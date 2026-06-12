@@ -163,24 +163,32 @@
     .item-body { flex:1; min-width:0; }
     .item-name { font-size:16px; font-weight:700; color: var(--slate-900); }
     .item-meta { font-size:12px; color: var(--slate-400); margin-top:2px; }
-    .ah-line {
-      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-      margin-top:4px; font-size:12px;
+    .item-nomatch { font-style:italic; }
+    /* Prijsvergelijking */
+    .cmp { margin-top:5px; display:flex; flex-direction:column; gap:3px; }
+    .cmp-row {
+      display:flex; align-items:center; gap:6px; font-size:12px;
+      min-width:0;
     }
-    .ah-price {
-      font-weight:900; color: var(--green-700);
-      font-size:13px;
+    .cmp-row.best .cmp-price { color: var(--green-700); font-weight:900; }
+    .cmp-row:not(.best) { opacity:.7; }
+    .cmp-row:not(.best) .cmp-price { color: var(--slate-600); font-weight:700; }
+    .store-chip {
+      font-size:9.5px; font-weight:900; color:white;
+      background: var(--sc, #888); padding:2px 6px; border-radius:6px;
+      letter-spacing:.3px; flex-shrink:0; min-width:38px; text-align:center;
     }
-    .ah-price.has-bonus { color: var(--rose-500); }
-    .ah-price-was {
+    .cmp-price { font-size:13px; flex-shrink:0; }
+    .cmp-was {
       color: var(--slate-400); text-decoration: line-through;
-      font-size:11px; font-weight:600;
+      font-size:11px; font-weight:600; flex-shrink:0;
     }
-    .ah-product {
+    .cmp-product {
       color: var(--slate-600); font-weight:500;
       overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
       flex:1; min-width:0;
     }
+    .cmp-diff { color: var(--slate-400); font-weight:700; font-size:11px; }
     .bonus-badge {
       display:inline-block;
       background: linear-gradient(135deg, #FBBF24, #F59E0B);
@@ -408,10 +416,15 @@
   let items   = loadJson(ITEMS_KEY, []);
   let history = loadJson(HIST_KEY,  {});
 
-  // ── AH PRIJSDATA ──
-  let ahProducts = [];
-  let ahLoadedAt = null;
-  const AH_DATA_KEY = 'boodschappen.ahData';
+  // ── PRIJSDATA (meerdere winkels) ──
+  // AH heeft bonus-data (eigen mobile-API scrape) + categorie. Jumbo via checkjebon: alleen reguliere prijs.
+  const STORES = [
+    { id:'ah',    name:'AH',    file:'./data/ah.json',    hasCategory:true,  hasBonus:true,  color:'#00A0E2' },
+    { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:false, color:'#EAB308' },
+  ];
+  const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
+  let storeData = {};  // id -> { products:[], scraped_at }
+
   // Stop-woorden die nooit op product-naam mogen forceren (anders matcht "yoghurt" op "yoghurtdrink")
   const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch']);
 
@@ -443,27 +456,32 @@
     huishouden:['Huishouden'],
   };
 
-  async function loadAH() {
-    // Probeer eerst cache (localStorage), dan vers ophalen op de achtergrond
-    try {
-      const cached = JSON.parse(localStorage.getItem(AH_DATA_KEY));
-      if (cached && cached.products && Array.isArray(cached.products)) {
-        ahProducts = cached.products;
-        ahLoadedAt = cached.scraped_at;
-        render();
-      }
-    } catch (e) {}
-    try {
-      const res = await fetch('./data/ah.json', { cache: 'no-cache' });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data.products)) {
-        ahProducts = data.products;
-        ahLoadedAt = data.scraped_at;
-        try { localStorage.setItem(AH_DATA_KEY, JSON.stringify({ scraped_at: ahLoadedAt, products: ahProducts })); } catch (e) {}
-        render();
-      }
-    } catch (e) {}
+  async function loadStores() {
+    // Per winkel: eerst cache uit localStorage (snel), dan vers ophalen op achtergrond.
+    for (const store of STORES) {
+      const key = 'boodschappen.data.' + store.id;
+      try {
+        const cached = JSON.parse(localStorage.getItem(key));
+        if (cached && Array.isArray(cached.products)) {
+          storeData[store.id] = cached;
+        }
+      } catch (e) {}
+    }
+    render();
+    // Vers ophalen (parallel)
+    await Promise.all(STORES.map(async store => {
+      try {
+        const res = await fetch(store.file, { cache: 'no-cache' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.products)) {
+          const slim = { scraped_at: data.scraped_at, products: data.products };
+          storeData[store.id] = slim;
+          try { localStorage.setItem('boodschappen.data.' + store.id, JSON.stringify(slim)); } catch (e) {}
+        }
+      } catch (e) {}
+    }));
+    render();
   }
 
   function normWords(s) {
@@ -485,22 +503,25 @@
     return false;
   }
 
-  function findAHMatch(itemName, itemCategory) {
-    if (!ahProducts.length) return null;
+  // Zoek de beste product-match binnen één winkel.
+  function findStoreMatch(storeId, itemName, itemCategory) {
+    const data = storeData[storeId];
+    if (!data || !data.products || !data.products.length) return null;
+    const store = STORE_BY_ID[storeId];
     const itemWords = normWords(itemName);
     if (!itemWords.length) return null;
     const today = new Date().toISOString().slice(0, 10);
-    const allowedCats = itemCategory ? (USER_CAT_TO_AH[itemCategory] || []) : [];
+    const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
-    const matches = [];
-    for (const p of ahProducts) {
+    let best = null;
+    for (const p of data.products) {
       const productWords = normWords(p.name);
       const allMatch = itemWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
       if (!allMatch) continue;
 
       let eff = (typeof p.price === 'number') ? p.price : null;
       let activeBonus = null, upcomingBonus = null;
-      if (p.bonus && p.bonus.start && p.bonus.end) {
+      if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
         if (p.bonus.start <= today && today <= p.bonus.end) {
           activeBonus = p.bonus;
           if (typeof p.bonus_price === 'number') eff = p.bonus_price;
@@ -509,10 +530,7 @@
         }
       }
       if (eff == null) continue;
-      // Scoring: hoge woord-dichtheid + lage prijs winnen.
-      // density = item-woorden / product-woorden (0..1, hoger = product is meer ON-onderwerp)
       const density = itemWords.length / Math.max(productWords.length, itemWords.length);
-      // Bonus voor woorden vooraan ("Brood" matcht "AH Brood" beter dan "Halvarine op brood")
       let posBonus = 0;
       for (const iw of itemWords) {
         const idx = productWords.findIndex(pw => wordMatches(iw, pw));
@@ -521,11 +539,24 @@
       }
       const catBoost = (allowedCats.length && p.category && allowedCats.includes(p.category)) ? 5 : 0;
       const score = density * 10 + posBonus + catBoost - eff * 0.01;
-      matches.push({ p, eff, activeBonus, upcomingBonus, score });
+      if (!best || score > best.score) best = { storeId, p, eff, activeBonus, upcomingBonus, score };
     }
-    if (!matches.length) return null;
-    matches.sort((a, b) => b.score - a.score);
-    return matches[0];
+    return best;
+  }
+
+  // Vergelijk een item over alle winkels. Geeft { matches:[per winkel], cheapest, hasData }.
+  function findMatches(itemName, itemCategory) {
+    const matches = [];
+    let anyData = false;
+    for (const store of STORES) {
+      if (storeData[store.id] && storeData[store.id].products?.length) anyData = true;
+      const m = findStoreMatch(store.id, itemName, itemCategory);
+      if (m) matches.push(m);
+    }
+    if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
+    // Goedkoopste op effectieve prijs
+    const cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+    return { matches, cheapest, hasData: anyData };
   }
 
   function fmtPrice(n) {
@@ -697,6 +728,36 @@
     else               sub.textContent = `${open} te halen${done ? ` · ${done} gepakt` : ''}`;
   }
 
+  // Prijsvergelijking-block voor één item: goedkoopste winkel uitgelicht + andere winkels ernaast.
+  function renderPriceComparison(it) {
+    const { matches, cheapest, hasData } = findMatches(it.name, it.category);
+    if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
+    if (!matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+
+    // Sorteer: goedkoopste eerst
+    const sorted = [...matches].sort((a, b) => a.eff - b.eff);
+    const rows = sorted.map((m, i) => {
+      const store = STORE_BY_ID[m.storeId];
+      const isCheapest = m === cheapest;
+      const diff = m.eff - cheapest.eff;
+      const wasPrice = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
+        ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
+      const bonusBadge = m.activeBonus
+        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>`
+        : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
+      const diffTag = (!isCheapest && diff > 0) ? `<span class="cmp-diff">+${fmtPrice(diff)}</span>` : '';
+      return `
+        <div class="cmp-row ${isCheapest ? 'best' : ''}">
+          <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+          <span class="cmp-price">${fmtPrice(m.eff)}</span>
+          ${wasPrice}
+          ${isCheapest ? `<span class="cmp-product">${escapeHtml(m.p.name)}${m.p.unit ? ' · ' + escapeHtml(m.p.unit) : ''}</span>` : diffTag}
+          ${bonusBadge}
+        </div>`;
+    }).join('');
+    return `<div class="cmp">${rows}</div>`;
+  }
+
   function renderList() {
     const wrap = document.getElementById('list-wrap');
     if (!items.length) {
@@ -723,36 +784,16 @@
             <span>${cat.emo}</span> ${cat.name}
             <span class="category-count">${open}/${arr.length}</span>
           </div>
-          ${arr.map(it => {
-            const m = findAHMatch(it.name, it.category);
-            let priceLine = '<div class="item-meta">Tik voor categorie</div>';
-            if (m) {
-              const wasPriceHtml = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
-                ? `<span class="ah-price-was">${fmtPrice(m.p.price)}</span>` : '';
-              const bonusBadge = m.activeBonus
-                ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>`
-                : (m.upcomingBonus
-                   ? `<span class="bonus-badge upcoming">vrijdag: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>`
-                   : '');
-              priceLine = `
-                <div class="ah-line">
-                  <span class="ah-price ${m.activeBonus ? 'has-bonus' : ''}">${fmtPrice(m.eff)}</span>
-                  ${wasPriceHtml}
-                  <span class="ah-product">${escapeHtml(m.p.name)}${m.p.unit ? ' · ' + escapeHtml(m.p.unit) : ''}</span>
-                  ${bonusBadge}
-                </div>`;
-            }
-            return `
+          ${arr.map(it => `
             <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
               <div class="check" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${it.checked}"></div>
               <div class="item-body" onclick="openCategoryPicker('${it.id}')">
                 <div class="item-name">${escapeHtml(it.name)}</div>
-                ${priceLine}
+                ${renderPriceComparison(it)}
               </div>
               ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
               <button class="item-del" onclick="deleteItem('${it.id}')" aria-label="Verwijder">✕</button>
-            </div>`;
-          }).join('')}
+            </div>`).join('')}
         </div>`;
     });
     wrap.innerHTML = html;
@@ -877,7 +918,7 @@
   }
 
   render();
-  loadAH();
+  loadStores();
 </script>
 </body>
 </html>

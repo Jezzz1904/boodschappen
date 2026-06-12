@@ -2,7 +2,8 @@ name: Scrape supermarkt prijzen
 
 on:
   schedule:
-    - cron: '15 4 * * *'   # elke dag 05:15 NL-tijd (04:15 UTC zomertijd / 05:15 wintertijd)
+    # 05:30 UTC — bewust NA checkjebon (~04:57 UTC) zodat we hun verse data pakken
+    - cron: '30 5 * * *'
   workflow_dispatch:        # handmatig kunnen triggeren
 
 permissions:
@@ -23,8 +24,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Scrape AH
+      - name: Scrape AH (mobile API, met bonus-data)
         run: node scripts/scrape-ah.mjs
+
+      - name: Scrape Jumbo (via checkjebon)
+        run: node scripts/scrape-checkjebon.mjs jumbo
 
       - name: Commit data if changed
         run: |
