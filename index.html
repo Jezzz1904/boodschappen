@@ -435,6 +435,8 @@
   const STORES = [
     { id:'ah',    name:'AH',    file:'./data/ah.json',    hasCategory:true,  hasBonus:true,  color:'#00A0E2' },
     { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:false, color:'#EAB308' },
+    { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:false, color:'#E11D48' },
+    { id:'lidl',  name:'Lidl',  file:'./data/lidl.json',  hasCategory:false, hasBonus:false, color:'#1E40AF' },
   ];
   const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
   let storeData = {};  // id -> { products:[], scraped_at }

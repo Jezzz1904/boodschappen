@@ -27,8 +27,8 @@ jobs:
       - name: Scrape AH (mobile API, met bonus-data)
         run: node scripts/scrape-ah.mjs
 
-      - name: Scrape Jumbo (via checkjebon)
-        run: node scripts/scrape-checkjebon.mjs jumbo
+      - name: Scrape Jumbo + Plus + Lidl (via checkjebon)
+        run: node scripts/scrape-checkjebon.mjs jumbo plus lidl
 
       - name: Commit data if changed
         run: |
