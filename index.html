@@ -59,6 +59,8 @@
       backdrop-filter: blur(10px);
     }
     .tabs.tabs-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .tabs.tabs-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .tabs.tabs-4 .tab { font-size:11.5px; padding:10px 4px; }
     .tab {
       padding:10px 6px; border:none; background:transparent;
       font-size:13px; font-weight:800; color:var(--slate-600);
@@ -135,6 +137,78 @@
 
     .route-empty {
       text-align:center; padding:40px 20px; color: var(--slate-400);
+    }
+
+    /* Tips view */
+    .tips-grid { display:grid; gap:10px; margin-bottom:16px; }
+    .tips-btn {
+      display:flex; align-items:center; gap:14px;
+      background:white; border:1.5px solid var(--green-100); border-radius:16px;
+      padding:14px 16px; text-align:left; cursor:pointer;
+      box-shadow:0 2px 8px rgba(15,23,42,.04);
+      transition: transform .12s, border-color .15s;
+      width:100%;
+    }
+    .tips-btn:active { transform:scale(.98); }
+    .tips-btn:hover { border-color: var(--green-500); background: var(--green-50); }
+    .tips-emo { font-size:30px; flex-shrink:0; }
+    .tips-title { font-size:15px; font-weight:800; color: var(--slate-900); }
+    .tips-sub { font-size:12px; color: var(--slate-600); margin-top:2px; }
+
+    #tips-output { margin-top:8px; }
+    .tips-result {
+      background:white; border:1.5px solid var(--green-100); border-radius:18px;
+      padding:18px; box-shadow:0 6px 20px rgba(15,23,42,.06);
+      font-size:14px; line-height:1.5; color: var(--slate-800);
+    }
+    .tips-result h3 {
+      font-size:16px; font-weight:900; color: var(--green-700);
+      margin: 12px 0 6px;
+    }
+    .tips-result h3:first-child { margin-top:0; }
+    .tips-result p { margin: 4px 0 10px; }
+    .tips-result strong { color: var(--slate-900); }
+    .tips-result ul { margin: 4px 0 10px 18px; }
+    .tips-result li { margin-bottom: 3px; }
+    .tips-result-header {
+      display:flex; align-items:center; gap:8px;
+      font-size:11px; text-transform:uppercase; letter-spacing:1.5px;
+      color: var(--green-700); font-weight:800; margin-bottom:10px;
+    }
+    .tips-loading {
+      display:flex; align-items:center; gap:10px;
+      background:white; border:1.5px solid var(--green-100); border-radius:16px;
+      padding:16px; color: var(--slate-600); font-weight:600;
+    }
+    .tips-spin {
+      width:18px; height:18px; border:2.5px solid var(--green-100);
+      border-top-color: var(--green-600); border-radius:50%;
+      animation: tspin .8s linear infinite;
+    }
+    @keyframes tspin { to { transform: rotate(360deg); } }
+    .tips-error {
+      background: rgba(239,68,68,.06); border:1.5px solid rgba(239,68,68,.25);
+      color: var(--rose-500); border-radius:14px; padding:12px 14px;
+      font-size:13px; font-weight:600;
+    }
+    .tips-config {
+      background: rgba(99,102,241,.06); border:1.5px dashed rgba(99,102,241,.3);
+      border-radius:14px; padding:14px; margin-bottom:14px;
+      font-size:13px; color: var(--slate-700);
+    }
+    .tips-config strong { color: var(--slate-900); }
+    .tips-config-input {
+      width:100%; padding:10px 12px; margin-top:8px;
+      border:1.5px solid var(--slate-200); border-radius:10px;
+      font-size:13px; font-family: ui-monospace, monospace;
+      background:white; outline:none;
+    }
+    .tips-config-input:focus { border-color: var(--green-500); }
+    .tips-config-btn {
+      margin-top:8px; padding:8px 16px;
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border:none; border-radius:10px;
+      font-size:13px; font-weight:800; cursor:pointer;
     }
 
     /* INPUT KAART */
@@ -415,9 +489,10 @@
     </div>
   </div>
 
-  <div class="tabs tabs-3">
+  <div class="tabs tabs-4">
     <button class="tab active" id="tab-lijst" onclick="showTab('lijst')">🛒 Lijst</button>
     <button class="tab"        id="tab-route" onclick="showTab('route')">🗺️ Route</button>
+    <button class="tab"        id="tab-tips"  onclick="showTab('tips')">💡 Tips</button>
     <button class="tab"        id="tab-hist"  onclick="showTab('hist')">⭐ Vaak</button>
   </div>
 
@@ -443,6 +518,41 @@
   <!-- TAB: ROUTE -->
   <div id="view-route" style="display:none">
     <div id="route-wrap"></div>
+  </div>
+
+  <!-- TAB: TIPS (AI) -->
+  <div id="view-tips" style="display:none">
+    <div class="tips-grid">
+      <button class="tips-btn" onclick="askAI('recept')">
+        <span class="tips-emo">🍳</span>
+        <div>
+          <div class="tips-title">Wat kan ik koken?</div>
+          <div class="tips-sub">Recept-ideeën bij wat op je lijst staat</div>
+        </div>
+      </button>
+      <button class="tips-btn" onclick="askAI('vergeten')">
+        <span class="tips-emo">🤔</span>
+        <div>
+          <div class="tips-title">Mis ik iets?</div>
+          <div class="tips-sub">Slimme aanvullingen op je lijst</div>
+        </div>
+      </button>
+      <button class="tips-btn" onclick="askAI('weekmenu')">
+        <span class="tips-emo">📅</span>
+        <div>
+          <div class="tips-title">Weekmenu uit historie</div>
+          <div class="tips-sub">5 maaltijden op basis van wat je vaak koopt</div>
+        </div>
+      </button>
+      <button class="tips-btn" onclick="askAI('deals')">
+        <span class="tips-emo">🏷️</span>
+        <div>
+          <div class="tips-title">Aanbieding-combo's</div>
+          <div class="tips-sub">Wat loont nu om te combineren</div>
+        </div>
+      </button>
+    </div>
+    <div id="tips-output"></div>
   </div>
 
   <!-- TAB: HISTORIE -->
@@ -1156,13 +1266,127 @@
   function showTab(tab) {
     document.getElementById('tab-lijst').classList.toggle('active', tab==='lijst');
     document.getElementById('tab-route').classList.toggle('active', tab==='route');
+    document.getElementById('tab-tips').classList.toggle('active', tab==='tips');
     document.getElementById('tab-hist').classList.toggle('active', tab==='hist');
     document.getElementById('view-lijst').style.display = tab==='lijst'  ? 'block' : 'none';
     document.getElementById('view-route').style.display = tab==='route' ? 'block' : 'none';
+    document.getElementById('view-tips').style.display  = tab==='tips'  ? 'block' : 'none';
     document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  renderHistory();
     if (tab === 'route') renderRoute();
+    if (tab === 'tips')  renderTipsConfig();
+  }
+
+  // ── AI TIPS ──
+  const AI_URL_KEY = 'boodschappen.aiUrl';
+
+  function getAIUrl() { try { return localStorage.getItem(AI_URL_KEY) || ''; } catch { return ''; } }
+  function setAIUrl(url) {
+    try { localStorage.setItem(AI_URL_KEY, url.replace(/\/$/, '')); } catch {}
+    renderTipsConfig();
+  }
+
+  function renderTipsConfig() {
+    const out = document.getElementById('tips-output');
+    if (getAIUrl()) return; // alles oké, leeg output-area
+    out.innerHTML = `
+      <div class="tips-config">
+        <strong>🔌 Eenmalige setup nodig</strong><br>
+        AI-suggesties draaien via een Cloudflare Worker die ik je laat deployen.
+        Plak hier de URL van jouw Worker (eindigt op <code>.workers.dev</code>) zodra die online staat:
+        <input class="tips-config-input" id="ai-url-input" type="text" placeholder="https://boodschappen-ai.xxx.workers.dev" value="${escapeHtml(getAIUrl())}">
+        <button class="tips-config-btn" onclick="saveAIUrl()">Opslaan</button>
+      </div>`;
+  }
+  function saveAIUrl() {
+    const v = document.getElementById('ai-url-input').value.trim();
+    if (!v) return;
+    setAIUrl(v);
+    document.getElementById('tips-output').innerHTML = `<div class="tips-result"><div class="tips-result-header">✓ Setup klaar</div><p>Klik een van de knoppen hierboven om een suggestie te krijgen.</p></div>`;
+  }
+
+  // Markdown-light → HTML (alleen wat de AI-prompt produceert: **bold**, kopjes, lijsten)
+  function mdToHtml(s) {
+    let h = escapeHtml(s).trim();
+    // **bold**
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // kop-regels die met emoji + bold beginnen → h3
+    const lines = h.split('\n');
+    const out = [];
+    let inList = false;
+    for (const ln of lines) {
+      if (!ln.trim()) { if (inList) { out.push('</ul>'); inList = false; } out.push(''); continue; }
+      if (/^- /.test(ln)) {
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push('<li>' + ln.slice(2) + '</li>');
+      } else if (/^<strong>.+<\/strong>$/.test(ln.trim())) {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push('<h3>' + ln.replace(/<\/?strong>/g, '') + '</h3>');
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push('<p>' + ln + '</p>');
+      }
+    }
+    if (inList) out.push('</ul>');
+    return out.join('\n');
+  }
+
+  async function askAI(mode) {
+    const url = getAIUrl();
+    const out = document.getElementById('tips-output');
+    if (!url) { renderTipsConfig(); return; }
+
+    const labels = {
+      recept:   'Recept-ideeën zoeken',
+      vergeten: 'Checken wat je vergeet',
+      weekmenu: 'Weekmenu samenstellen',
+      deals:    'Deal-combinaties zoeken',
+    };
+    out.innerHTML = `<div class="tips-loading"><span class="tips-spin"></span> ${labels[mode]}…</div>`;
+
+    // Verzamel context
+    const list = items.filter(x => !x.checked).map(it => ({ name: it.name, qty: it.qty, category: it.category }));
+    const histTop = Object.entries(history)
+      .map(([k, v]) => ({ key: k, name: v.name, count: v.count, lastBought: v.lastBought, category: v.category }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 40);
+    const today = new Date().toISOString().slice(0, 10);
+    const deals = [];
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data || !data.products) continue;
+      for (const p of data.products) {
+        if (p.bonus && p.bonus.start && p.bonus.end && p.bonus.start <= today && today <= p.bonus.end) {
+          deals.push({
+            store: store.name,
+            name: p.name,
+            mechanism: p.bonus.mechanism || 'aanbieding',
+            price: p.bonus_price ?? p.price,
+          });
+        }
+      }
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode, list, history: histTop, deals: deals.slice(0, 60) }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        out.innerHTML = `<div class="tips-error">⚠ ${escapeHtml(data.error || ('HTTP ' + res.status))}${data.detail ? '<br><small>' + escapeHtml(data.detail) + '</small>' : ''}</div>`;
+        return;
+      }
+      out.innerHTML = `
+        <div class="tips-result">
+          <div class="tips-result-header">💡 ${escapeHtml(labels[mode])}</div>
+          ${mdToHtml(data.text || '(geen antwoord)')}
+        </div>`;
+    } catch (e) {
+      out.innerHTML = `<div class="tips-error">⚠ Verbinding mislukt: ${escapeHtml(String(e))}</div>`;
+    }
   }
 
   // ── ROUTE PLANNER ──
