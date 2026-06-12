@@ -110,6 +110,19 @@
     .chip:active { transform:scale(.94); }
     .chip:hover { background: var(--green-100); }
     .chip .chip-cnt { font-size:10px; color: var(--green-600); opacity:.7; }
+    .chip.variant-chip {
+      background: white;
+      border:1.5px solid var(--green-500);
+      color: var(--green-700);
+    }
+    .chip.variant-chip:hover { background: var(--green-50); }
+    .chip.chip-generic {
+      background: transparent;
+      border:1.5px dashed var(--slate-200);
+      color: var(--slate-600);
+      font-weight:600;
+    }
+    .chip.chip-generic:hover { background: var(--slate-50); border-color: var(--slate-400); }
     .suggestions-label {
       font-size: 11px; text-transform:uppercase; letter-spacing:1.5px;
       color: var(--slate-400); font-weight:800; margin: 4px 2px 6px;
@@ -448,6 +461,53 @@
   // Bewerkte-product-indicatoren: als product dit bevat maar het item niet, straf af
   // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
   const NOISE_WORDS = new Set(['drink','sap','sapje','saus','wafels','wafel','koek','koekjes','snack','snacks','mix','ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak','toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep','pasta','pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade','puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread']);
+
+  // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
+  const VARIANTS = {
+    pasta:        ['Spaghetti', 'Penne', 'Macaroni', 'Lasagne', 'Tagliatelle', 'Farfalle', 'Fusilli'],
+    rijst:        ['Basmati rijst', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst'],
+    noedels:      ['Mie', 'Boemboe noedels', 'Ramen', 'Soba'],
+    melk:         ['Halfvolle melk', 'Volle melk', 'Magere melk', 'Karnemelk'],
+    yoghurt:      ['Magere yoghurt', 'Volle yoghurt', 'Griekse yoghurt', 'Yoghurt naturel'],
+    kwark:        ['Magere kwark', 'Volle kwark', 'Kwark vanille', 'Kwark aardbei'],
+    vla:          ['Vanillevla', 'Chocoladevla', 'Hopjesvla'],
+    kaas:         ['Jong belegen kaas', 'Belegen kaas', 'Oude kaas', 'Brie', 'Mozzarella', 'Feta'],
+    boter:        ['Roomboter', 'Halvarine', 'Margarine', 'Bakboter'],
+    brood:        ['Bruin brood', 'Wit brood', 'Volkoren brood', 'Tijgerbrood', 'Stokbrood', 'Krentenbrood'],
+    appel:        ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
+    appels:       ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
+    peer:         ['Conference peer', 'Doyenne peer', 'Gieser Wildeman'],
+    aardappel:    ['Kruimige aardappel', 'Vastkokende aardappel', 'Drielingen', 'Krieltjes'],
+    aardappels:   ['Kruimige aardappel', 'Vastkokende aardappel', 'Drielingen', 'Krieltjes'],
+    ui:           ['Gele ui', 'Rode ui', 'Sjalot', 'Zilveruitjes', 'Bosui'],
+    tomaat:       ['Cherrytomaat', 'Vleestomaat', 'Trostomaat', 'Snoeptomaat', 'Pruimtomaat'],
+    tomaten:      ['Cherrytomaten', 'Vleestomaat', 'Trostomaten', 'Snoeptomaten'],
+    paprika:      ['Rode paprika', 'Gele paprika', 'Groene paprika', 'Mini paprika'],
+    sla:          ['IJsbergsla', 'Veldsla', 'Eikenbladsla', 'Little gem', 'Romaine'],
+    kip:          ['Kipfilet', 'Kipdijfilet', 'Kippenpoten', 'Kipschnitzel', 'Kipgehakt'],
+    vlees:        ['Kipfilet', 'Rundergehakt', 'Biefstuk', 'Varkenshaas', 'Speklap', 'Hamburger'],
+    gehakt:       ['Rundergehakt', 'Half-om-half gehakt', 'Kipgehakt', 'Gekruid gehakt'],
+    vis:          ['Zalm', 'Tonijn', 'Kabeljauw', 'Tilapia', 'Pangasius', 'Schol', 'Haring'],
+    chocolade:    ['Pure chocolade', 'Melkchocolade', 'Witte chocolade', 'Hazelnoot chocolade'],
+    chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
+    koffie:       ['Filterkoffie', 'Koffiebonen', 'Koffiepads', 'Senseo', 'Nespresso cups'],
+    thee:         ['Zwarte thee', 'Groene thee', 'Rooibos', 'Kruidenthee', 'Earl Grey', 'Pepermunt'],
+    wijn:         ['Rode wijn', 'Witte wijn', 'Rosé', 'Prosecco'],
+    bier:         ['Pils', 'Speciaalbier', 'Witbier', 'Radler', 'Alcoholvrij bier'],
+    water:        ['Spa rood', 'Spa blauw', 'Bronwater', 'Spa & fruit'],
+    sap:          ['Sinaasappelsap', 'Appelsap', 'Multivit', 'Smoothie'],
+    frisdrank:    ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris'],
+    cola:         ['Coca-Cola', 'Coca-Cola Zero', 'Pepsi', 'Cola light'],
+    ijs:          ['Magnum', "Ben & Jerry's", 'Schepijs', 'Cornetto', 'Calippo', 'IJsblokjes'],
+    crackers:     ['Cream crackers', 'Knäckebröd', 'Rijstwafels', 'Maïswafels'],
+    beleg:        ['Hagelslag', 'Pindakaas', 'Chocopasta', 'Jam', 'Honing', 'Smeerkaas', 'Vleeswaren'],
+    soep:         ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Bouillon'],
+    saus:         ['Pastasaus', 'Tomatensaus', 'Pesto', 'Sojasaus', 'Sweet chili', 'Ketchup'],
+    olie:         ['Olijfolie', 'Zonnebloemolie', 'Bakolie', 'Sesamolie'],
+    bonen:        ['Sperziebonen', 'Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Kikkererwten'],
+    shampoo:      ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo'],
+    tandpasta:    ['Tandpasta white', 'Tandpasta gevoelige tanden', 'Tandpasta kids', 'Tandpasta original'],
+  };
 
   // Mijn categorie → AH-categorieen (boost score als de match daarin valt)
   const USER_CAT_TO_AH = {
@@ -890,6 +950,32 @@
     const wrap = document.getElementById('suggestions-wrap');
     const inp = document.getElementById('add-input').value.trim().toLowerCase();
     const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+
+    // 1. Generieke term → varianten tonen (jouw historie sorteert ze)
+    const variants = inp && VARIANTS[inp];
+    if (variants && variants.length) {
+      const ranked = variants
+        .filter(v => !onList.has(normalize(v)))
+        .map(v => ({ name: v, count: history[normalize(v)]?.count || 0 }))
+        .sort((a, b) => b.count - a.count);
+      if (ranked.length) {
+        wrap.innerHTML = `
+          <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
+          <div class="suggestions">
+            ${ranked.map(v => `
+              <span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+                ${escapeHtml(v.name)}
+                ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+              </span>`).join('')}
+            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
+              + ${escapeHtml(inp)} (zonder soort)
+            </span>
+          </div>`;
+        return;
+      }
+    }
+
+    // 2. Anders: historie-suggesties (zoals voorheen)
     let entries = Object.entries(history)
       .filter(([k]) => !onList.has(k))
       .map(([k, v]) => ({ key:k, ...v }));
@@ -899,7 +985,6 @@
       entries.sort((a,b) => b.count - a.count);
       entries = entries.slice(0, 8);
     } else {
-      // top: combi van frequentie + recentheid
       const now = Date.now();
       entries.forEach(e => {
         const daysAgo = (now - (e.lastBought || 0)) / 86400000;
