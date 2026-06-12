@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="cart" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#ECFDF5"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+  <!-- Mandje -->
+  <path d="M52 70 L140 70 L130 138 Q128 148 118 148 L74 148 Q64 148 62 138 Z"
+        fill="url(#cart)" stroke="#065F46" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Handvat -->
+  <path d="M70 70 L82 42 L110 42 L122 70" fill="none"
+        stroke="#FBBF24" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Items in mandje -->
+  <circle cx="80" cy="98" r="10" fill="#EF4444"/>
+  <circle cx="104" cy="94" r="9" fill="#FB923C"/>
+  <circle cx="120" cy="106" r="8" fill="#A78BFA"/>
+  <rect x="74" y="112" width="40" height="14" rx="3" fill="#FBBF24"/>
+  <!-- Vinkje -->
+  <circle cx="148" cy="50" r="20" fill="#FBBF24"/>
+  <path d="M140 50 L146 56 L158 44" stroke="#fff" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

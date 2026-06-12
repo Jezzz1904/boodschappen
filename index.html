@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Boodschappen">
+  <meta name="theme-color" content="#059669">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="logo.svg">
+  <title>Boodschappen</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    :root {
+      --green-50:#ECFDF5; --green-100:#D1FAE5; --green-500:#10B981; --green-600:#059669; --green-700:#047857;
+      --amber-400:#FBBF24; --amber-500:#F59E0B;
+      --rose-500:#EF4444;
+      --slate-50:#F8FAFC; --slate-200:#E2E8F0; --slate-400:#94A3B8; --slate-600:#475569; --slate-800:#1E293B; --slate-900:#0F172A;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(16,185,129,.18), transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(251,191,36,.12), transparent 55%),
+        linear-gradient(180deg, #F0FDF4 0%, #ECFDF5 60%, #F0FDF4 100%);
+      background-attachment: fixed;
+      min-height: 100%;
+      color: var(--slate-900);
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 18px 16px calc(120px + env(safe-area-inset-bottom));
+      position: relative;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 4px 4px 14px;
+    }
+    .header .logo { width: 44px; height: 44px; border-radius: 12px; box-shadow: 0 4px 14px rgba(5,150,105,.25); }
+    .header h1 {
+      font-size: 24px; font-weight: 900; letter-spacing:-.5px;
+      background: linear-gradient(135deg, var(--green-600), var(--green-700));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header .sub { font-size: 12px; color: var(--slate-600); font-weight: 600; }
+
+    /* TABS */
+    .tabs {
+      display:grid; grid-template-columns: 1fr 1fr;
+      background: rgba(255,255,255,.7);
+      border:1.5px solid var(--green-100);
+      border-radius:14px; padding:4px; gap:4px;
+      margin-bottom:14px;
+      backdrop-filter: blur(10px);
+    }
+    .tab {
+      padding:10px 8px; border:none; background:transparent;
+      font-size:13px; font-weight:800; color:var(--slate-600);
+      cursor:pointer; border-radius:10px; transition: all .15s;
+    }
+    .tab.active { background: linear-gradient(135deg, var(--green-500), var(--green-600)); color:white; box-shadow:0 3px 10px rgba(5,150,105,.3); }
+
+    /* INPUT KAART */
+    .add-card {
+      background:white; border:1.5px solid var(--green-100); border-radius:18px;
+      padding:12px; box-shadow: 0 6px 24px rgba(15,23,42,.06);
+      margin-bottom:14px;
+    }
+    .add-row { display:flex; gap:8px; }
+    .add-input {
+      flex:1; padding:14px 14px; font-size:16px; font-weight:600;
+      border:2px solid var(--slate-200); border-radius:12px;
+      background: var(--slate-50); color: var(--slate-900);
+      outline:none; transition: border-color .15s, background .15s;
+      min-width:0;
+    }
+    .add-input:focus { border-color: var(--green-500); background:white; }
+    .add-input::placeholder { color: var(--slate-400); font-weight:500; }
+    .qty-input {
+      width:64px; padding:14px 8px; font-size:16px; font-weight:700; text-align:center;
+      border:2px solid var(--slate-200); border-radius:12px;
+      background: var(--slate-50); color: var(--slate-900); outline:none;
+    }
+    .qty-input:focus { border-color: var(--green-500); background:white; }
+    .add-btn {
+      padding:14px 18px; border:none; border-radius:12px;
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; font-size:22px; font-weight:900; cursor:pointer;
+      box-shadow:0 4px 14px rgba(5,150,105,.35);
+      transition: transform .12s;
+      line-height:1;
+    }
+    .add-btn:active { transform:scale(.94); }
+
+    /* SUGGESTIES */
+    .suggestions { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
+    .chip {
+      display:inline-flex; align-items:center; gap:5px;
+      background: var(--green-50); color: var(--green-700);
+      border:1.5px solid var(--green-100); border-radius:99px;
+      padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer;
+      transition: all .12s;
+      user-select:none;
+    }
+    .chip:active { transform:scale(.94); }
+    .chip:hover { background: var(--green-100); }
+    .chip .chip-cnt { font-size:10px; color: var(--green-600); opacity:.7; }
+    .suggestions-label {
+      font-size: 11px; text-transform:uppercase; letter-spacing:1.5px;
+      color: var(--slate-400); font-weight:800; margin: 4px 2px 6px;
+    }
+
+    /* LIJST */
+    .category-group { margin-bottom:18px; }
+    .category-header {
+      display:flex; align-items:center; gap:8px;
+      font-size:11px; text-transform:uppercase; letter-spacing:1.5px;
+      color: var(--green-700); font-weight:800;
+      margin: 0 4px 8px;
+    }
+    .category-header::after {
+      content:''; flex:1; height:1px; background: linear-gradient(90deg, var(--green-100), transparent);
+    }
+    .category-count {
+      background: var(--green-100); color: var(--green-700);
+      padding: 1px 7px; border-radius:99px; font-size:10px; font-weight:800;
+    }
+
+    .item {
+      display:flex; align-items:center; gap:12px;
+      background:white; border:1.5px solid var(--slate-200); border-radius:14px;
+      padding: 12px 14px; margin-bottom:8px;
+      box-shadow: 0 2px 8px rgba(15,23,42,.04);
+      transition: opacity .2s, transform .15s;
+    }
+    .item.checked {
+      opacity:.5;
+      background: var(--slate-50);
+    }
+    .item.checked .item-name { text-decoration: line-through; color: var(--slate-600); }
+    .check {
+      width:28px; height:28px; border-radius:10px;
+      border:2.5px solid var(--slate-200); background:white;
+      flex-shrink:0; cursor:pointer; position:relative;
+      transition: all .12s;
+    }
+    .check:active { transform:scale(.9); }
+    .item.checked .check {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      border-color: var(--green-600);
+    }
+    .item.checked .check::after {
+      content:''; position:absolute; left:7px; top:3px;
+      width:8px; height:14px;
+      border:solid white; border-width:0 3px 3px 0;
+      transform: rotate(45deg);
+    }
+    .item-body { flex:1; min-width:0; }
+    .item-name { font-size:16px; font-weight:700; color: var(--slate-900); }
+    .item-meta { font-size:12px; color: var(--slate-400); margin-top:2px; }
+    .item-qty {
+      background: var(--green-50); color: var(--green-700);
+      padding: 3px 10px; border-radius:99px;
+      font-size:13px; font-weight:800;
+      flex-shrink:0;
+    }
+    .item-del {
+      background:none; border:none; color: var(--slate-400);
+      font-size:20px; cursor:pointer; padding:4px 6px;
+      flex-shrink:0;
+    }
+    .item-del:active { color: var(--rose-500); transform:scale(.9); }
+
+    /* EMPTY */
+    .empty {
+      text-align:center; padding: 40px 20px;
+      color: var(--slate-400);
+    }
+    .empty-emoji { font-size:54px; margin-bottom:8px; display:block; }
+    .empty-title { font-size:18px; font-weight:800; color: var(--slate-600); margin-bottom:4px; }
+    .empty-sub { font-size:13px; color: var(--slate-400); }
+
+    /* HISTORIE TAB */
+    .hist-item {
+      display:flex; align-items:center; gap:12px;
+      background:white; border:1.5px solid var(--slate-200); border-radius:14px;
+      padding: 10px 12px; margin-bottom:8px;
+    }
+    .hist-info { flex:1; min-width:0; }
+    .hist-name { font-size:15px; font-weight:700; color: var(--slate-900); }
+    .hist-meta { font-size:11px; color: var(--slate-400); margin-top:1px; }
+    .hist-add {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border:none; border-radius:10px;
+      padding: 8px 14px; font-size:13px; font-weight:800;
+      cursor:pointer; box-shadow:0 2px 8px rgba(5,150,105,.3);
+    }
+    .hist-add:active { transform:scale(.94); }
+    .hist-search {
+      width:100%; padding:12px 14px; font-size:15px; font-weight:600;
+      border:2px solid var(--slate-200); border-radius:12px;
+      background: white; outline:none; margin-bottom:12px;
+    }
+    .hist-search:focus { border-color: var(--green-500); }
+
+    /* FOOTER ACTIE-BALK */
+    .actionbar {
+      position: fixed; left:0; right:0; bottom:0;
+      max-width: 520px; margin: 0 auto;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(240,253,244,0), rgba(240,253,244,.95) 30%);
+      display:flex; gap:8px;
+      z-index: 5;
+    }
+    .ab-btn {
+      flex:1; padding: 14px;
+      border:none; border-radius: 14px;
+      font-size:14px; font-weight:800; cursor:pointer;
+      transition: transform .12s;
+    }
+    .ab-btn:active { transform: scale(.97); }
+    .ab-clear {
+      background: white; color: var(--slate-600);
+      border:1.5px solid var(--slate-200);
+    }
+    .ab-clear.has-checked { color: var(--rose-500); border-color: #FECACA; }
+    .ab-done {
+      background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+      color:white; box-shadow:0 4px 14px rgba(251,191,36,.4);
+    }
+
+    /* CATEGORIE-KIEZER MODAL */
+    .modal-bg {
+      position: fixed; inset:0; background: rgba(15,23,42,.5);
+      display:none; align-items: flex-end; justify-content: center;
+      z-index: 20; padding: 16px;
+    }
+    .modal-bg.open { display:flex; }
+    .modal {
+      background:white; border-radius: 22px 22px 22px 22px;
+      width:100%; max-width: 520px;
+      padding: 20px; max-height: 80vh; overflow-y:auto;
+      box-shadow: 0 -8px 32px rgba(0,0,0,.2);
+    }
+    .modal-title { font-size:18px; font-weight:900; margin-bottom:4px; color: var(--slate-900); }
+    .modal-sub { font-size:13px; color: var(--slate-600); margin-bottom: 14px; }
+    .cat-grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+    .cat-btn {
+      display:flex; align-items:center; gap:10px;
+      padding: 12px 12px;
+      background: var(--slate-50); border:1.5px solid var(--slate-200);
+      border-radius:14px; cursor:pointer;
+      font-size:14px; font-weight:700; color: var(--slate-800);
+      text-align:left;
+    }
+    .cat-btn .cat-emo { font-size:22px; }
+    .cat-btn:active { transform:scale(.96); }
+    .cat-btn:hover { background: var(--green-50); border-color: var(--green-100); }
+    .modal-close {
+      width:100%; margin-top:12px; padding:12px;
+      background:transparent; border:none; color: var(--slate-600);
+      font-size:14px; font-weight:700; cursor:pointer;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed; left:50%; bottom: 100px;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--slate-900); color:white;
+      padding: 10px 16px; border-radius: 99px;
+      font-size:13px; font-weight:700;
+      opacity:0; pointer-events:none;
+      transition: opacity .2s, transform .2s;
+      z-index: 30;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    }
+    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="logo.svg" alt="" class="logo">
+    <div>
+      <h1>Boodschappen</h1>
+      <div class="sub" id="header-sub">Klaar om te shoppen</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-lijst" onclick="showTab('lijst')">🛒 Lijst</button>
+    <button class="tab" id="tab-hist" onclick="showTab('hist')">⭐ Vaak gekocht</button>
+  </div>
+
+  <!-- TAB: LIJST -->
+  <div id="view-lijst">
+    <div class="add-card">
+      <div class="add-row">
+        <input class="add-input" id="add-input" type="text" placeholder="Wat heb je nodig?"
+               autocomplete="off" autocapitalize="sentences"
+               oninput="onInputChange()"
+               onkeydown="if(event.key==='Enter') addCurrent()">
+        <input class="qty-input" id="qty-input" type="text" inputmode="numeric"
+               placeholder="1" value="" maxlength="3"
+               onkeydown="if(event.key==='Enter') addCurrent()">
+        <button class="add-btn" onclick="addCurrent()" aria-label="Toevoegen">+</button>
+      </div>
+      <div id="suggestions-wrap"></div>
+    </div>
+
+    <div id="list-wrap"></div>
+  </div>
+
+  <!-- TAB: HISTORIE -->
+  <div id="view-hist" style="display:none">
+    <input class="hist-search" id="hist-search" type="text"
+           placeholder="🔍 Zoeken in jouw producten..."
+           autocomplete="off" oninput="renderHistory()">
+    <div id="hist-wrap"></div>
+  </div>
+
+  <!-- ACTIE-BALK -->
+  <div class="actionbar" id="actionbar" style="display:none">
+    <button class="ab-btn ab-clear" id="ab-clear" onclick="clearChecked()">Wis afgevinkt</button>
+    <button class="ab-btn ab-done" onclick="finishShopping()">✓ Klaar</button>
+  </div>
+
+  <!-- MODAL CATEGORIE -->
+  <div class="modal-bg" id="modal-cat" onclick="if(event.target===this) closeCatModal()">
+    <div class="modal">
+      <div class="modal-title">Welke categorie?</div>
+      <div class="modal-sub" id="modal-cat-sub">Kies een categorie voor dit product</div>
+      <div class="cat-grid" id="cat-grid"></div>
+      <button class="modal-close" onclick="closeCatModal()">Annuleren</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ── DATA ──
+  const CATEGORIES = [
+    { id:'groente',   name:'Groente & Fruit', emo:'🥬' },
+    { id:'zuivel',    name:'Zuivel',          emo:'🥛' },
+    { id:'bakkerij',  name:'Bakkerij',        emo:'🥖' },
+    { id:'vlees',     name:'Vlees & Vis',     emo:'🥩' },
+    { id:'diepvries', name:'Diepvries',       emo:'🧊' },
+    { id:'houdbaar',  name:'Houdbaar',        emo:'🥫' },
+    { id:'snacks',    name:'Snacks & Snoep',  emo:'🍫' },
+    { id:'dranken',   name:'Dranken',         emo:'🥤' },
+    { id:'drogist',   name:'Drogist',         emo:'🧴' },
+    { id:'huishouden',name:'Huishouden',      emo:'🧻' },
+    { id:'overig',    name:'Overig',          emo:'📦' },
+  ];
+  const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+
+  // Auto-categorisatie woordenboek (Nederlands, gericht op AH/Jumbo/Lidl/Plus assortiment)
+  const AUTO_CAT = {
+    groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
+    zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
+    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek'],
+    vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol'],
+    diepvries: ['diepvries','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','bevroren','frikandel'],
+    houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
+    snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
+    dranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster','bier','heineken','grolsch','amstel','speciaalbier','wijn','rode wijn','witte wijn','rosé','prosecco','cava','champagne','sterke drank','wodka','whisky','rum','gin','koffie','koffiepads','koffiecups','senseo','nespresso','dolce gusto','thee','thee zakjes','groene thee','rooibos'],
+    drogist: ['shampoo','conditioner','douchegel','zeep','handzeep','tandpasta','tandenborstel','flosdraad','mondwater','deodorant','deo','parfum','bodylotion','crème','creme','dagcreme','nachtcreme','zonnebrand','aftersun','make-up','mascara','lippenstift','foundation','wattenstaafjes','wattenschijfjes','maandverband','tampons','inlegkruisjes','luiers','babydoekjes','billendoekjes','paracetamol','ibuprofen','aspirine','pleisters','pleister','desinfecterend','scheermes','scheerschuim','vitaminen','vitamine','supplementen','condooms'],
+    huishouden: ['wc papier','toiletpapier','keukenpapier','tissues','zakdoekjes','vuilniszakken','afvalzakken','vaatwastabletten','vaatwasmiddel','afwasmiddel','allesreiniger','schoonmaakmiddel','wasmiddel','wasverzachter','vlekverwijderaar','aluminiumfolie','plasticfolie','vershoudfolie','bakpapier','boterhamzakjes','sponzen','vaatdoek','dweil','luchtverfrisser','wc reiniger','bleek','batterijen','batterij','lampen','lamp','aansteker','lucifers','kaarsen','plant','bloemen','aanmaakblokjes','houtskool'],
+  };
+
+  const ITEMS_KEY = 'boodschappen.items';
+  const HIST_KEY  = 'boodschappen.history';
+
+  let items   = loadJson(ITEMS_KEY, []);
+  let history = loadJson(HIST_KEY,  {});
+
+  // ── HELPERS ──
+  function loadJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
+  }
+  function saveItems()   { try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch(e){} }
+  function saveHistory() { try { localStorage.setItem(HIST_KEY,  JSON.stringify(history)); } catch(e){} }
+
+  function normalize(s) { return (s || '').trim().toLowerCase(); }
+  function titleCase(s) {
+    s = (s || '').trim();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function guessCategory(name) {
+    const n = normalize(name);
+    if (!n) return 'overig';
+    // exacte match eerst
+    for (const cat of Object.keys(AUTO_CAT)) {
+      if (AUTO_CAT[cat].includes(n)) return cat;
+    }
+    // dan begint-met / bevat
+    for (const cat of Object.keys(AUTO_CAT)) {
+      for (const kw of AUTO_CAT[cat]) {
+        if (n === kw || n.startsWith(kw + ' ') || n.endsWith(' ' + kw) || n.includes(' ' + kw + ' ')) {
+          return cat;
+        }
+      }
+    }
+    return 'overig';
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // ── ACTIES ──
+  function addCurrent() {
+    const input = document.getElementById('add-input');
+    const qtyInput = document.getElementById('qty-input');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const qty = parseInt(qtyInput.value, 10) || 1;
+    addItem(name, qty);
+    input.value = '';
+    qtyInput.value = '';
+    input.focus();
+    renderSuggestions();
+  }
+
+  function addItem(name, qty) {
+    const norm = normalize(name);
+    // bestaande in lijst? verhoog aantal
+    const existing = items.find(it => normalize(it.name) === norm && !it.checked);
+    if (existing) {
+      existing.qty = (existing.qty || 1) + (qty || 1);
+      saveItems(); render();
+      toast(`${titleCase(name)}: ${existing.qty}×`);
+      return;
+    }
+    const histEntry = history[norm];
+    const category = (histEntry && histEntry.category) || guessCategory(name);
+    const item = {
+      id: Date.now() + Math.random().toString(36).slice(2,6),
+      name: histEntry ? histEntry.name : titleCase(name),
+      qty: qty || 1,
+      category,
+      checked: false,
+      addedAt: Date.now(),
+    };
+    items.push(item);
+    saveItems(); render();
+  }
+
+  function toggleItem(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.checked = !it.checked;
+    saveItems(); render();
+  }
+
+  function deleteItem(id) {
+    items = items.filter(x => x.id !== id);
+    saveItems(); render();
+  }
+
+  function clearChecked() {
+    const before = items.length;
+    items = items.filter(x => !x.checked);
+    saveItems(); render();
+    if (before !== items.length) toast('Afgevinkte items gewist');
+  }
+
+  function finishShopping() {
+    if (!items.length) { toast('Lijst is leeg'); return; }
+    const checked = items.filter(x => x.checked);
+    if (!checked.length) {
+      if (!confirm('Niets afgevinkt. Toch alles als gekocht markeren?')) return;
+      items.forEach(x => x.checked = true);
+    }
+    // boek alles afgevinkte in historie
+    const now = Date.now();
+    items.filter(x => x.checked).forEach(it => {
+      const norm = normalize(it.name);
+      const h = history[norm] || { name: it.name, category: it.category, count: 0, lastBought: 0 };
+      h.name = it.name;
+      h.category = it.category;
+      h.count += 1;
+      h.lastBought = now;
+      history[norm] = h;
+    });
+    saveHistory();
+    // verwijder afgevinkte uit lijst
+    items = items.filter(x => !x.checked);
+    saveItems(); render();
+    toast('🎉 Boodschappen geboekt!');
+  }
+
+  function openCategoryPicker(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    const grid = document.getElementById('cat-grid');
+    document.getElementById('modal-cat-sub').textContent = `Kies categorie voor "${it.name}"`;
+    grid.innerHTML = CATEGORIES.map(c =>
+      `<button class="cat-btn" onclick="setCategory('${id}','${c.id}')">
+         <span class="cat-emo">${c.emo}</span> ${c.name}
+       </button>`).join('');
+    document.getElementById('modal-cat').classList.add('open');
+  }
+  function setCategory(id, catId) {
+    const it = items.find(x => x.id === id);
+    if (!it) { closeCatModal(); return; }
+    it.category = catId;
+    // ook in historie bijwerken zodat het volgende keer goed gegokt wordt
+    const norm = normalize(it.name);
+    if (history[norm]) { history[norm].category = catId; saveHistory(); }
+    saveItems(); render();
+    closeCatModal();
+  }
+  function closeCatModal() { document.getElementById('modal-cat').classList.remove('open'); }
+
+  // ── RENDER ──
+  function render() {
+    renderList();
+    renderSuggestions();
+    renderActionbar();
+    renderHeaderSub();
+  }
+
+  function renderHeaderSub() {
+    const open = items.filter(x => !x.checked).length;
+    const done = items.length - open;
+    const sub = document.getElementById('header-sub');
+    if (!items.length) sub.textContent = 'Lijst is leeg';
+    else if (!open)    sub.textContent = `${done} klaar — vink af of druk Klaar`;
+    else               sub.textContent = `${open} te halen${done ? ` · ${done} gepakt` : ''}`;
+  }
+
+  function renderList() {
+    const wrap = document.getElementById('list-wrap');
+    if (!items.length) {
+      wrap.innerHTML = `
+        <div class="empty">
+          <span class="empty-emoji">🛒</span>
+          <div class="empty-title">Lijst is leeg</div>
+          <div class="empty-sub">Typ hierboven een product, of kies uit 'Vaak gekocht'.</div>
+        </div>`;
+      return;
+    }
+    // groeperen per categorie, in vaste volgorde, afgevinkten onderaan binnen elke groep
+    const byCat = {};
+    items.forEach(it => { (byCat[it.category] = byCat[it.category] || []).push(it); });
+    const order = CATEGORIES.map(c => c.id).filter(id => byCat[id]);
+    let html = '';
+    order.forEach(catId => {
+      const cat = CAT_BY_ID[catId];
+      const arr = byCat[catId].sort((a,b) => (a.checked - b.checked) || (a.addedAt - b.addedAt));
+      const open = arr.filter(x => !x.checked).length;
+      html += `
+        <div class="category-group">
+          <div class="category-header">
+            <span>${cat.emo}</span> ${cat.name}
+            <span class="category-count">${open}/${arr.length}</span>
+          </div>
+          ${arr.map(it => `
+            <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
+              <div class="check" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${it.checked}"></div>
+              <div class="item-body" onclick="openCategoryPicker('${it.id}')">
+                <div class="item-name">${escapeHtml(it.name)}</div>
+                <div class="item-meta">Tik voor categorie wijzigen</div>
+              </div>
+              ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
+              <button class="item-del" onclick="deleteItem('${it.id}')" aria-label="Verwijder">✕</button>
+            </div>
+          `).join('')}
+        </div>`;
+    });
+    wrap.innerHTML = html;
+  }
+
+  function renderSuggestions() {
+    const wrap = document.getElementById('suggestions-wrap');
+    const inp = document.getElementById('add-input').value.trim().toLowerCase();
+    const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+    let entries = Object.entries(history)
+      .filter(([k]) => !onList.has(k))
+      .map(([k, v]) => ({ key:k, ...v }));
+
+    if (inp) {
+      entries = entries.filter(e => e.key.includes(inp) || normalize(e.name).includes(inp));
+      entries.sort((a,b) => b.count - a.count);
+      entries = entries.slice(0, 8);
+    } else {
+      // top: combi van frequentie + recentheid
+      const now = Date.now();
+      entries.forEach(e => {
+        const daysAgo = (now - (e.lastBought || 0)) / 86400000;
+        e._score = e.count * Math.max(0.3, 1 - daysAgo / 60);
+      });
+      entries.sort((a,b) => b._score - a._score);
+      entries = entries.slice(0, 8);
+    }
+
+    if (!entries.length) { wrap.innerHTML = ''; return; }
+    const label = inp ? 'Suggesties' : 'Vaak gekocht';
+    wrap.innerHTML = `
+      <div class="suggestions-label">${label}</div>
+      <div class="suggestions">
+        ${entries.map(e => `
+          <span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
+            ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}
+            <span class="chip-cnt">×${e.count}</span>
+          </span>
+        `).join('')}
+      </div>`;
+  }
+  function quickAdd(name) {
+    addItem(name, 1);
+    document.getElementById('add-input').value = '';
+    document.getElementById('qty-input').value = '';
+    renderSuggestions();
+  }
+  function onInputChange() { renderSuggestions(); }
+
+  function renderActionbar() {
+    const bar = document.getElementById('actionbar');
+    if (!items.length) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    const hasChecked = items.some(x => x.checked);
+    const clr = document.getElementById('ab-clear');
+    clr.classList.toggle('has-checked', hasChecked);
+  }
+
+  // ── HISTORIE TAB ──
+  function renderHistory() {
+    const wrap = document.getElementById('hist-wrap');
+    const q = normalize(document.getElementById('hist-search').value);
+    let entries = Object.entries(history).map(([k,v]) => ({ key:k, ...v }));
+    if (q) entries = entries.filter(e => e.key.includes(q) || normalize(e.name).includes(q));
+    entries.sort((a,b) => b.count - a.count || (b.lastBought||0) - (a.lastBought||0));
+    if (!entries.length) {
+      wrap.innerHTML = `
+        <div class="empty">
+          <span class="empty-emoji">⭐</span>
+          <div class="empty-title">Nog geen historie</div>
+          <div class="empty-sub">Druk 'Klaar' onderaan om gekochte boodschappen op te slaan. Daarna staan ze hier als suggestie.</div>
+        </div>`;
+      return;
+    }
+    // groeperen per categorie
+    const byCat = {};
+    entries.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
+    const order = CATEGORIES.map(c => c.id).filter(id => byCat[id]);
+    let html = '';
+    order.forEach(catId => {
+      const cat = CAT_BY_ID[catId];
+      const arr = byCat[catId];
+      html += `<div class="category-header" style="margin-top:14px"><span>${cat.emo}</span> ${cat.name}<span class="category-count">${arr.length}</span></div>`;
+      arr.forEach(e => {
+        const last = e.lastBought ? timeAgo(e.lastBought) : '';
+        html += `
+          <div class="hist-item">
+            <div class="hist-info">
+              <div class="hist-name">${escapeHtml(e.name)}</div>
+              <div class="hist-meta">${e.count}× gekocht${last ? ' · laatst ' + last : ''}</div>
+            </div>
+            <button class="hist-add" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}'); toast('Toegevoegd');">+ Op lijst</button>
+          </div>`;
+      });
+    });
+    wrap.innerHTML = html;
+  }
+  function timeAgo(ts) {
+    const d = (Date.now() - ts) / 86400000;
+    if (d < 1)  return 'vandaag';
+    if (d < 2)  return 'gisteren';
+    if (d < 7)  return Math.floor(d) + ' dagen geleden';
+    if (d < 30) return Math.floor(d/7) + ' wk geleden';
+    if (d < 365) return Math.floor(d/30) + ' mnd geleden';
+    return Math.floor(d/365) + ' jr geleden';
+  }
+
+  function showTab(tab) {
+    document.getElementById('tab-lijst').classList.toggle('active', tab==='lijst');
+    document.getElementById('tab-hist').classList.toggle('active', tab==='hist');
+    document.getElementById('view-lijst').style.display = tab==='lijst' ? 'block' : 'none';
+    document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
+    document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
+    if (tab === 'hist') renderHistory();
+  }
+
+  // ── SW + INIT ──
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>

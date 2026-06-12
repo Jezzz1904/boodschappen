@@ -1,0 +1,14 @@
+{
+  "name": "Boodschappen",
+  "short_name": "Boodschappen",
+  "description": "Slim boodschappenlijstje met geheugen",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ECFDF5",
+  "theme_color": "#059669",
+  "icons": [
+    { "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
