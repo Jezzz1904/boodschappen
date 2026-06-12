@@ -189,6 +189,7 @@
       flex:1; min-width:0;
     }
     .cmp-diff { color: var(--slate-400); font-weight:700; font-size:11px; }
+    .cmp-unit { color: var(--slate-400); font-size:10.5px; font-weight:600; flex-shrink:0; }
     .bonus-badge {
       display:inline-block;
       background: linear-gradient(135deg, #FBBF24, #F59E0B);
@@ -442,6 +443,12 @@
     return out;
   }
 
+  // Merk-/ruisprefixen die niet meetellen voor coverage
+  const BRAND_NOISE = new Set(['ah','jumbo','g','de','jumbos']);
+  // Bewerkte-product-indicatoren: als product dit bevat maar het item niet, straf af
+  // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
+  const NOISE_WORDS = new Set(['drink','sap','sapje','saus','wafels','wafel','koek','koekjes','snack','snacks','mix','ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak','toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep','pasta','pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade','puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread']);
+
   // Mijn categorie → AH-categorieen (boost score als de match daarin valt)
   const USER_CAT_TO_AH = {
     groente:   ['Groente, aardappelen', 'Fruit, verse sappen'],
@@ -484,11 +491,40 @@
     render();
   }
 
-  function normWords(s) {
+  // Eenheid-tokens die uit productnamen gestript worden vóór het matchen
+  // (anders verdunnen "1", "l", "500ml" de woord-dichtheid).
+  const UNIT_TOKENS = new Set(['l','ml','cl','dl','g','gr','gram','kg','kilo','st','stuk','stuks','stk','pak','pack','x','liter','stems','rollen','rol','tabletten','wasbeurten','plakken','zakjes','bossen','bos','tros','per','ca','001']);
+  function isQtyToken(w) {
+    if (UNIT_TOKENS.has(w)) return true;
+    if (/^\d+([.,]\d+)?$/.test(w)) return true;          // puur getal: "1", "0,5"
+    if (/^\d+([.,]\d+)?(l|ml|cl|dl|g|gr|kg|st|stuks?|x|pak)$/.test(w)) return true; // "500ml","400g","6x"
+    return false;
+  }
+  function normWords(s, stripUnits = true) {
     const cleaned = applySynonyms(
       normalize(s).normalize('NFD').replace(/[̀-ͯ]/g, '')
     );
-    return cleaned.split(/[\s,.;:()/\-+]+/).filter(w => w && !MATCH_STOPWORDS.has(w));
+    let words = cleaned.split(/[\s,.;:()/\-+]+/).filter(w => w && !MATCH_STOPWORDS.has(w));
+    if (stripUnits) words = words.filter(w => !isQtyToken(w));
+    return words;
+  }
+
+  // Parse formaat-string → { qty, unit:'l'|'kg'|'st' } voor prijs-per-eenheid.
+  function parseUnit(unitStr) {
+    if (!unitStr) return null;
+    const s = normalize(unitStr).replace(',', '.');
+    let m;
+    // multipack: "6 x 0.2 l", "3x1l"
+    let mult = 1;
+    if ((m = s.match(/(\d+)\s*x\s*(.+)/))) { mult = parseInt(m[1], 10) || 1; }
+    const rest = mult > 1 ? s.slice(s.indexOf('x') + 1) : s;
+    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(l|liter)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'l' };
+    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(ml)\b/)))             return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'l' };
+    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(cl)\b/)))             return { qty: parseFloat(m[1]) / 100 * mult, unit: 'l' };
+    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(kg|kilo)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'kg' };
+    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(g|gr|gram)\b/)))      return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'kg' };
+    if ((m = rest.match(/(\d+)\s*(stuks?|stk|st|x)\b/)))          return { qty: parseInt(m[1], 10) * mult, unit: 'st' };
+    return null;
   }
 
   // Woord-grens match met simpele NL-meervouden, GEEN substring.
@@ -530,18 +566,41 @@
         }
       }
       if (eff == null) continue;
-      const density = itemWords.length / Math.max(productWords.length, itemWords.length);
+      // Coverage: welk deel van de inhoudswoorden (merk/eenheid weggehaald) is het gevraagde item?
+      // Hoog = product gáát over dit item. "Appel" → "Appel"=1.0, "1fruit appel"=0.5.
+      const content = productWords.filter(w => !BRAND_NOISE.has(w));
+      const denom = Math.max(content.length, 1);
+      const matchedContent = content.filter(pw => itemWords.some(iw => wordMatches(iw, pw))).length;
+      const coverage = matchedContent / denom;
+      // Positie-bonus: item-woord vroeg in de naam
       let posBonus = 0;
       for (const iw of itemWords) {
         const idx = productWords.findIndex(pw => wordMatches(iw, pw));
-        if (idx === 0) posBonus += 0.3;
-        else if (idx === 1) posBonus += 0.15;
+        if (idx === 0) posBonus += 0.4;
+        else if (idx === 1) posBonus += 0.2;
       }
-      const catBoost = (allowedCats.length && p.category && allowedCats.includes(p.category)) ? 5 : 0;
-      const score = density * 10 + posBonus + catBoost - eff * 0.01;
+      // Ruis-penalty: bewerkte-product-woorden die het item niet noemt
+      let noise = 0;
+      for (const pw of productWords) {
+        if (NOISE_WORDS.has(pw) && !itemWords.some(iw => wordMatches(iw, pw))) noise++;
+      }
+      let catBoost = 0;
+      if (itemCategory) {
+        if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
+        else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
+      }
+      const score = coverage * 10 + posBonus + catBoost - noise * 4 - eff * 0.02;
       if (!best || score > best.score) best = { storeId, p, eff, activeBonus, upcomingBonus, score };
     }
+    if (best) best.unitPrice = computeUnitPrice(best.eff, best.p.unit);
     return best;
+  }
+
+  // Prijs per liter/kg/stuk voor eerlijke vergelijking.
+  function computeUnitPrice(price, unitStr) {
+    const u = parseUnit(unitStr);
+    if (!u || !u.qty) return null;
+    return { value: price / u.qty, unit: u.unit };
   }
 
   // Vergelijk een item over alle winkels. Geeft { matches:[per winkel], cheapest, hasData }.
@@ -554,9 +613,17 @@
       if (m) matches.push(m);
     }
     if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
-    // Goedkoopste op effectieve prijs
-    const cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
-    return { matches, cheapest, hasData: anyData };
+    // Goedkoopste: op prijs-per-eenheid als alle matches dezelfde eenheid hebben (eerlijke vergelijking,
+    // lost pak-grootte op: tray cola vs blikje). Anders op absolute prijs.
+    let cheapest;
+    const units = matches.map(m => m.unitPrice?.unit);
+    const sameUnit = units.every(u => u && u === units[0]);
+    if (sameUnit && matches.every(m => m.unitPrice)) {
+      cheapest = matches.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+    } else {
+      cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+    }
+    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit && matches.every(m => m.unitPrice) };
   }
 
   function fmtPrice(n) {
@@ -580,6 +647,16 @@
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
+  // Normaliseer dubbele klinkers (banaan→banan) zodat meervoud "bananen" op de stam matcht.
+  function deDouble(w) { return w.replace(/([aeou])\1/g, '$1'); }
+  // Lichte stam-match: gelijk, of de een is prefix van de ander (min. 4 tekens stam).
+  function stemMatch(a, b) {
+    const da = deDouble(a), db = deDouble(b);
+    if (da === db) return true;
+    const short = da.length <= db.length ? da : db;
+    const long  = da.length <= db.length ? db : da;
+    return short.length >= 4 && long.startsWith(short);
+  }
   function guessCategory(name) {
     const n = normalize(name);
     if (!n) return 'overig';
@@ -587,10 +664,13 @@
     for (const cat of Object.keys(AUTO_CAT)) {
       if (AUTO_CAT[cat].includes(n)) return cat;
     }
-    // dan begint-met / bevat
+    // dan woord-voor-woord met stam-tolerantie (bananen→banaan, tomaten→tomaat)
+    const words = n.split(/[\s,.;:()/\-]+/).filter(Boolean);
     for (const cat of Object.keys(AUTO_CAT)) {
       for (const kw of AUTO_CAT[cat]) {
-        if (n === kw || n.startsWith(kw + ' ') || n.endsWith(' ' + kw) || n.includes(' ' + kw + ' ')) {
+        if (kw.includes(' ')) {
+          if (n.includes(kw)) return cat;            // meerwoordige keyword: directe substring
+        } else if (words.some(w => stemMatch(w, kw))) {
           return cat;
         }
       }
@@ -728,29 +808,36 @@
     else               sub.textContent = `${open} te halen${done ? ` · ${done} gepakt` : ''}`;
   }
 
+  const UNIT_LABEL = { l: '/l', kg: '/kg', st: '/st' };
   // Prijsvergelijking-block voor één item: goedkoopste winkel uitgelicht + andere winkels ernaast.
   function renderPriceComparison(it) {
-    const { matches, cheapest, hasData } = findMatches(it.name, it.category);
+    const res = findMatches(it.name, it.category);
+    const { matches, cheapest, hasData, comparedByUnit } = res;
     if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
     if (!matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
 
-    // Sorteer: goedkoopste eerst
-    const sorted = [...matches].sort((a, b) => a.eff - b.eff);
-    const rows = sorted.map((m, i) => {
+    // Sorteer goedkoopste eerst (op de gebruikte vergelijkings-maat)
+    const key = comparedByUnit ? (m => m.unitPrice.value) : (m => m.eff);
+    const sorted = [...matches].sort((a, b) => key(a) - key(b));
+    const rows = sorted.map(m => {
       const store = STORE_BY_ID[m.storeId];
       const isCheapest = m === cheapest;
-      const diff = m.eff - cheapest.eff;
       const wasPrice = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
         ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
       const bonusBadge = m.activeBonus
         ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>`
         : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
-      const diffTag = (!isCheapest && diff > 0) ? `<span class="cmp-diff">+${fmtPrice(diff)}</span>` : '';
+      const unitTag = m.unitPrice
+        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>` : '';
+      const diff = key(m) - key(cheapest);
+      const diffTag = (!isCheapest && diff > 0)
+        ? `<span class="cmp-diff">+${fmtPrice(diff)}${comparedByUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
+          ${unitTag}
           ${isCheapest ? `<span class="cmp-product">${escapeHtml(m.p.name)}${m.p.unit ? ' · ' + escapeHtml(m.p.unit) : ''}</span>` : diffTag}
           ${bonusBadge}
         </div>`;
