@@ -58,12 +58,84 @@
       margin-bottom:14px;
       backdrop-filter: blur(10px);
     }
+    .tabs.tabs-3 { grid-template-columns: 1fr 1fr 1fr; }
     .tab {
-      padding:10px 8px; border:none; background:transparent;
+      padding:10px 6px; border:none; background:transparent;
       font-size:13px; font-weight:800; color:var(--slate-600);
       cursor:pointer; border-radius:10px; transition: all .15s;
+      white-space:nowrap;
     }
     .tab.active { background: linear-gradient(135deg, var(--green-500), var(--green-600)); color:white; box-shadow:0 3px 10px rgba(5,150,105,.3); }
+
+    /* Route view */
+    .route-rec {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border-radius:18px; padding:16px;
+      box-shadow:0 6px 20px rgba(5,150,105,.3);
+      margin-bottom:14px;
+    }
+    .route-rec.single { background: linear-gradient(135deg, var(--amber-400), var(--amber-500)); box-shadow:0 6px 20px rgba(251,191,36,.35); }
+    .route-rec-label { font-size:11px; opacity:.85; letter-spacing:1.5px; text-transform:uppercase; font-weight:800; }
+    .route-rec-title { font-size:20px; font-weight:900; margin:4px 0 6px; line-height:1.2; }
+    .route-rec-sub { font-size:13px; opacity:.9; font-weight:600; }
+    .route-rec-totals {
+      display:flex; gap:14px; margin-top:10px; padding-top:10px;
+      border-top:1px solid rgba(255,255,255,.25);
+      font-size:13px; font-weight:700;
+    }
+    .route-rec-totals strong { font-weight:900; font-size:16px; display:block; }
+
+    .route-store {
+      background:white; border:1.5px solid var(--slate-200); border-radius:16px;
+      padding:14px; margin-bottom:12px;
+      box-shadow:0 2px 10px rgba(15,23,42,.04);
+    }
+    .route-store-head {
+      display:flex; align-items:center; gap:10px; margin-bottom:10px;
+      padding-bottom:10px; border-bottom:1px solid var(--slate-200);
+    }
+    .route-store-name {
+      font-size:14px; font-weight:900; color:white;
+      padding:5px 12px; border-radius:8px; letter-spacing:.3px;
+    }
+    .route-store-count { color: var(--slate-600); font-size:13px; font-weight:600; }
+    .route-store-total {
+      margin-left:auto; font-size:18px; font-weight:900; color: var(--green-700);
+    }
+    .route-item {
+      display:flex; align-items:center; gap:8px;
+      padding:7px 0; font-size:14px;
+    }
+    .route-item:not(:last-child) { border-bottom:1px solid var(--slate-50); }
+    .route-item-qty {
+      width:26px; height:26px; flex-shrink:0;
+      background: var(--green-50); color: var(--green-700);
+      border-radius:8px; display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:900;
+    }
+    .route-item-name { flex:1; min-width:0; font-weight:700; }
+    .route-item-detail {
+      font-size:11px; color: var(--slate-400); font-weight:500;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .route-item-price { font-weight:800; font-size:14px; color: var(--slate-800); flex-shrink:0; }
+    .route-item-bonus {
+      font-size:9px; font-weight:900; color:white;
+      background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+      padding:2px 6px; border-radius:6px; letter-spacing:.3px;
+      text-transform:uppercase; flex-shrink:0;
+    }
+
+    .route-missing {
+      background: rgba(239,68,68,.06); border:1.5px dashed rgba(239,68,68,.25);
+      border-radius:14px; padding:12px;
+    }
+    .route-missing-title { font-size:13px; font-weight:800; color: var(--rose-500); margin-bottom:6px; }
+    .route-missing-item { font-size:13px; color: var(--slate-600); padding:3px 0; }
+
+    .route-empty {
+      text-align:center; padding:40px 20px; color: var(--slate-400);
+    }
 
     /* INPUT KAART */
     .add-card {
@@ -343,9 +415,10 @@
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs tabs-3">
     <button class="tab active" id="tab-lijst" onclick="showTab('lijst')">🛒 Lijst</button>
-    <button class="tab" id="tab-hist" onclick="showTab('hist')">⭐ Vaak gekocht</button>
+    <button class="tab"        id="tab-route" onclick="showTab('route')">🗺️ Route</button>
+    <button class="tab"        id="tab-hist"  onclick="showTab('hist')">⭐ Vaak</button>
   </div>
 
   <!-- TAB: LIJST -->
@@ -365,6 +438,11 @@
     </div>
 
     <div id="list-wrap"></div>
+  </div>
+
+  <!-- TAB: ROUTE -->
+  <div id="view-route" style="display:none">
+    <div id="route-wrap"></div>
   </div>
 
   <!-- TAB: HISTORIE -->
@@ -1077,11 +1155,174 @@
 
   function showTab(tab) {
     document.getElementById('tab-lijst').classList.toggle('active', tab==='lijst');
+    document.getElementById('tab-route').classList.toggle('active', tab==='route');
     document.getElementById('tab-hist').classList.toggle('active', tab==='hist');
-    document.getElementById('view-lijst').style.display = tab==='lijst' ? 'block' : 'none';
+    document.getElementById('view-lijst').style.display = tab==='lijst'  ? 'block' : 'none';
+    document.getElementById('view-route').style.display = tab==='route' ? 'block' : 'none';
     document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
-    if (tab === 'hist') renderHistory();
+    if (tab === 'hist')  renderHistory();
+    if (tab === 'route') renderRoute();
+  }
+
+  // ── ROUTE PLANNER ──
+  // Bepaal voor de boodschappenlijst: goedkoopste winkel per item + advies multi-store vs single-store.
+  // Jouw regel: als single-store maximaal 3% duurder is dan optimale split → één winkel (scheelt rondrijden).
+  const SINGLE_STORE_THRESHOLD = 0.03;
+
+  function buildRoute() {
+    const active = items.filter(i => !i.checked);
+    if (!active.length) return null;
+
+    const itemPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category) }));
+    const missing = itemPlans.filter(p => !p.matches.length).map(p => p.item);
+    const found   = itemPlans.filter(p => p.matches.length);
+
+    // Multi-store optimum (per item naar goedkoopste winkel)
+    let multi = 0;
+    const byStore = {};
+    for (const p of found) {
+      const qty = p.item.qty || 1;
+      multi += p.cheapest.eff * qty;
+      (byStore[p.cheapest.storeId] ||= []).push({ item: p.item, match: p.cheapest });
+    }
+
+    // Per-winkel totaal als je daar ALLES haalt (en bij hoeveel items je dan misloopt)
+    const singles = STORES.map(store => {
+      let total = 0, hit = 0;
+      const rows = [];
+      for (const p of found) {
+        const m = p.matches.find(x => x.storeId === store.id);
+        if (m) { total += m.eff * (p.item.qty || 1); hit++; rows.push({ item: p.item, match: m }); }
+      }
+      return { store, total, hit, missingInStore: found.length - hit, rows };
+    });
+
+    // Beste single-store: meest items, dan goedkoopst
+    const completeSingles = singles.filter(s => s.missingInStore === 0).sort((a, b) => a.total - b.total);
+    const bestSingle = completeSingles[0] || singles.slice().sort((a, b) => b.hit - a.hit || a.total - b.total)[0];
+
+    // Advies
+    let advice;
+    if (Object.keys(byStore).length <= 1) {
+      // Al maar één winkel nodig
+      const storeId = Object.keys(byStore)[0] || bestSingle?.store.id;
+      advice = { type: 'single', storeId, total: multi, savedVsSplit: 0 };
+    } else if (bestSingle && bestSingle.missingInStore === 0) {
+      const extra = bestSingle.total - multi;
+      const pct = multi > 0 ? extra / multi : 0;
+      if (pct <= SINGLE_STORE_THRESHOLD) {
+        advice = { type: 'single', storeId: bestSingle.store.id, total: bestSingle.total, savedVsSplit: -extra, almostSame: true };
+      } else {
+        advice = { type: 'multi', total: multi, savedVsSingle: extra, vsStoreId: bestSingle.store.id, vsStoreTotal: bestSingle.total };
+      }
+    } else {
+      advice = { type: 'multi', total: multi, savedVsSingle: 0 };
+    }
+
+    return { itemPlans, found, missing, multi, byStore, singles, bestSingle, advice };
+  }
+
+  function renderRoute() {
+    const wrap = document.getElementById('route-wrap');
+    const route = buildRoute();
+    if (!route) {
+      wrap.innerHTML = `<div class="route-empty">
+        <span class="empty-emoji" style="font-size:48px;">🗺️</span>
+        <div class="empty-title">Geen items op je lijst</div>
+        <div class="empty-sub">Voeg eerst boodschappen toe om een route te zien.</div>
+      </div>`;
+      return;
+    }
+    const { found, missing, advice, byStore } = route;
+
+    // Advies-kaart bovenaan
+    let recHtml = '';
+    if (advice.type === 'single') {
+      const store = STORE_BY_ID[advice.storeId];
+      recHtml = `
+        <div class="route-rec single">
+          <div class="route-rec-label">Aanbeveling</div>
+          <div class="route-rec-title">Ga naar ${store ? store.name : '?'}</div>
+          <div class="route-rec-sub">${advice.almostSame ? 'Bijna dezelfde prijs als splitsen — scheelt rondrijden.' : 'Eén winkel doet het.'}</div>
+          <div class="route-rec-totals">
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal</div>
+            ${advice.almostSame ? `<div>scheelt €${Math.abs(advice.savedVsSplit).toFixed(2).replace('.', ',')} extra t.o.v. splitsen</div>` : ''}
+          </div>
+        </div>`;
+    } else {
+      const storeCount = Object.keys(byStore).length;
+      recHtml = `
+        <div class="route-rec">
+          <div class="route-rec-label">Aanbeveling</div>
+          <div class="route-rec-title">Splits over ${storeCount} winkel${storeCount === 1 ? '' : 's'}</div>
+          <div class="route-rec-sub">${advice.savedVsSingle > 0
+            ? `Bespaart ${fmtPrice(advice.savedVsSingle)} vs alles bij ${STORE_BY_ID[advice.vsStoreId]?.name || '?'}.`
+            : 'Niet alles is bij één winkel beschikbaar.'}</div>
+          <div class="route-rec-totals">
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal</div>
+            ${advice.vsStoreTotal ? `<div><strong>${fmtPrice(advice.vsStoreTotal)}</strong>bij ${STORE_BY_ID[advice.vsStoreId]?.name || '?'}</div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    // Per-winkel sectie. Bij "single store" advies tonen we alléén die winkel met alle items;
+    // bij "multi" tonen we de optimale verdeling.
+    let storesHtml = '';
+    if (advice.type === 'single') {
+      const single = route.singles.find(s => s.store.id === advice.storeId);
+      storesHtml = renderStoreSection(single.store, single.rows, single.total);
+    } else {
+      const orderedIds = Object.keys(byStore).sort((a, b) =>
+        byStore[b].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0) -
+        byStore[a].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0)
+      );
+      storesHtml = orderedIds.map(id => {
+        const store = STORE_BY_ID[id];
+        const rows = byStore[id];
+        const total = rows.reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0);
+        return renderStoreSection(store, rows, total);
+      }).join('');
+    }
+
+    // Geen-match sectie
+    let missingHtml = '';
+    if (missing.length) {
+      missingHtml = `
+        <div class="route-missing">
+          <div class="route-missing-title">⚠ ${missing.length} item${missing.length === 1 ? '' : 's'} nergens gevonden</div>
+          ${missing.map(it => `<div class="route-missing-item">• ${escapeHtml(it.name)}${it.qty > 1 ? ` (${it.qty}×)` : ''}</div>`).join('')}
+        </div>`;
+    }
+
+    wrap.innerHTML = recHtml + storesHtml + missingHtml;
+  }
+
+  function renderStoreSection(store, rows, total) {
+    return `
+      <div class="route-store">
+        <div class="route-store-head">
+          <span class="route-store-name" style="background:${store.color}">${store.name}</span>
+          <span class="route-store-count">${rows.length} item${rows.length === 1 ? '' : 's'}</span>
+          <span class="route-store-total">${fmtPrice(total)}</span>
+        </div>
+        ${rows.map(({ item, match }) => {
+          const qty = item.qty || 1;
+          const lineTotal = match.eff * qty;
+          const bonus = match.activeBonus
+            ? `<span class="route-item-bonus">${escapeHtml(match.activeBonus.mechanism || 'bonus')}</span>` : '';
+          return `
+            <div class="route-item">
+              ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : '<span class="route-item-qty">•</span>'}
+              <div style="flex:1; min-width:0;">
+                <div class="route-item-name">${escapeHtml(item.name)}</div>
+                <div class="route-item-detail">${escapeHtml(match.p.name)}${match.p.unit ? ' · ' + escapeHtml(match.p.unit) : ''}</div>
+              </div>
+              ${bonus}
+              <span class="route-item-price">${fmtPrice(lineTotal)}</span>
+            </div>`;
+        }).join('')}
+      </div>`;
   }
 
   // ── SW + INIT ──
