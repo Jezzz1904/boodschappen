@@ -1,0 +1,13 @@
+{
+  "updatedAt": "2026-06-12T09:38:22.333Z",
+  "stores": [
+    "ah"
+  ],
+  "queryCount": 48,
+  "counts": {
+    "ah": {
+      "ok": 48,
+      "onSale": 10
+    }
+  }
+}
