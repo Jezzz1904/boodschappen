@@ -981,6 +981,12 @@
     [/\bzwarte\s*thee\b/g, 'zwarte thee'],
     [/\bgemberthee\b/g, 'gember thee'],
     [/\bkamillethe\b/g, 'kamille thee'],
+    // Huismerk-namen strippen zodat matching alle winkels vindt
+    [/\bperla\b/gi, ''],
+    [/\bhuismerk\b/gi, ''],
+    [/\bjumbo koffie\b/gi, 'koffie'],
+    [/\bjumbo thee\b/gi, 'thee'],
+    [/\bjumbo kaas\b/gi, 'kaas'],
     // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
@@ -993,7 +999,16 @@
   }
 
   // Merk-/ruisprefixen die niet meetellen voor coverage
-  const BRAND_NOISE = new Set(['ah','jumbo','g','de','jumbos']);
+  const BRAND_NOISE = new Set(['ah','jumbo','g','de','jumbos','huismerk','perla','plus','lidl']);
+  // Bekende huismerk-namen per categorie → strip zodat de match alle winkels vindt.
+  // Lidl/Plus hebben geen eigen merknaam voor koffie, dus "Perla Koffiebonen" moet als
+  // "koffiebonen" worden gezocht zodat ook Lidl/Plus huismerk koffie opduikt.
+  const HOUSE_BRAND_NAMES = new Set([
+    'perla','jumbo koffie','ah koffie','plus koffie','lidl koffie',
+    'ah thee','jumbo thee','plus thee',
+    'ah kaas','jumbo kaas','plus kaas',
+    'huismerk',
+  ]);
   // Bewerkte-product-indicatoren: als product dit bevat maar het item niet, straf af
   // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
   // "pasta" en "saus" zijn hier bewust weggelaten: ze zitten in samengestelde productnamen
@@ -1094,7 +1109,7 @@
     chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
     koffie:       { groups: {
                     'Type':    ['Koffiebonen', 'Filterkoffie', 'Koffiepads', 'Koffiecups', 'Instant koffie'],
-                    'Merk':    ['Douwe Egberts', 'Senseo', 'Nespresso', 'Jacobs', 'Lavazza', 'Illy', 'De Koffie Jongens', 'Starbucks', 'Perla (AH)', 'Jumbo koffie', 'Huismerk'],
+                    'Merk':    ['Douwe Egberts', 'Senseo', 'Nespresso', 'Jacobs', 'Lavazza', 'Illy', 'De Koffie Jongens', 'Starbucks', 'Perla', 'Jumbo koffie', 'Huismerk'],
                     'Stijl':   ['Espresso', 'Lungo', 'Ristretto', 'Cappuccino', 'Latte macchiato'],
                   }},
     thee:         { groups: {
