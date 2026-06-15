@@ -42,6 +42,9 @@ jobs:
       - name: Scrape Jumbo weekaanbiedingen (Playwright, met bonus-data)
         run: node scripts/scrape-jumbo-bonus.mjs
 
+      - name: Scrape Plus weekaanbiedingen (Playwright, met bonus-data)
+        run: node scripts/scrape-plus-bonus.mjs
+
       - name: Commit data if changed
         run: |
           git config user.name  "boodschappen-bot"

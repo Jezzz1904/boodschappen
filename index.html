@@ -117,6 +117,13 @@
     .bonus-tip-mech { background: #fcd34d; color: #78350f; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
     .bonus-tip-add { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--green-600); }
 
+    /* Volgende-week-advisor */
+    .upcoming-tip {
+      margin-top: 7px; padding: 7px 10px; border-radius: 10px;
+      background: #eff6ff; border: 1.5px solid #bfdbfe;
+      font-size: 12px; color: var(--slate-700);
+    }
+
     /* Merk-toggle (huismerk / a-merk) */
     .brand-toggle { display:flex; gap:5px; margin-top:6px; }
     .brand-chip {
@@ -846,7 +853,7 @@
   const STORES = [
     { id:'ah',    name:'AH',    file:'./data/ah.json',    hasCategory:true,  hasBonus:true,  color:'#00A0E2' },
     { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:true,  color:'#EAB308' },
-    { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:false, color:'#E11D48' },
+    { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:true,  color:'#E11D48' },
     { id:'lidl',  name:'Lidl',  file:'./data/lidl.json',  hasCategory:false, hasBonus:true,  color:'#1E40AF' },
   ];
   const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
@@ -1754,7 +1761,26 @@
         <span class="bonus-tip-add">+ voeg toe</span>
       </div>` : '';
 
-    return `<div class="cmp">${rows}${brandToggle}${bonusTipHtml}</div>`;
+    // Volgende-week-advisor: toon tip als een match volgende week in aanbieding gaat
+    const FRESH_CATS = new Set(['groente', 'zuivel', 'bakkerij', 'vlees']);
+    const upcomingTipHtml = (() => {
+      if (FRESH_CATS.has(it.category)) return ''; // verse producten: geen bewaar-advies
+      const upcoming = matches
+        .filter(m => m.upcomingBonus)
+        .sort((a, b) => (a.upcomingBonus.bonusPrice ?? a.eff) - (b.upcomingBonus.bonusPrice ?? b.eff));
+      if (!upcoming.length) return '';
+      const best = upcoming[0];
+      const store = STORE_BY_ID[best.storeId];
+      const upPrice = typeof best.p.bonus_price === 'number' ? best.p.bonus_price : null;
+      const priceStr = upPrice != null ? ` voor ${fmtPrice(upPrice)}` : '';
+      const mechStr = best.upcomingBonus.mechanism ? ` (${escapeHtml(best.upcomingBonus.mechanism)})` : '';
+      const endStr = best.upcomingBonus.end ? ` t/m ${best.upcomingBonus.end.slice(5).replace('-', '/')}` : '';
+      return `<div class="upcoming-tip">
+        📅 <strong>Volgende week goedkoper bij ${escapeHtml(store.name)}</strong>${priceStr}${mechStr}${endStr} — bewaar dit voor volgende week!
+      </div>`;
+    })();
+
+    return `<div class="cmp">${rows}${brandToggle}${bonusTipHtml}${upcomingTipHtml}</div>`;
   }
 
   // Zoek een vergelijkbaar product dat nu in aanbieding is en goedkoper dan de huidige beste match.
