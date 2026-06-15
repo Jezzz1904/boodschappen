@@ -117,6 +117,34 @@
     .bonus-tip-mech { background: #fcd34d; color: #78350f; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
     .bonus-tip-add { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--green-600); }
 
+    /* Multi-select variant builder */
+    .variant-group-row {
+      display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px;
+    }
+    .variant-group-label {
+      font-size: 10px; font-weight: 700; color: var(--slate-400);
+      text-transform: uppercase; letter-spacing: .05em;
+      min-width: 38px; padding-top: 6px; white-space: nowrap;
+    }
+    .chip.variant-chip-selected {
+      background: var(--green-600); color: white; border-color: var(--green-600);
+    }
+    .chip.variant-chip-selected:hover { background: var(--green-700); }
+    .variant-compose-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--green-50); border: 1.5px solid var(--green-400);
+      border-radius: 10px; padding: 6px 10px; margin-bottom: 8px;
+    }
+    .variant-compose-name {
+      flex: 1; font-size: 13px; font-weight: 600; color: var(--green-800);
+    }
+    .variant-compose-add {
+      background: var(--green-600); color: white; border: none;
+      border-radius: 8px; padding: 4px 10px; font-size: 12px;
+      font-weight: 700; cursor: pointer;
+    }
+    .variant-compose-add:active { background: var(--green-700); }
+
     /* Volgende-week-advisor */
     .upcoming-tip {
       margin-top: 7px; padding: 7px 10px; border-radius: 10px;
@@ -1980,34 +2008,55 @@
     if (variants) {
       if (variants.groups) {
         const groupNames = Object.keys(variants.groups);
-        if (activeVariantGroup && activeVariantGroup.term === inp && variants.groups[activeVariantGroup.name]) {
-          const list = variants.groups[activeVariantGroup.name]
-            .filter(v => !onList.has(normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')))
-            .map(v => ({ name: v, count: history[normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')]?.count || 0 }))
-            .sort((a, b) => b.count - a.count);
-          const packs = PACKAGINGS[inp] || [];
-          return `
-            <div class="suggestions-label">${escapeHtml(activeVariantGroup.name)} <span style="color:var(--slate-400);font-weight:600;letter-spacing:0;text-transform:none">— soort ${escapeHtml(inp)}</span></div>
-            ${packs.length ? `<div class="suggestions" style="margin-bottom:8px">
-              ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">📦 ${escapeHtml(p)}</span>`).join('')}
-            </div>` : ''}
-            <div class="suggestions">
-              <span class="chip chip-back" onclick="clearVariantGroup()">← Terug</span>
-              ${list.map(v => `<span class="chip variant-chip" onclick="quickAddWithPack('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
-                ${escapeHtml(v.name)}${activePackaging ? ` <span class="chip-cnt">${escapeHtml(activePackaging)}</span>` : ''}
-                ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
-              </span>`).join('')}
-              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
-            </div>`;
+        const picks = (variantPicks && variantPicks.term === inp) ? variantPicks.picks : {};
+        const hasPick = Object.keys(picks).length > 0;
+
+        // Stel samengestelde naam op: Merk eerst, dan de rest in definitievolgorde
+        function composeName() {
+          const order = ['Merk', ...groupNames.filter(g => g !== 'Merk')];
+          return order.filter(g => picks[g]).map(g => picks[g]).join(' ');
         }
-        return `
-          <div class="suggestions-label">Welke soort ${escapeHtml(inp)}?</div>
-          <div class="suggestions">
-            ${groupNames.map(g => `<span class="chip chip-group" onclick="setVariantGroup('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g, "\\'")}')">
-              ${escapeHtml(g)} →
-            </span>`).join('')}
-            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+
+        const composed = composeName();
+        const packs = PACKAGINGS[inp] || [];
+
+        let html = `<div class="suggestions-label">Welke soort ${escapeHtml(inp)}?</div>`;
+
+        if (hasPick) {
+          html += `<div class="variant-compose-bar">
+            <span class="variant-compose-name">${escapeHtml(composed)}</span>
+            <button class="variant-compose-add" onclick="quickAddComposed('${escapeHtml(inp)}')">+ Voeg toe</button>
           </div>`;
+        }
+
+        if (packs.length) {
+          html += `<div class="suggestions" style="margin-bottom:6px">
+            ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">📦 ${escapeHtml(p)}</span>`).join('')}
+          </div>`;
+        }
+
+        for (const g of groupNames) {
+          const items = variants.groups[g];
+          html += `<div class="variant-group-row">
+            <span class="variant-group-label">${escapeHtml(g)}</span>
+            <div class="suggestions" style="flex:1;margin:0">
+              ${items.map(v => {
+                const sel = picks[g] === v;
+                return `<span class="chip variant-chip${sel ? ' variant-chip-selected' : ''}"
+                  onclick="toggleVariantPick('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g,"\\'")}','${escapeHtml(v).replace(/'/g,"\\'")}')">
+                  ${escapeHtml(v)}${sel ? ' ✓' : ''}
+                </span>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }
+
+        html += `<div class="suggestions" style="margin-top:4px">
+          <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+          ${hasPick ? `<span class="chip chip-back" onclick="clearVariantPicks()">✕ Wis</span>` : ''}
+        </div>`;
+
+        return html;
       }
       if (Array.isArray(variants) && variants.length) {
         const ranked = variants.filter(v => !onList.has(normalize(v)))
@@ -2129,17 +2178,38 @@
     toast(`${recipe.emo} ${titleCase(recipeKey)} toegevoegd (${recipe.ingredients.length} ingrediënten)`);
   }
   function onInputChange() {
-    // Sub-groep wissen zodra je iets anders intikt
-    if (activeVariantGroup) {
-      const inp = document.getElementById('add-input').value.trim().toLowerCase();
-      if (inp !== activeVariantGroup.term) activeVariantGroup = null;
-    }
+    const inp = document.getElementById('add-input').value.trim().toLowerCase();
+    if (activeVariantGroup && inp !== activeVariantGroup.term) activeVariantGroup = null;
+    if (variantPicks && inp !== variantPicks.term) variantPicks = null;
     renderSuggestions();
   }
-  let activeVariantGroup = null;
-  let activePackaging = null;  // bv. 'krat', '6-pack flesjes', 'blik', ...
+  let activeVariantGroup = null;  // legacy (niet-groep varianten)
+  let variantPicks = null;        // { term, picks: { Groep: 'Waarde' } }
+  let activePackaging = null;
+
   function setVariantGroup(term, name) { activeVariantGroup = { term, name }; renderSuggestions(); }
   function clearVariantGroup() { activeVariantGroup = null; activePackaging = null; renderSuggestions(); }
+
+  function toggleVariantPick(term, group, value) {
+    if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
+    if (variantPicks.picks[group] === value) delete variantPicks.picks[group];
+    else variantPicks.picks[group] = value;
+    renderSuggestions();
+  }
+  function clearVariantPicks() { variantPicks = null; renderSuggestions(); }
+  function quickAddComposed(baseTerm) {
+    if (!variantPicks || variantPicks.term !== baseTerm) return;
+    const variants = VARIANTS[baseTerm];
+    const groupNames = Object.keys(variants.groups);
+    const picks = variantPicks.picks;
+    const order = ['Merk', ...groupNames.filter(g => g !== 'Merk')];
+    const name = order.filter(g => picks[g]).map(g => picks[g]).join(' ');
+    if (!name) return;
+    const finalName = activePackaging ? `${name} ${activePackaging}` : name;
+    variantPicks = null;
+    activePackaging = null;
+    quickAdd(finalName);
+  }
   function setPackaging(p) { activePackaging = (activePackaging === p) ? null : p; renderSuggestions(); }
 
   // Verpakking-opties per generieke term. Default: alleen bier.
