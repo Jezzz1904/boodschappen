@@ -32,7 +32,7 @@
       color: var(--slate-900);
       max-width: 520px;
       margin: 0 auto;
-      padding: 18px 16px calc(160px + env(safe-area-inset-bottom));
+      padding: 18px 16px calc(220px + env(safe-area-inset-bottom));
       position: relative;
     }
 
@@ -1908,8 +1908,10 @@
         </div>`;
     }
 
-    // Groepeer op verpakkingstype; toon scheidingslijn als beide aanwezig
-    const withPackType = sorted.map(m => ({ m, pack: detectPackType(m) }));
+    // Groepeer op verpakkingstype — alleen zinvol voor dranken, niet voor sauzen/houdbaar
+    const DRINK_CATS = new Set(['frisdranken', 'alcoholisch', 'koffie']);
+    const doPackGroup = DRINK_CATS.has(it.category);
+    const withPackType = sorted.map(m => ({ m, pack: doPackGroup ? detectPackType(m) : null }));
     const packTypes = [...new Set(withPackType.map(x => x.pack).filter(Boolean))];
     const multiPack = packTypes.length > 1;
 
