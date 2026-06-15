@@ -1826,6 +1826,17 @@
     return `<div class="cmp">${rows}${brandToggle}${bonusTipHtml}${upcomingTipHtml}</div>`;
   }
 
+  // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
+  function coffeeSubtype(name) {
+    const n = normalize(name);
+    if (/bonen/.test(n))                      return 'bonen';
+    if (/filter|gemalen/.test(n))             return 'filter';
+    if (/pad(s)?\b/.test(n))                  return 'pads';
+    if (/cup(s)?\b|nespresso|dolce gusto|tassimo/.test(n)) return 'cups';
+    if (/instant|oplos/.test(n))              return 'instant';
+    return null;
+  }
+
   // Zoek een vergelijkbaar product dat nu in aanbieding is en goedkoper dan de huidige beste match.
   // Geeft { name, storeName, price, mechanism } terug of null.
   function findBonusAlternative(itemName, itemCategory, currentMatches) {
@@ -1835,6 +1846,9 @@
     // Pak de hoofd-stam: het langste niet-stopwoord (bijv. "tomaat" uit "trostomaten")
     const stem = itemWords.reduce((a, b) => a.length >= b.length ? a : b, '');
     if (stem.length < 4) return null;
+
+    // Koffie-subtype van het item zodat we geen cross-type suggesties doen
+    const itemCoffeeType = itemCategory === 'koffie' ? coffeeSubtype(itemName) : null;
 
     const allowedCats = itemCategory ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
@@ -1851,6 +1865,8 @@
         // Moet hetzelfde hoofd-ingrediënt bevatten (stem-match op productnaam)
         const pWords = normWords(p.name);
         if (!pWords.some(pw => stemMatch(pw, stem))) continue;
+        // Koffie: subtype moet overeenkomen (bonen ≠ filter ≠ pads ≠ cups)
+        if (itemCoffeeType && coffeeSubtype(p.name) !== itemCoffeeType) continue;
         // Mag niet al in de currentMatches zitten
         if (currentMatches.some(m => m.storeId === store.id && m.p.name === p.name)) continue;
         // Categorie-check als beschikbaar
