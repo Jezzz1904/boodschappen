@@ -126,6 +126,7 @@
     }
     .brand-chip.active { background:#eff6ff; color:#1d4ed8; border-color:#3b82f6; }
     .pack-badge { font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; background:var(--slate-100); color:var(--slate-500); margin-left:4px; flex-shrink:0; }
+    .pack-group-header { font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; letter-spacing:.05em; padding:6px 0 2px; }
     .cmp-product { font-size:11px; color:var(--slate-500); font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     /* Recept-kaart in suggesties */
@@ -1477,7 +1478,21 @@
         <span class="brand-chip${it.brandPref === 'huismerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','huismerk')">Huismerk</span>
       </div>` : '';
 
-    const rows = sorted.map(m => {
+    // Verpakkingstype detecteren per match (canoniek: 'fles' | 'blik' | null)
+    function detectPackType(m) {
+      const src = (m.p.name + ' ' + (m.p.unit || '')).toLowerCase();
+      const wordMatch = src.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik)\b/);
+      if (wordMatch) return /blik|can/.test(wordMatch[1]) ? 'blik' : 'fles';
+      const multiVol = src.match(/(\d+)\s*x\s*(\d+(?:[.,]\d+)?)\s*ml\b/i);
+      const singleVol = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*ml\b/);
+      const litres = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*(?:l|liter)\b/);
+      if (multiVol) return parseFloat(multiVol[2].replace(',', '.')) <= 500 ? 'blik' : 'fles';
+      if (singleVol) return parseFloat(singleVol[1].replace(',', '.')) <= 500 ? 'blik' : 'fles';
+      if (litres) return 'fles';
+      return null;
+    }
+
+    function makeRow(m, cheapest, sameUnit, key) {
       const store = STORE_BY_ID[m.storeId];
       const isCheapest = m === cheapest;
       const wasPrice = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
@@ -1492,28 +1507,7 @@
       const diff = canDiff ? key(m) - key(cheapest) : 0;
       const diffTag = (!isCheapest && canDiff && diff > 0)
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
-      // Merknaam + verpakking tonen
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
-      // Verpakkingstype: expliciet woord in naam, anders afleiden uit volume
-      const packWordMatch = m.p.name.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik|fust|vat|doos)\b/i);
-      let packLabel = packWordMatch ? packWordMatch[1].toLowerCase() : null;
-      if (!packLabel) {
-        // Volume-inferentie: "6 x 250ml" of "250ml" → blikje; "1,5l" / "2l" → fles
-        const src = (m.p.name + ' ' + (m.p.unit || '')).toLowerCase();
-        const singleVol = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*ml\b/);
-        const multiVol  = src.match(/(\d+)\s*x\s*(\d+(?:[.,]\d+)?)\s*ml\b/i);
-        const litres    = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*(?:l|liter)\b/);
-        if (multiVol) {
-          const ml = parseFloat(multiVol[2].replace(',', '.'));
-          packLabel = ml <= 500 ? 'blikjes' : 'flesjes';
-        } else if (singleVol) {
-          const ml = parseFloat(singleVol[1].replace(',', '.'));
-          packLabel = ml <= 500 ? 'blikje' : 'fles';
-        } else if (litres) {
-          packLabel = 'fles';
-        }
-      }
-      const packBadge = packLabel ? `<span class="pack-badge">${packLabel}</span>` : '';
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
@@ -1521,11 +1515,31 @@
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
           ${unitTag}
-          <span class="cmp-product">${brandName}${unitStr}</span>${packBadge}
+          <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
           ${bonusBadge}
         </div>`;
-    }).join('');
+    }
+
+    // Groepeer op verpakkingstype; toon scheidingslijn als beide aanwezig
+    const withPackType = sorted.map(m => ({ m, pack: detectPackType(m) }));
+    const packTypes = [...new Set(withPackType.map(x => x.pack).filter(Boolean))];
+    const multiPack = packTypes.length > 1;
+
+    const PACK_LABEL = { fles: '🍾 Fles', blik: '🥫 Blikje' };
+    let rows;
+    if (multiPack) {
+      // Groepen: eerst fles, dan blik, dan onbekend — elk gesorteerd op prijs
+      const order = ['fles', 'blik', null];
+      rows = order.flatMap(pt => {
+        const group = withPackType.filter(x => x.pack === pt).map(x => x.m);
+        if (!group.length) return [];
+        const header = pt ? `<div class="pack-group-header">${PACK_LABEL[pt]}</div>` : '';
+        return [header, ...group.map(m => makeRow(m, cheapest, sameUnit, key))];
+      }).join('');
+    } else {
+      rows = sorted.map(m => makeRow(m, cheapest, sameUnit, key)).join('');
+    }
     // Aanbieding-tip: zoek vergelijkbaar product dat nu in bonus is en goedkoper
     const bonusTip = findBonusAlternative(it.name, it.category, matches);
     const bonusTipHtml = bonusTip ? `
