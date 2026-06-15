@@ -857,6 +857,20 @@
     [/\bpistachenoten\b/g, 'pistache noten'],
     [/\bhazelnoten\b/g, 'hazel noten'],
     [/\bwalnoten\b/g, 'wal noten'],
+    // Vis en vlees compounds splitsen zodat stam-match werkt na de ratio-check
+    [/\bzalmfilet\b/g, 'zalm filet'],
+    [/\bkabeljauwfilet\b/g, 'kabeljauw filet'],
+    [/\btonijnsteak\b/g, 'tonijn steak'],
+    [/\bkipdrumstick(s)?\b/g, 'kip drumstick'],
+    [/\bvarkenshaas\b/g, 'varken haas'],
+    [/\bvarkensfilet\b/g, 'varken filet'],
+    [/\bvarkensribben\b/g, 'varken ribben'],
+    [/\brundergehakt\b/g, 'runder gehakt'],
+    [/\blamsgehakt\b/g, 'lams gehakt'],
+    // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
+    [/\b(coca[- ])?cola\b/g, 'coca cola'],
+    [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
+    [/\bsprite\b/g, 'sprite'],
   ];
   function applySynonyms(s) {
     let out = s;
@@ -1208,12 +1222,14 @@
   // Normaliseer dubbele klinkers (banaan→banan) zodat meervoud "bananen" op de stam matcht.
   function deDouble(w) { return w.replace(/([aeou])\1/g, '$1'); }
   // Lichte stam-match: gelijk, of de een is prefix van de ander (min. 4 tekens stam).
+  // Ratio-check: de stam mag max 60% van het lange woord zijn — anders matcht 'fanta' op
+  // 'fantastische' of 'tonic' op 'tonisch'. Compound-woorden worden via SYNONYMS gesplitst.
   function stemMatch(a, b) {
     const da = deDouble(a), db = deDouble(b);
     if (da === db) return true;
     const short = da.length <= db.length ? da : db;
     const long  = da.length <= db.length ? db : da;
-    return short.length >= 4 && long.startsWith(short);
+    return short.length >= 4 && long.startsWith(short) && short.length * 10 >= long.length * 6;
   }
   function guessCategory(name) {
     const n = normalize(name);
