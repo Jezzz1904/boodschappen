@@ -269,6 +269,96 @@
       font-weight:600;
     }
     .chip.chip-generic:hover { background: var(--slate-50); border-color: var(--slate-400); }
+    .chip.chip-group {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border-color: transparent;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(5,150,105,.25);
+    }
+    .chip.chip-group:hover { filter: brightness(1.05); }
+    .chip.chip-back {
+      background: var(--slate-50); color: var(--slate-600);
+      border-color: var(--slate-200); font-weight:700;
+    }
+    .chip.chip-back:hover { background: var(--slate-200); }
+    .chip.chip-pack {
+      background: var(--slate-50); color: var(--slate-700);
+      border:1.5px solid var(--slate-200); font-weight:700;
+    }
+    .chip.chip-pack:hover { border-color: var(--amber-400); }
+    .chip.chip-pack.chip-pack-active {
+      background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+      color:white; border-color: transparent;
+      box-shadow: 0 2px 8px rgba(251,191,36,.35);
+    }
+
+    /* Browse-knop */
+    .browse-link {
+      display:block; width:100%;
+      margin-top:10px; padding:10px 12px;
+      background: transparent; border:1.5px dashed var(--green-100);
+      color: var(--green-700); font-size:13px; font-weight:700;
+      border-radius:12px; cursor:pointer;
+    }
+    .browse-link:hover { background: var(--green-50); border-color: var(--green-500); }
+    .browse-link:active { transform: scale(.98); }
+
+    /* Browse-modal */
+    .modal.modal-browse { max-width: 540px; }
+    .browse-head {
+      display:flex; align-items:center; gap:10px;
+      margin-bottom: 14px; min-height: 28px;
+    }
+    .browse-head .browse-back {
+      background:none; border:none; color: var(--slate-600);
+      font-size:13px; font-weight:700; cursor:pointer;
+      padding: 4px 8px; border-radius:8px;
+    }
+    .browse-head .browse-back:hover { background: var(--slate-50); color: var(--green-700); }
+    .browse-head .browse-title {
+      font-size: 17px; font-weight:900; color: var(--slate-900);
+      flex:1;
+    }
+    .browse-head .browse-emo { font-size:22px; }
+    .browse-grid {
+      display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+    }
+    .browse-cat {
+      display:flex; align-items:center; gap:10px;
+      padding: 14px 12px;
+      background: var(--green-50); border:1.5px solid var(--green-100);
+      border-radius:14px; cursor:pointer;
+      font-size:14px; font-weight:800; color: var(--slate-900);
+      text-align:left;
+      transition: transform .12s, background .15s;
+    }
+    .browse-cat:active { transform: scale(.96); }
+    .browse-cat:hover { background: var(--green-100); border-color: var(--green-500); }
+    .browse-cat .b-emo { font-size:24px; flex-shrink:0; }
+    .browse-cat .b-count {
+      font-size:11px; font-weight:700; color: var(--green-700);
+      background: white; padding:2px 7px; border-radius:99px;
+      margin-left:auto; flex-shrink:0;
+    }
+    .browse-products {
+      display:flex; flex-wrap:wrap; gap:6px;
+      max-height: 65vh; overflow-y:auto;
+      padding: 2px;
+    }
+    .browse-prod {
+      background: white; border:1.5px solid var(--slate-200);
+      color: var(--slate-800); border-radius:99px;
+      padding: 7px 13px; font-size:13.5px; font-weight:700;
+      cursor:pointer; user-select:none;
+      transition: transform .1s, border-color .12s, background .12s;
+    }
+    .browse-prod:active { transform: scale(.95); }
+    .browse-prod:hover { background: var(--green-50); border-color: var(--green-500); color: var(--green-700); }
+    .browse-prod.added {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color: white; border-color: transparent;
+    }
+    .browse-prod.added::before { content:'✓ '; }
     .suggestions-label {
       font-size: 11px; text-transform:uppercase; letter-spacing:1.5px;
       color: var(--slate-400); font-weight:800; margin: 4px 2px 6px;
@@ -348,6 +438,7 @@
       flex:1; min-width:0;
     }
     .cmp-diff { color: var(--slate-400); font-weight:700; font-size:11px; }
+    .cmp-unit-missing { color: var(--slate-400); font-style: italic; }
     .cmp-unit { color: var(--slate-400); font-size:10.5px; font-weight:600; flex-shrink:0; }
     .bonus-badge {
       display:inline-block;
@@ -510,6 +601,7 @@
         <button class="add-btn" onclick="addCurrent()" aria-label="Toevoegen">+</button>
       </div>
       <div id="suggestions-wrap"></div>
+      <button class="browse-link" onclick="openBrowse()">📋 Bladeren door categorieën</button>
     </div>
 
     <div id="list-wrap"></div>
@@ -576,6 +668,15 @@
       <div class="modal-sub" id="modal-cat-sub">Kies een categorie voor dit product</div>
       <div class="cat-grid" id="cat-grid"></div>
       <button class="modal-close" onclick="closeCatModal()">Annuleren</button>
+    </div>
+  </div>
+
+  <!-- MODAL BROWSE -->
+  <div class="modal-bg" id="modal-browse" onclick="if(event.target===this) closeBrowse()">
+    <div class="modal modal-browse">
+      <div class="browse-head" id="browse-head"></div>
+      <div id="browse-body"></div>
+      <button class="modal-close" onclick="closeBrowse()">✓ Klaar</button>
     </div>
   </div>
 
@@ -683,7 +784,12 @@
     koffie:       ['Filterkoffie', 'Koffiebonen', 'Koffiepads', 'Senseo', 'Nespresso cups'],
     thee:         ['Zwarte thee', 'Groene thee', 'Rooibos', 'Kruidenthee', 'Earl Grey', 'Pepermunt'],
     wijn:         ['Rode wijn', 'Witte wijn', 'Rosé', 'Prosecco'],
-    bier:         ['Pils', 'Speciaalbier', 'Witbier', 'Radler', 'Alcoholvrij bier'],
+    bier:         { groups: {
+                    'Pils & helder':     ['Heineken', 'Hertog Jan', 'Grolsch', 'Amstel', 'Bavaria', 'Brand', 'Jupiler', 'Warsteiner', 'Bavaria 0.0', 'Heineken 0.0', 'Radler'],
+                    'Witbier':            ['Hoegaarden', 'Wieckse Witte', 'Texels Skuumkoppe', 'Korenwolf', 'Brand Weizen', 'Erdinger Weissbier'],
+                    'Tripel & abdij':    ['La Trappe Tripel', 'La Trappe Dubbel', 'La Trappe Blond', 'Affligem Tripel', 'Affligem Blond', 'Leffe Blond', 'Leffe Bruin', 'Westmalle Tripel', 'Karmeliet Tripel', 'Duvel', 'Chimay Rood'],
+                    'Craft & speciaal':  ['Brouwerij \'t IJ IPA', 'Lowlander IPA', 'Texels Skuumkoppe', 'La Chouffe', 'Maximus IPA', 'Jopen IPA', 'Gulpener', 'Vandestreek', 'Brand IPA', 'Brouwerij \'t IJ Zatte'],
+                  }},
     water:        ['Spa rood', 'Spa blauw', 'Bronwater', 'Spa & fruit'],
     sap:          ['Sinaasappelsap', 'Appelsap', 'Multivit', 'Smoothie'],
     frisdrank:    ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris'],
@@ -799,7 +905,7 @@
     const today = new Date().toISOString().slice(0, 10);
     const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
-    let best = null;
+    const candidates = [];
     for (const p of data.products) {
       const productWords = normWords(p.name);
       const allMatch = itemWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
@@ -840,10 +946,39 @@
         else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
       }
       const score = coverage * 10 + posBonus + catBoost - noise * 4 - eff * 0.02;
-      if (!best || score > best.score) best = { storeId, p, eff, activeBonus, upcomingBonus, score };
+      candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
-    if (best) best.unitPrice = computeUnitPrice(best.eff, best.p.unit);
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => b.score - a.score);
+    const top = candidates[0];
+    // Tier = matches die qua naam-relevantie nagenoeg gelijk staan. Binnen de tier
+    // kiezen we de meest standaard verpakking met laagste €/eenheid — dat fixt het
+    // klassieke "AH halfvolle melk 0,5l (€0,85) wint van 1l (€1,29) op absolute prijs"
+    // probleem terwijl per liter de 1l-versie veel goedkoper is.
+    const tier = candidates.filter(c => c.score >= top.score - 1.0);
+    for (const c of tier) {
+      c.unitPrice = computeUnitPrice(c.eff, c.p.unit);
+      c.multipack = isMultipack(c.p.name, c.p.unit);
+    }
+    const singles = tier.filter(c => !c.multipack && c.unitPrice);
+    const best = singles.length
+      ? singles.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a)
+      : top;
+    if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit);
     return best;
+  }
+
+  // Multipack-detectie: voordelpakken, "X stuks", "12x1l", "6-pack" etc.
+  // We hebben liefst de standaard enkele verpakking als match, niet de bulk-aanbieding.
+  function isMultipack(name, unit) {
+    const u = normalize(unit);
+    const n = normalize(name);
+    if (/\d\s*x\s*\d/.test(u)) return true;            // "12 x 1 l"
+    if (/\b\d+\s*stuks?\b/.test(u)) return true;       // "3 stuks"
+    if (/\b\d+\s*[- ]?pack\b/.test(n)) return true;    // "3-pack", "6 pack"
+    if (/voordeel(verpakking|pak)?\b/.test(n)) return true;
+    if (/familie(verpakking|pak)?\b/.test(n)) return true;
+    return false;
   }
 
   // Prijs per liter/kg/stuk voor eerlijke vergelijking.
@@ -866,14 +1001,19 @@
     // Goedkoopste: op prijs-per-eenheid als alle matches dezelfde eenheid hebben (eerlijke vergelijking,
     // lost pak-grootte op: tray cola vs blikje). Anders op absolute prijs.
     let cheapest;
-    const units = matches.map(m => m.unitPrice?.unit);
-    const sameUnit = units.every(u => u && u === units[0]);
-    if (sameUnit && matches.every(m => m.unitPrice)) {
-      cheapest = matches.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+    // Eerlijke vergelijking als ≥2 winkels hetzelfde unit hebben (l/kg/st). Lidl
+    // die unit mist krijgt 'm gewoon op absolute prijs ernaast getoond.
+    const withUnit = matches.filter(m => m.unitPrice);
+    const unitsList = withUnit.map(m => m.unitPrice.unit);
+    const sameUnit = unitsList.length >= 2 && unitsList.every(u => u === unitsList[0]);
+    if (sameUnit) {
+      // Goedkoopste op €/eenheid binnen de winkels die unit hebben
+      const cheapestByUnit = withUnit.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+      cheapest = cheapestByUnit;
     } else {
       cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
     }
-    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit && matches.every(m => m.unitPrice) };
+    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit };
   }
 
   function fmtPrice(n) {
@@ -1066,8 +1206,12 @@
     if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
     if (!matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
 
-    // Sorteer goedkoopste eerst (op de gebruikte vergelijkings-maat)
-    const key = comparedByUnit ? (m => m.unitPrice.value) : (m => m.eff);
+    // Sorteer goedkoopste eerst (op de gebruikte vergelijkings-maat).
+    // Matches zonder unitPrice (bv. Lidl zonder verpakkingsdata) zakken naar onder
+    // bij €/eenheid-vergelijking.
+    const key = comparedByUnit
+      ? (m => m.unitPrice ? m.unitPrice.value : Infinity)
+      : (m => m.eff);
     const sorted = [...matches].sort((a, b) => key(a) - key(b));
     const rows = sorted.map(m => {
       const store = STORE_BY_ID[m.storeId];
@@ -1078,9 +1222,12 @@
         ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>`
         : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
       const unitTag = m.unitPrice
-        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>` : '';
-      const diff = key(m) - key(cheapest);
-      const diffTag = (!isCheapest && diff > 0)
+        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>`
+        : (comparedByUnit ? `<span class="cmp-unit cmp-unit-missing">?/${cheapest.unitPrice?.unit || 'l'}</span>` : '');
+      // Diff alleen wanneer beide kanten een vergelijkbare maat hebben
+      const canDiff = comparedByUnit ? !!m.unitPrice : true;
+      const diff = canDiff ? key(m) - key(cheapest) : 0;
+      const diffTag = (!isCheapest && canDiff && diff > 0)
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${comparedByUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
@@ -1143,25 +1290,74 @@
 
     // 1. Generieke term → varianten tonen (jouw historie sorteert ze)
     const variants = inp && VARIANTS[inp];
-    if (variants && variants.length) {
-      const ranked = variants
-        .filter(v => !onList.has(normalize(v)))
-        .map(v => ({ name: v, count: history[normalize(v)]?.count || 0 }))
-        .sort((a, b) => b.count - a.count);
-      if (ranked.length) {
+    if (variants) {
+      // 1a. Genest schema (bv. bier → submenu's per stijl)
+      if (variants.groups) {
+        const groupNames = Object.keys(variants.groups);
+        // Drill-in: een submenu geselecteerd?
+        if (activeVariantGroup && activeVariantGroup.term === inp && variants.groups[activeVariantGroup.name]) {
+          const list = variants.groups[activeVariantGroup.name]
+            .filter(v => !onList.has(normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')))
+            .map(v => ({ name: v, count: history[normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')]?.count || 0 }))
+            .sort((a, b) => b.count - a.count);
+          const packs = PACKAGINGS[inp] || [];
+          wrap.innerHTML = `
+            <div class="suggestions-label">${escapeHtml(activeVariantGroup.name)} <span style="color:var(--slate-400);font-weight:600;letter-spacing:0;text-transform:none">— soort ${escapeHtml(inp)}</span></div>
+            ${packs.length ? `
+              <div class="suggestions" style="margin-bottom:8px">
+                ${packs.map(p => `
+                  <span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">
+                    📦 ${escapeHtml(p)}
+                  </span>`).join('')}
+              </div>` : ''}
+            <div class="suggestions">
+              <span class="chip chip-back" onclick="clearVariantGroup()">← Terug</span>
+              ${list.map(v => `
+                <span class="chip variant-chip" onclick="quickAddWithPack('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+                  ${escapeHtml(v.name)}${activePackaging ? ` <span class="chip-cnt">${escapeHtml(activePackaging)}</span>` : ''}
+                  ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+                </span>`).join('')}
+              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
+                + ${escapeHtml(inp)} (zonder soort)
+              </span>
+            </div>`;
+          return;
+        }
+        // Hoofdmenu: 4 groep-chips
         wrap.innerHTML = `
-          <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
+          <div class="suggestions-label">Welke soort ${escapeHtml(inp)}?</div>
           <div class="suggestions">
-            ${ranked.map(v => `
-              <span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
-                ${escapeHtml(v.name)}
-                ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+            ${groupNames.map(g => `
+              <span class="chip chip-group" onclick="setVariantGroup('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g, "\\'")}')">
+                ${escapeHtml(g)} →
               </span>`).join('')}
             <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
               + ${escapeHtml(inp)} (zonder soort)
             </span>
           </div>`;
         return;
+      }
+      // 1b. Plat schema (bestaande logica)
+      if (variants.length) {
+        const ranked = variants
+          .filter(v => !onList.has(normalize(v)))
+          .map(v => ({ name: v, count: history[normalize(v)]?.count || 0 }))
+          .sort((a, b) => b.count - a.count);
+        if (ranked.length) {
+          wrap.innerHTML = `
+            <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
+            <div class="suggestions">
+              ${ranked.map(v => `
+                <span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+                  ${escapeHtml(v.name)}
+                  ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+                </span>`).join('')}
+              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
+                + ${escapeHtml(inp)} (zonder soort)
+              </span>
+            </div>`;
+          return;
+        }
       }
     }
 
@@ -1201,9 +1397,156 @@
     addItem(name, 1);
     document.getElementById('add-input').value = '';
     document.getElementById('qty-input').value = '';
+    activeVariantGroup = null;
+    activePackaging = null;
     renderSuggestions();
   }
-  function onInputChange() { renderSuggestions(); }
+  function quickAddWithPack(name) {
+    quickAdd(activePackaging ? `${name} ${activePackaging}` : name);
+  }
+  function onInputChange() {
+    // Sub-groep wissen zodra je iets anders intikt
+    if (activeVariantGroup) {
+      const inp = document.getElementById('add-input').value.trim().toLowerCase();
+      if (inp !== activeVariantGroup.term) activeVariantGroup = null;
+    }
+    renderSuggestions();
+  }
+  let activeVariantGroup = null;
+  let activePackaging = null;  // bv. 'krat', '6-pack flesjes', 'blik', ...
+  function setVariantGroup(term, name) { activeVariantGroup = { term, name }; renderSuggestions(); }
+  function clearVariantGroup() { activeVariantGroup = null; activePackaging = null; renderSuggestions(); }
+  function setPackaging(p) { activePackaging = (activePackaging === p) ? null : p; renderSuggestions(); }
+
+  // Verpakking-opties per generieke term. Default: alleen bier.
+  const PACKAGINGS = {
+    bier: ['Krat', '6-pack flesjes', 'Flesje', '6-pack blik', 'Tray blik', 'Blik'],
+  };
+
+  // Catalogus voor het Bladeren-menu — per categorie de meest gangbare NL boodschappen.
+  // Title-case zodat het direct als productnaam de lijst in kan.
+  const BROWSE_CATALOG = {
+    groente: [
+      'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Druiven','Kiwi',
+      'Aardbeien','Framboos','Blauwe bes','Meloen','Watermeloen','Ananas','Perzik','Nectarine',
+      'Pruim','Avocado','Tomaat','Cherrytomaten','Komkommer','Paprika','Wortel','Ui','Rode ui',
+      'Knoflook','Sla','IJsbergsla','Andijvie','Spinazie','Rucola','Broccoli','Bloemkool',
+      'Courgette','Aubergine','Prei','Aardappel','Krieltjes','Zoete aardappel','Champignons',
+      'Radijs','Rode kool','Witte kool','Spruitjes','Bieten','Sperziebonen','Asperges',
+      'Mais','Bosui','Peterselie','Basilicum','Gember','Munt',
+    ],
+    zuivel: [
+      'Halfvolle melk','Volle melk','Magere melk','Karnemelk','Sojadrink','Havermelk',
+      'Yoghurt naturel','Griekse yoghurt','Magere kwark','Volle kwark','Vanillevla','Chocoladevla',
+      'Slagroom','Kookroom','Crème fraîche','Roomboter','Margarine','Eieren',
+      'Jong belegen kaas','Belegen kaas','Oude kaas','Geraspte kaas','Smeerkaas','Mozzarella',
+      'Feta','Geitenkaas','Brie','Cottage cheese','Pudding','Dessert',
+    ],
+    bakkerij: [
+      'Bruin brood','Wit brood','Volkoren brood','Tijgerbrood','Stokbrood','Pistolet','Broodje',
+      'Bolletje','Croissant','Krentenbol','Rozijnenbol','Beschuit','Crackers','Knäckebröd',
+      'Wraps','Tortilla','Pita','Naan','Bagel','Cake','Muffin',
+    ],
+    vlees: [
+      'Kipfilet','Kipdijfilet','Kippenpoten','Kipschnitzel','Kipgehakt','Kalkoenfilet',
+      'Rundergehakt','Half-om-half gehakt','Biefstuk','Runderlap','Varkenshaas','Speklap',
+      'Spek','Bacon','Ham','Beenham','Schouderham','Salami','Worst','Rookworst','Knakworst',
+      'Braadworst','Frikandel','Kroket','Zalmfilet','Tonijn','Kabeljauw','Tilapia',
+      'Garnalen','Mosselen','Haring','Makreel','Sardines','Schol',
+    ],
+    diepvries: [
+      'Diepvries pizza','Friet','Aardappelpartjes','Vanille-ijs','IJsblokjes','Ben & Jerry\'s',
+      'Magnum','Vissticks','Loempia','Spinazie diepvries','Doperwten','Diepvries groente',
+      'Bevroren fruit','Pizza margherita','Diepvries pasta',
+    ],
+    houdbaar: [
+      'Spaghetti','Penne','Macaroni','Lasagne','Tagliatelle','Farfalle','Basmati rijst',
+      'Jasmijnrijst','Risottorijst','Couscous','Bulgur','Quinoa','Noedels','Mie',
+      'Olijfolie','Zonnebloemolie','Azijn','Balsamico','Sojasaus','Ketchup','Mayonaise',
+      'Mosterd','Sambal','Pesto','Bouillon','Tomatenblokjes','Tomatenpuree','Passata',
+      'Kikkererwten in blik','Bonen in blik','Linzen','Soep','Bloem','Suiker','Zout','Peper',
+      'Honing','Jam','Hagelslag','Pindakaas','Chocoladepasta','Muesli','Cornflakes','Havermout',
+      'Rijstwafels','Olijven','Augurken','Kappertjes',
+    ],
+    snacks: [
+      'Chips naturel','Paprika chips','Bolognese chips','Tortilla chips','Borrelnootjes',
+      'Popcorn','Ongezouten noten','Cashewnoten','Pinda\'s','Pure chocolade','Melkchocolade',
+      'Witte chocolade','Tony Chocolonely','Reep','Drop','Wine gums','Stroopwafel','Speculaas',
+      'Liga','Sultana','Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
+    ],
+    dranken: [
+      'Spa rood','Spa blauw','Bronwater','Sinaasappelsap','Appelsap','Multivit','Smoothie',
+      'Cola','Cola Zero','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris',
+      'Red Bull','Heineken','Hertog Jan','Grolsch','Amstel','Bavaria','Brand','Jupiler','Pils',
+      'Hoegaarden','Leffe','Duvel','Rode wijn','Witte wijn','Rosé','Prosecco','Koffiebonen',
+      'Filterkoffie','Koffiepads','Senseo','Nespresso cups','Zwarte thee','Groene thee',
+      'Rooibos','Earl Grey',
+    ],
+    drogist: [
+      'Shampoo','Conditioner','Douchegel','Handzeep','Tandpasta','Tandenborstel','Flosdraad',
+      'Mondwater','Deodorant','Bodylotion','Dagcrème','Zonnebrand','Aftersun','Make-up remover',
+      'Wattenstaafjes','Wattenschijfjes','Maandverband','Tampons','Inlegkruisjes','Luiers',
+      'Babydoekjes','Paracetamol','Ibuprofen','Aspirine','Pleisters','Vitaminen',
+      'Scheermesjes','Scheerschuim',
+    ],
+    huishouden: [
+      'WC papier','Keukenpapier','Tissues','Zakdoekjes','Vuilniszakken','Vaatwastabletten',
+      'Afwasmiddel','Allesreiniger','Wasmiddel','Wasverzachter','Vlekverwijderaar',
+      'Aluminiumfolie','Vershoudfolie','Bakpapier','Boterhamzakjes','Sponzen','Vaatdoek',
+      'Dweil','Luchtverfrisser','WC reiniger','Bleek','Batterijen','Lampen','Aansteker',
+      'Lucifers','Kaarsen','Bloemen','Houtskool','Aanmaakblokjes',
+    ],
+    overig: [
+      'Cadeau','Bloemen','Plant','Wenskaart','Postzegels','Krant','Tijdschrift',
+    ],
+  };
+
+  let browseCat = null; // huidige geopende categorie in modal
+
+  function openBrowse() {
+    browseCat = null;
+    renderBrowse();
+    document.getElementById('modal-browse').classList.add('open');
+  }
+  function closeBrowse() {
+    document.getElementById('modal-browse').classList.remove('open');
+    browseCat = null;
+  }
+  function openBrowseCat(catId) { browseCat = catId; renderBrowse(); }
+  function backToBrowseHome() { browseCat = null; renderBrowse(); }
+
+  function renderBrowse() {
+    const head = document.getElementById('browse-head');
+    const body = document.getElementById('browse-body');
+    if (!browseCat) {
+      head.innerHTML = `<span class="browse-title">📋 Door categorieën bladeren</span>`;
+      body.innerHTML = `<div class="browse-grid">${
+        CATEGORIES.filter(c => BROWSE_CATALOG[c.id]?.length).map(c => `
+          <button class="browse-cat" onclick="openBrowseCat('${c.id}')">
+            <span class="b-emo">${c.emo}</span> ${escapeHtml(c.name)}
+            <span class="b-count">${BROWSE_CATALOG[c.id].length}</span>
+          </button>`).join('')
+      }</div>`;
+      return;
+    }
+    const cat = CAT_BY_ID[browseCat];
+    const products = BROWSE_CATALOG[browseCat] || [];
+    const onListNorms = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+    head.innerHTML = `
+      <button class="browse-back" onclick="backToBrowseHome()">← Categorieën</button>
+      <span class="browse-emo">${cat.emo}</span>
+      <span class="browse-title">${escapeHtml(cat.name)}</span>`;
+    body.innerHTML = `<div class="browse-products">${
+      products.map(name => {
+        const added = onListNorms.has(normalize(name));
+        return `<span class="browse-prod${added ? ' added' : ''}" onclick="browseAdd('${escapeHtml(name).replace(/'/g, "\\'")}', this)">${escapeHtml(name)}</span>`;
+      }).join('')
+    }</div>`;
+  }
+  function browseAdd(name, el) {
+    addItem(name, 1);
+    if (el) el.classList.add('added');
+  }
 
   function renderActionbar() {
     const bar = document.getElementById('actionbar');
@@ -1357,16 +1700,27 @@
       const data = storeData[store.id];
       if (!data || !data.products) continue;
       for (const p of data.products) {
-        if (p.bonus && p.bonus.start && p.bonus.end && p.bonus.start <= today && today <= p.bonus.end) {
-          deals.push({
-            store: store.name,
-            name: p.name,
-            mechanism: p.bonus.mechanism || 'aanbieding',
-            price: p.bonus_price ?? p.price,
-          });
-        }
+        if (!p.bonus || !p.bonus.start || !p.bonus.end) continue;
+        if (p.bonus.start > today || today > p.bonus.end) continue;
+        // Structurele "altijd-aan" kortingen (eindigen in 2999) zijn geen
+        // week-aanbieding — daar wil de AI niet over praten
+        if (p.bonus.infinite || p.bonus.end > '2030-01-01') continue;
+        const savings = (typeof p.price === 'number' && typeof p.bonus_price === 'number' && p.bonus_price < p.price)
+          ? +(p.price - p.bonus_price).toFixed(2) : null;
+        deals.push({
+          store: store.name,
+          name: p.name,
+          mechanism: p.bonus.mechanism || 'aanbieding',
+          price_now: p.bonus_price ?? p.price,
+          price_was: p.price,
+          savings,
+          conditional: !!p.bonus.conditional,
+          ends: p.bonus.end,
+        });
       }
     }
+    // Beste aanbiedingen bovenaan: grootste besparing eerst
+    deals.sort((a, b) => (b.savings || 0) - (a.savings || 0));
 
     try {
       const res = await fetch(url, {

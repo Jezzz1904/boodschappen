@@ -100,15 +100,78 @@ async function search(token, query, page = 0) {
   return res.json();
 }
 
+// Bereken effectieve per-stuk bonus-prijs uit discountLabels.
+// AH geeft `currentPrice: null` voor conditionele kortingen ("2e gratis", "X voor Y",
+// "per 100g voor Y") — daar moet je 'm zelf afleiden uit de label-structuur.
+function computeEffectivePrice(p) {
+  const before = typeof p.priceBeforeBonus === 'number' ? p.priceBeforeBonus : null;
+  const cur = typeof p.currentPrice === 'number' ? p.currentPrice : null;
+  // Geen bonus of geen labels: simpele fall-through.
+  if (!p.discountLabels || !p.discountLabels.length) {
+    return cur != null && before != null && cur < before ? cur : null;
+  }
+  // Eerste label dat een effectieve prijs oplevert telt.
+  for (const dl of p.discountLabels) {
+    switch (dl.code) {
+      case 'DISCOUNT_BUNDLE_BULK':
+      case 'DISCOUNT_BUNDLE':
+      case 'DISCOUNT_PERCENTAGE':
+      case 'DISCOUNT_FIXED_PRICE':
+        // currentPrice is hier al de gediscount totaal-prijs per verpakking
+        if (cur != null && before != null && cur < before) return cur;
+        if (dl.code === 'DISCOUNT_FIXED_PRICE' && typeof dl.price === 'number') return dl.price;
+        if (dl.code === 'DISCOUNT_PERCENTAGE' && typeof dl.percentage === 'number' && before != null) {
+          return +(before * (1 - dl.percentage / 100)).toFixed(2);
+        }
+        break;
+      case 'DISCOUNT_X_FOR_Y':
+        // "4 voor 7.29" → 7.29 / 4 = 1.82 per stuk
+        if (typeof dl.price === 'number' && typeof dl.count === 'number' && dl.count > 0) {
+          return +(dl.price / dl.count).toFixed(2);
+        }
+        break;
+      case 'DISCOUNT_ONE_FREE': {
+        // "2e gratis" → count=2, freeCount=1 → betaal 1, krijg 2 = before/2
+        // "2+1 gratis" → count=3, freeCount=1 → betaal 2, krijg 3 = before * 2/3
+        let count = dl.count, free = dl.freeCount;
+        if (count == null || free == null) {
+          // freeCount ontbreekt vaak — leid af uit mechanism text
+          const m = (p.bonusMechanism || dl.defaultDescription || '').toLowerCase();
+          if (/2e gratis/.test(m)) { count = 2; free = 1; }
+          else if (/1\s*\+\s*1/.test(m)) { count = 2; free = 1; }
+          else if (/2\s*\+\s*1/.test(m)) { count = 3; free = 1; }
+          else if (/3\s*\+\s*1/.test(m)) { count = 4; free = 1; }
+          else if (/2e halve/.test(m)) { count = 2; free = 0.5; }
+        }
+        if (before != null && count > 0 && free != null) {
+          const paid = count - free;
+          if (paid > 0) return +(before * paid / count).toFixed(2);
+        }
+        break;
+      }
+      case 'DISCOUNT_WEIGHT':
+        // "per 100g voor 2.39" — voor lijst-vergelijking laten we de stuks-prijs staan,
+        // bonus_price wordt de stuks-prijs als die lager is dan voor-prijs (vaak het geval)
+        if (cur != null && before != null && cur < before) return cur;
+        break;
+    }
+  }
+  // Laatste fallback
+  return cur != null && before != null && cur < before ? cur : null;
+}
+
 // Minimaal vertaal-schema: alleen wat we echt nodig hebben in de PWA.
 function normalize(p) {
+  const before = typeof p.priceBeforeBonus === 'number' && p.priceBeforeBonus > 0 ? p.priceBeforeBonus : null;
+  const cur = typeof p.currentPrice === 'number' && p.currentPrice > 0 ? p.currentPrice : null;
   const out = {
     id: p.webshopId ? `wi${p.webshopId}` : (p.hqId ? `hq${p.hqId}` : null),
     name: p.title,
     brand: p.brand || null,
     unit: p.salesUnitSize || null,
-    price: typeof p.priceBeforeBonus === 'number' && p.priceBeforeBonus > 0 ? p.priceBeforeBonus : (p.currentPrice ?? null),
-    bonus_price: typeof p.currentPrice === 'number' && typeof p.priceBeforeBonus === 'number' && p.currentPrice < p.priceBeforeBonus ? p.currentPrice : null,
+    // price = de normale (niet-bonus) prijs
+    price: before ?? cur,
+    bonus_price: computeEffectivePrice(p),
     unit_price: p.unitPriceDescription || null,
     bonus: null,
     image: null,
@@ -119,13 +182,21 @@ function normalize(p) {
     const small = p.images.find(i => i.width === 200) || p.images.find(i => i.width <= 400) || p.images[0];
     out.image = small.url;
   }
-  // Bonus-info
-  if (p.bonusMechanism || p.discountType || p.bonusStartDate) {
+  // Bonus-info — alleen flaggen als er actief een aanbieding loopt
+  if (p.isBonus || p.bonusMechanism || p.bonusStartDate) {
     out.bonus = {
-      mechanism: p.bonusMechanism || null,
+      mechanism: p.bonusMechanism || (p.discountLabels?.[0]?.defaultDescription) || null,
       start: p.bonusStartDate || null,
       end: p.bonusEndDate || null,
       type: p.discountType || null,
+      // Structurele "permanente" 5%-kortingen (einddatum 2999) markeren zodat de PWA
+      // ze niet als week-aanbieding ziet. AH's isInfiniteBonus-veld is onbetrouwbaar
+      // (vaak false terwijl einddatum 2999-12-31 is), dus zelf detecteren.
+      infinite: !!p.isInfiniteBonus || (p.bonusEndDate && p.bonusEndDate > '2030-01-01'),
+      // Conditionele bonus (alleen voordelig vanaf X stuks) — voor "2e gratis" e.d.
+      conditional: !!p.isStapelBonus || (p.discountLabels || []).some(dl =>
+        ['DISCOUNT_ONE_FREE','DISCOUNT_X_FOR_Y','DISCOUNT_BUNDLE'].includes(dl.code)
+      ),
     };
   }
   return out;

@@ -1,4 +1,4 @@
-const CACHE = 'boodschappen-v7';
+const CACHE = 'boodschappen-v13';
 const ASSETS = ['./', './index.html', './manifest.json', './logo.svg'];
 
 self.addEventListener('install', e => {
