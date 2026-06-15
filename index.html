@@ -1369,29 +1369,93 @@
       }
     }
 
-    // 2. Anders: historie-suggesties (zoals voorheen)
+    // 2. Autocomplete: combineer VARIANTS-sleutels, alle variant-waarden en historie
+    if (inp) {
+      const results = []; // { label, name, isVariantKey, histCount, startsWith }
+
+      // 2a. VARIANTS-sleutels die matchen (bv. "piz" → "pizza")
+      for (const key of Object.keys(VARIANTS)) {
+        if (onList.has(key)) continue;
+        const norm = normalize(key);
+        if (norm.includes(inp)) {
+          results.push({ label: titleCase(key), name: key, isVariantKey: true,
+                         histCount: history[key]?.count || 0,
+                         startsWith: norm.startsWith(inp) });
+        }
+      }
+
+      // 2b. Alle individuele variant-waarden (plat + genest) die matchen
+      for (const [key, val] of Object.entries(VARIANTS)) {
+        const items2 = val.groups
+          ? Object.values(val.groups).flat()
+          : (Array.isArray(val) ? val : []);
+        for (const v of items2) {
+          const norm = normalize(v);
+          if (norm.includes(inp) && !onList.has(norm)) {
+            // Sla op als VARIANTS-sleutel al toegevoegd is
+            if (results.some(r => r.name === key && r.isVariantKey) && norm === normalize(key)) continue;
+            results.push({ label: v, name: v, isVariantKey: false,
+                           histCount: history[norm]?.count || 0,
+                           startsWith: norm.startsWith(inp) });
+          }
+        }
+      }
+
+      // 2c. Historie-entries die nog niet door bovenstaande gedekt zijn
+      for (const [k, v] of Object.entries(history)) {
+        if (onList.has(k)) continue;
+        const norm = normalize(v.name);
+        if ((k.includes(inp) || norm.includes(inp)) && !results.some(r => normalize(r.name) === k)) {
+          results.push({ label: v.name, name: v.name, isVariantKey: false,
+                         histCount: v.count || 0, startsWith: k.startsWith(inp),
+                         category: v.category });
+        }
+      }
+
+      // Sorteren: starts-with eerst, dan variant-sleutels voor, dan op histCount
+      results.sort((a, b) => {
+        if (a.startsWith !== b.startsWith) return a.startsWith ? -1 : 1;
+        if (a.isVariantKey !== b.isVariantKey) return a.isVariantKey ? -1 : 1;
+        return b.histCount - a.histCount;
+      });
+
+      const shown = results.slice(0, 10);
+      if (!shown.length) { wrap.innerHTML = ''; return; }
+
+      wrap.innerHTML = `
+        <div class="suggestions-label">Suggesties</div>
+        <div class="suggestions">
+          ${shown.map(r => {
+            const cat = r.category ? (CAT_BY_ID[r.category]?.emo || '📦') : (r.isVariantKey ? '🔍' : '📦');
+            const cnt = r.histCount ? `<span class="chip-cnt">×${r.histCount}</span>` : '';
+            const arrow = r.isVariantKey ? ` <span class="chip-cnt">→</span>` : '';
+            const safeName = escapeHtml(r.name).replace(/'/g, "\\'");
+            const action = r.isVariantKey
+              ? `document.getElementById('add-input').value='${safeName}';onInputChange()`
+              : `quickAdd('${safeName}')`;
+            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">
+              ${cat} ${escapeHtml(r.label)}${arrow}${cnt}
+            </span>`;
+          }).join('')}
+        </div>`;
+      return;
+    }
+
+    // 3. Leeg veld: meest recent / vaak gekocht uit historie
     let entries = Object.entries(history)
       .filter(([k]) => !onList.has(k))
       .map(([k, v]) => ({ key:k, ...v }));
-
-    if (inp) {
-      entries = entries.filter(e => e.key.includes(inp) || normalize(e.name).includes(inp));
-      entries.sort((a,b) => b.count - a.count);
-      entries = entries.slice(0, 8);
-    } else {
-      const now = Date.now();
-      entries.forEach(e => {
-        const daysAgo = (now - (e.lastBought || 0)) / 86400000;
-        e._score = e.count * Math.max(0.3, 1 - daysAgo / 60);
-      });
-      entries.sort((a,b) => b._score - a._score);
-      entries = entries.slice(0, 8);
-    }
+    const now = Date.now();
+    entries.forEach(e => {
+      const daysAgo = (now - (e.lastBought || 0)) / 86400000;
+      e._score = e.count * Math.max(0.3, 1 - daysAgo / 60);
+    });
+    entries.sort((a,b) => b._score - a._score);
+    entries = entries.slice(0, 8);
 
     if (!entries.length) { wrap.innerHTML = ''; return; }
-    const label = inp ? 'Suggesties' : 'Vaak gekocht';
     wrap.innerHTML = `
-      <div class="suggestions-label">${label}</div>
+      <div class="suggestions-label">Vaak gekocht</div>
       <div class="suggestions">
         ${entries.map(e => `
           <span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
