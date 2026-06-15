@@ -106,6 +106,16 @@
       padding: 2px 7px; border-radius: 10px; font-weight: 700;
     }
 
+    /* Merk-toggle (huismerk / a-merk) */
+    .brand-toggle { display:flex; gap:5px; margin-top:6px; }
+    .brand-chip {
+      font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px;
+      background:var(--slate-100); color:var(--slate-500); cursor:pointer;
+      border:1.5px solid transparent; user-select:none;
+    }
+    .brand-chip.active { background:#eff6ff; color:#1d4ed8; border-color:#3b82f6; }
+    .cmp-product { font-size:11px; color:var(--slate-500); font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
     /* Recept-kaart in suggesties */
     .recipe-card {
       background: linear-gradient(135deg, #fffbeb, #fef3c7);
@@ -1291,19 +1301,53 @@
 
   const UNIT_LABEL = { l: '/l', kg: '/kg', st: '/st' };
   // Prijsvergelijking-block voor één item: goedkoopste winkel uitgelicht + andere winkels ernaast.
+  // Detecteer of een productnaam een huismerk is (begint met winkelnaam of bevat 'huismerk')
+  function isHuismerk(productName) {
+    const n = normalize(productName);
+    return /^(ah|jumbo|plus|lidl|etos|kruidvat)\b/.test(n) || n.includes('huismerk');
+  }
+
+  // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
+  function applyBrandPref(matches, pref) {
+    if (!pref) return matches;
+    const filtered = matches.filter(m => pref === 'huismerk' ? isHuismerk(m.p.name) : !isHuismerk(m.p.name));
+    return filtered.length ? filtered : matches; // altijd iets tonen
+  }
+
+  function setBrandPref(id, pref) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.brandPref = it.brandPref === pref ? null : pref; // toggle
+    saveItems(); render();
+  }
+
   function renderPriceComparison(it) {
     const res = findMatches(it.name, it.category);
-    const { matches, cheapest, hasData, comparedByUnit } = res;
+    const { hasData, comparedByUnit } = res;
     if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
-    if (!matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    if (!res.matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
 
-    // Sorteer goedkoopste eerst (op de gebruikte vergelijkings-maat).
-    // Matches zonder unitPrice (bv. Lidl zonder verpakkingsdata) zakken naar onder
-    // bij €/eenheid-vergelijking.
-    const key = comparedByUnit
-      ? (m => m.unitPrice ? m.unitPrice.value : Infinity)
-      : (m => m.eff);
+    const matches = applyBrandPref(res.matches, it.brandPref);
+
+    // Herbereken cheapest na filter
+    const withUnit = matches.filter(m => m.unitPrice);
+    const unitsList = withUnit.map(m => m.unitPrice.unit);
+    const sameUnit = unitsList.length >= 2 && unitsList.every(u => u === unitsList[0]);
+    const key = sameUnit ? (m => m.unitPrice ? m.unitPrice.value : Infinity) : (m => m.eff);
+    const cheapest = matches.reduce((a, b) => key(b) < key(a) ? b : a);
+
     const sorted = [...matches].sort((a, b) => key(a) - key(b));
+
+    // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
+    const hasHuis = res.matches.some(m => isHuismerk(m.p.name));
+    const hasAmerk = res.matches.some(m => !isHuismerk(m.p.name));
+    const safeId = it.id.replace(/'/g, "\\'");
+    const brandToggle = (hasHuis && hasAmerk) ? `
+      <div class="brand-toggle">
+        <span class="brand-chip${it.brandPref === 'amerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','amerk')">A-merk</span>
+        <span class="brand-chip${it.brandPref === 'huismerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','huismerk')">Huismerk</span>
+      </div>` : '';
+
     const rows = sorted.map(m => {
       const store = STORE_BY_ID[m.storeId];
       const isCheapest = m === cheapest;
@@ -1314,23 +1358,26 @@
         : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
       const unitTag = m.unitPrice
         ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>`
-        : (comparedByUnit ? `<span class="cmp-unit cmp-unit-missing">?/${cheapest.unitPrice?.unit || 'l'}</span>` : '');
-      // Diff alleen wanneer beide kanten een vergelijkbare maat hebben
-      const canDiff = comparedByUnit ? !!m.unitPrice : true;
+        : (sameUnit ? `<span class="cmp-unit cmp-unit-missing">?/${cheapest.unitPrice?.unit || 'l'}</span>` : '');
+      const canDiff = sameUnit ? !!m.unitPrice : true;
       const diff = canDiff ? key(m) - key(cheapest) : 0;
       const diffTag = (!isCheapest && canDiff && diff > 0)
-        ? `<span class="cmp-diff">+${fmtPrice(diff)}${comparedByUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
+        ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
+      // Merknaam altijd tonen (verkort)
+      const brandName = escapeHtml(m.p.name.length > 28 ? m.p.name.slice(0, 26) + '…' : m.p.name);
+      const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
           ${unitTag}
-          ${isCheapest ? `<span class="cmp-product">${escapeHtml(m.p.name)}${m.p.unit ? ' · ' + escapeHtml(m.p.unit) : ''}</span>` : diffTag}
+          <span class="cmp-product">${brandName}${unitStr}</span>
+          ${isCheapest ? '' : diffTag}
           ${bonusBadge}
         </div>`;
     }).join('');
-    return `<div class="cmp">${rows}</div>`;
+    return `<div class="cmp">${rows}${brandToggle}</div>`;
   }
 
   function renderPriceSummary() {
