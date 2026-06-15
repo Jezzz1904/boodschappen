@@ -2137,12 +2137,22 @@
         const norm = normalize(key);
         if (norm.includes(inp)) results.push({ label: titleCase(key), name: key, isVariantKey: true, histCount: history[key]?.count || 0, startsWith: norm.startsWith(inp) });
       }
-      for (const [, val] of Object.entries(VARIANTS)) {
-        const flat = val.groups ? Object.values(val.groups).flat() : (Array.isArray(val) ? val : []);
-        for (const v of flat) {
-          const norm = normalize(v);
-          if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
-            results.push({ label: v, name: v, isVariantKey: false, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+      for (const [key, val] of Object.entries(VARIANTS)) {
+        if (val.groups) {
+          for (const [groupName, items] of Object.entries(val.groups)) {
+            for (const v of items) {
+              const norm = normalize(v);
+              if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
+                results.push({ label: v, name: v, isVariantKey: false, parentKey: key, groupName, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+            }
+          }
+        } else {
+          const flat = Array.isArray(val) ? val : [];
+          for (const v of flat) {
+            const norm = normalize(v);
+            if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
+              results.push({ label: v, name: v, isVariantKey: false, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+          }
         }
       }
       for (const [k, v] of Object.entries(history)) {
@@ -2162,7 +2172,11 @@
             const cnt = r.histCount ? `<span class="chip-cnt">×${r.histCount}</span>` : '';
             const arrow = r.isVariantKey ? ` <span class="chip-cnt">→</span>` : '';
             const safe = escapeHtml(r.name).replace(/'/g, "\\'");
-            const action = r.isVariantKey ? `document.getElementById('add-input').value='${safe}';onInputChange()` : `quickAdd('${safe}')`;
+            const action = r.isVariantKey
+              ? `document.getElementById('add-input').value='${safe}';onInputChange()`
+              : r.parentKey
+                ? `selectVariantItem('${escapeHtml(r.parentKey).replace(/'/g,"\\'")}','${escapeHtml(r.groupName).replace(/'/g,"\\'")}','${safe}')`
+                : `quickAdd('${safe}')`;
             return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">${cat} ${escapeHtml(r.label)}${arrow}${cnt}</span>`;
           }).join('')}
         </div>`;
@@ -2248,6 +2262,12 @@
   function setVariantGroup(term, name) { activeVariantGroup = { term, name }; renderSuggestions(); }
   function clearVariantGroup() { activeVariantGroup = null; activePackaging = null; renderSuggestions(); }
 
+  function selectVariantItem(term, group, value) {
+    document.getElementById('add-input').value = term;
+    if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
+    variantPicks.picks[group] = value;
+    renderSuggestions();
+  }
   function toggleVariantPick(term, group, value) {
     if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
     if (variantPicks.picks[group] === value) delete variantPicks.picks[group];
