@@ -1,8 +1,8 @@
-const CACHE = 'boodschappen-v14';
-const ASSETS = ['./', './index.html', './manifest.json', './logo.svg'];
+const CACHE = 'boodschappen-v15';
+const STATIC = ['./manifest.json', './logo.svg'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -16,7 +16,20 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  // Prijsdata (dagelijks ververst) → network-first, val terug op cache bij offline.
+  // index.html → altijd network-first zodat updates direct zichtbaar zijn.
+  // Val terug op cache alleen als volledig offline.
+  if (url.pathname === '/' || url.pathname.endsWith('/index.html')) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Prijsdata → network-first, val terug op cache bij offline.
   if (url.pathname.includes('/data/') && url.pathname.endsWith('.json')) {
     e.respondWith(
       fetch(e.request).then(res => {
@@ -28,12 +41,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // App-shell en overige assets → cache-first (snel + offline).
+  // Overige assets (logo, manifest) → cache-first.
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }))
   );
 });
