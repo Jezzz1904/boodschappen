@@ -817,6 +817,7 @@
     { id:'houdbaar',  name:'Houdbaar',        emo:'🥫' },
     { id:'snacks',      name:'Snacks & Snoep',    emo:'🍫' },
     { id:'frisdranken', name:'Frisdranken',        emo:'🥤' },
+    { id:'koffie',      name:'Koffie & Thee',      emo:'☕' },
     { id:'alcoholisch', name:'Alcoholisch',         emo:'🍺' },
     { id:'drogist',     name:'Drogist',             emo:'🧴' },
     { id:'huishouden',name:'Huishouden',      emo:'🧻' },
@@ -833,7 +834,16 @@
     diepvries: ['diepvries','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','bevroren','frikandel'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
     snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
-    frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster','koffie','koffiepads','koffiecups','senseo','nespresso','dolce gusto','thee','thee zakjes','groene thee','rooibos'],
+    frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster'],
+    koffie: [
+      'koffie','koffiebonen','filterkoffie','espressokoffie','instantkoffie','oploskoffie',
+      'koffiepads','koffiecups','koffie pads','koffie cups','koffie bonen','filter koffie',
+      'espresso','lungo','ristretto','cappuccino','latte','americano',
+      'senseo','nespresso','dolce gusto','tassimo','jacobs','douwe egberts','de koffie jongens',
+      'thee','zwarte thee','groene thee','rooibos','kruidenthee','earl grey','pepermunt thee',
+      'kamille','gember thee','chai','thee zakjes','thee blaadjes','infusie',
+      'pickwick','lipton','clipper','yogi tea','pure leaf',
+    ],
     alcoholisch: ['bier','heineken','grolsch','amstel','speciaalbier','hertog jan','hoegaarden','leffe','duvel','weizen','ipa','pils','wijn','rode wijn','witte wijn','rosé','prosecco','cava','champagne','sterke drank','wodka','whisky','rum','gin','tequila','likeur','port','sherry','jenever','alcoholvrij bier'],
     drogist: ['shampoo','conditioner','douchegel','zeep','handzeep','tandpasta','tandenborstel','flosdraad','mondwater','deodorant','deo','parfum','bodylotion','crème','creme','dagcreme','nachtcreme','zonnebrand','aftersun','make-up','mascara','lippenstift','foundation','wattenstaafjes','wattenschijfjes','maandverband','tampons','inlegkruisjes','luiers','babydoekjes','billendoekjes','paracetamol','ibuprofen','aspirine','pleisters','pleister','desinfecterend','scheermes','scheerschuim','vitaminen','vitamine','supplementen','condooms'],
     huishouden: ['wc papier','toiletpapier','keukenpapier','tissues','zakdoekjes','vuilniszakken','afvalzakken','vaatwastabletten','vaatwasmiddel','afwasmiddel','allesreiniger','schoonmaakmiddel','wasmiddel','wasverzachter','vlekverwijderaar','aluminiumfolie','plasticfolie','vershoudfolie','bakpapier','boterhamzakjes','sponzen','vaatdoek','dweil','luchtverfrisser','wc reiniger','bleek','batterijen','batterij','lampen','lamp','aansteker','lucifers','kaarsen','plant','bloemen','aanmaakblokjes','houtskool'],
@@ -846,7 +856,16 @@
   let history = loadJson(HIST_KEY,  {});
 
   // Migreer opgeslagen items: 'dranken' → 'frisdranken' (categorie-split)
-  items.forEach(it => { if (it.category === 'dranken') it.category = 'frisdranken'; });
+  items.forEach(it => {
+    if (it.category === 'dranken') it.category = 'frisdranken';
+    // Migreer koffie/thee items die eerder als frisdranken waren gecategoriseerd
+    if (it.category === 'frisdranken') {
+      const n = normalize(it.name);
+      if (/koffie|thee|espresso|lungo|senseo|nespresso|cappuccino|latte|rooibos|earl grey|pickwick|lipton/.test(n)) {
+        it.category = 'koffie';
+      }
+    }
+  });
 
   // ── PRIJSDATA (meerdere winkels) ──
   // AH heeft bonus-data (eigen mobile-API scrape) + categorie. Jumbo via checkjebon: alleen reguliere prijs.
@@ -918,6 +937,22 @@
     // Sauzen afkortingen
     [/\bmayo\b/g, 'mayonaise'],
     [/\bketchup\b/g, 'ketchup'],
+    // Koffie compound-woorden splitsen zodat stemMatch werkt
+    [/\bkoffiebonen\b/g, 'koffie bonen'],
+    [/\bkoffiepads\b/g, 'koffie pads'],
+    [/\bkoffiecups\b/g, 'koffie cups'],
+    [/\bfilterkoffie\b/g, 'filter koffie'],
+    [/\bespressokoffie\b/g, 'espresso koffie'],
+    [/\binstantkoffie\b/g, 'instant koffie'],
+    [/\boploskoffie\b/g, 'oplos koffie'],
+    [/\bkoffiezetapparaat\b/g, 'koffie apparaat'],
+    // Thee compound-woorden splitsen
+    [/\bpepermuntthee\b/g, 'pepermunt thee'],
+    [/\bkruidenthee\b/g, 'kruiden thee'],
+    [/\bgroene\s*thee\b/g, 'groene thee'],
+    [/\bzwarte\s*thee\b/g, 'zwarte thee'],
+    [/\bgemberthee\b/g, 'gember thee'],
+    [/\bkamillethe\b/g, 'kamille thee'],
     // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
@@ -978,8 +1013,15 @@
     vis:          ['Zalm', 'Tonijn', 'Kabeljauw', 'Tilapia', 'Pangasius', 'Schol', 'Haring'],
     chocolade:    ['Pure chocolade', 'Melkchocolade', 'Witte chocolade', 'Hazelnoot chocolade'],
     chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
-    koffie:       ['Filterkoffie', 'Koffiebonen', 'Koffiepads', 'Senseo', 'Nespresso cups'],
-    thee:         ['Zwarte thee', 'Groene thee', 'Rooibos', 'Kruidenthee', 'Earl Grey', 'Pepermunt'],
+    koffie:       { groups: {
+                    'Type':    ['Koffiebonen', 'Filterkoffie', 'Koffiepads', 'Koffiecups', 'Instant koffie'],
+                    'Merk':    ['Douwe Egberts', 'Senseo', 'Nespresso', 'Jacobs', 'Lavazza', 'Illy', 'De Koffie Jongens', 'Starbucks'],
+                    'Stijl':   ['Espresso', 'Lungo', 'Ristretto', 'Cappuccino', 'Latte macchiato'],
+                  }},
+    thee:         { groups: {
+                    'Type':    ['Zwarte thee', 'Groene thee', 'Rooibos', 'Kruidenthee', 'Pepermunt thee', 'Gember thee', 'Kamille thee', 'Earl Grey', 'Chai'],
+                    'Merk':    ['Pickwick', 'Lipton', 'Clipper', 'Yogi Tea', 'Pure Leaf', 'Ahmad Tea'],
+                  }},
     wijn:         ['Rode wijn', 'Witte wijn', 'Rosé', 'Prosecco'],
     bier:         { groups: {
                     'Pils & helder':     ['Heineken', 'Hertog Jan', 'Grolsch', 'Amstel', 'Bavaria', 'Brand', 'Jupiler', 'Warsteiner', 'Bavaria 0.0', 'Heineken 0.0', 'Radler'],
@@ -1054,7 +1096,8 @@
     diepvries: ['Diepvries'],
     houdbaar:  ['Soepen, sauzen, kruiden, olie', 'Pasta, rijst, wereldkeuken', 'Ontbijtgranen, beleg', 'Maaltijden, salades', 'Glutenvrij', 'Vegetarisch, vegan en plantaardig'],
     snacks:    ['Koek, snoep, chocolade', 'Borrel, chips, snacks', 'Tussendoortjes'],
-    frisdranken: ['Frisdrank, sappen, water', 'Koffie, thee'],
+    frisdranken: ['Frisdrank, sappen, water'],
+    koffie:      ['Koffie, thee'],
     alcoholisch: ['Bier, wijn, aperitieven', 'Sterke drank'],
     drogist:   ['Drogisterij', 'Gezondheid en sport', 'Baby en kind'],
     huishouden:['Huishouden'],
@@ -2147,8 +2190,14 @@
     frisdranken: [
       'Spa rood','Spa blauw','Bronwater','Sinaasappelsap','Appelsap','Multivit','Smoothie',
       'Cola','Cola Zero','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris',
-      'Red Bull','Koffiebonen','Filterkoffie','Koffiepads','Senseo','Nespresso cups',
-      'Zwarte thee','Groene thee','Rooibos','Earl Grey',
+      'Red Bull',
+    ],
+    koffie: [
+      'Koffiebonen','Filterkoffie','Koffiepads','Koffiecups','Instant koffie',
+      'Douwe Egberts','Senseo','Nespresso','Jacobs','Lavazza',
+      'Espresso','Lungo','Ristretto',
+      'Zwarte thee','Groene thee','Rooibos','Earl Grey','Pepermunt thee','Kruidenthee',
+      'Pickwick','Lipton','Yogi Tea',
     ],
     alcoholisch: [
       'Heineken','Hertog Jan','Grolsch','Amstel','Bavaria','Brand','Jupiler','Pils',
