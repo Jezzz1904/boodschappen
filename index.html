@@ -460,7 +460,7 @@
     .browse-link:active { transform: scale(.98); }
 
     /* Browse-modal */
-    .modal.modal-browse { max-width: 540px; }
+    .modal.modal-browse { max-width: 520px; overflow-x: hidden; }
     .browse-head {
       display:flex; align-items:center; gap:10px;
       margin-bottom: 14px; min-height: 28px;
@@ -682,7 +682,7 @@
     .modal-bg {
       position: fixed; inset:0; background: rgba(15,23,42,.5);
       display:none; align-items: flex-end; justify-content: center;
-      z-index: 20; padding: 16px;
+      z-index: 20; padding: 16px; overflow: hidden;
     }
     .modal-bg.open { display:flex; }
     .modal {
