@@ -1184,8 +1184,50 @@
     gnocchi:      ['Verse gnocchi', 'Gnocchi tomaat mozzarella'],
     olie:         ['Olijfolie', 'Zonnebloemolie', 'Bakolie', 'Sesamolie'],
     bonen:        ['Sperziebonen', 'Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Kikkererwten'],
-    shampoo:      ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo'],
-    tandpasta:    ['Tandpasta white', 'Tandpasta gevoelige tanden', 'Tandpasta kids', 'Tandpasta original'],
+    shampoo:      { groups: {
+                    'Type':   ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo', 'Shampoo gekleurd haar'],
+                    'Merk':   ['Head & Shoulders', 'Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Herbal Essences', 'Huismerk'],
+                  }},
+    conditioner:  { groups: {
+                    'Type':   ['Conditioner normaal', 'Conditioner droog haar', 'Leave-in conditioner', 'Haarmasker'],
+                    'Merk':   ['Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Huismerk'],
+                  }},
+    douchegel:    { groups: {
+                    'Type':   ['Douchegel fris', 'Douchegel verzorgend', 'Douchegel sport', 'Douchegel men'],
+                    'Merk':   ['Dove', 'Nivea', 'Fa', 'Palmolive', 'Zwitsal', 'Axe', 'Huismerk'],
+                  }},
+    tandpasta:    { groups: {
+                    'Type':   ['Tandpasta whitening', 'Tandpasta gevoelige tanden', 'Tandpasta kids', 'Tandpasta original', 'Tandpasta complete'],
+                    'Merk':   ['Colgate', 'Oral-B', 'Aquafresh', 'Elmex', 'Sensodyne', 'Signal', 'Huismerk'],
+                  }},
+    deodorant:    { groups: {
+                    'Type':   ['Deodorant spray', 'Deodorant roller', 'Deodorant stick', 'Deodorant cream'],
+                    'Merk':   ['Dove', 'Nivea', 'Axe', 'Rexona', 'Sure', 'Fa', 'Huismerk'],
+                  }},
+    wasmiddel:    { groups: {
+                    'Type':   ['Vloeibaar wasmiddel', 'Wasmiddel capsules', 'Wasmiddel poeder', 'Wasmiddel kleur', 'Wasmiddel wit', 'Wasmiddel wol/fijn'],
+                    'Merk':   ['Ariel', 'Persil', 'Robijn', 'Omo', 'Bold', 'Dreft', 'Huismerk'],
+                  }},
+    wasverzachter:{ groups: {
+                    'Type':   ['Wasverzachter bloemen', 'Wasverzachter fris', 'Wasverzachter sport', 'Wasverzachter baby'],
+                    'Merk':   ['Robijn', 'Lenor', 'Comfort', 'Huismerk'],
+                  }},
+    afwasmiddel:  { groups: {
+                    'Type':   ['Afwasmiddel citroen', 'Afwasmiddel original', 'Afwasmiddel vet-oplossend'],
+                    'Merk':   ['Dreft', 'Fairy', 'Palmolive', 'Morning Fresh', 'Huismerk'],
+                  }},
+    vaatwastabletten: { groups: {
+                    'Type':   ['Vaatwastabletten all-in-1', 'Vaatwastabletten classic', 'Vaatwastabletten platinum', 'Vaatwastabletten pods'],
+                    'Merk':   ['Finish', 'Dreft', 'Somat', 'Sun', 'Huismerk'],
+                  }},
+    allesreiniger:{ groups: {
+                    'Type':   ['Allesreiniger spray', 'Allesreiniger citroen', 'Allesreiniger ontvet', 'Badkamerreiniger', 'Keukenreiniger'],
+                    'Merk':   ['Dettol', 'Mr. Proper', 'Flash', 'Ajax', 'Cif', 'Glorix', 'Huismerk'],
+                  }},
+    toiletpapier: { groups: {
+                    'Type':   ['2-laags toiletpapier', '3-laags toiletpapier', 'Vochtig toiletpapier', 'Bamboe toiletpapier'],
+                    'Merk':   ['Lotus', 'Zewa', 'Hakle', 'Kleenex', 'Huismerk'],
+                  }},
     // Sauzen & condimenten
     mayonaise:    ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise', 'Vegan mayonaise'],
     mayo:         ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise'],
