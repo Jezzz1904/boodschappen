@@ -864,7 +864,7 @@
     zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
     bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek'],
     vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol'],
-    diepvries: ['diepvries','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','bevroren','frikandel'],
+    diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
     snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
     frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster'],
@@ -1171,10 +1171,19 @@
                     'Overig':     ['Hummus', 'Kippenleverpastei', 'Ansjovis'],
                   }},
     vis:          { groups: {
-                    'Vers/gekoeld': ['Zalmfilet', 'Kabeljauwfilet', 'Tilapia', 'Pangasius', 'Schol', 'Tonijn steak', 'Zalm moot'],
-                    'Gerookt':      ['Gerookte zalm', 'Gerookte makreel', 'Gerookte haring', 'Gerookte forel'],
-                    'Diepvries':    ['Diepvries zalm', 'Vissticks', 'Garnalen diepvries', 'Diepvries kabeljauw'],
-                    'Blik/pot':     ['Tonijn op water', 'Tonijn op olie', 'Sardines', 'Makreel in tomatensaus', 'Haring in zuur'],
+                    'Soort':    ['Verse vis', 'Gerookte vis', 'Vis in blik', 'Diepvries vis', 'Garnalen'],
+                  }},
+    'verse vis':      { groups: {
+                    'Soort':    ['Zalmfilet', 'Kabeljauwfilet', 'Tilapia', 'Pangasius', 'Schol', 'Tonijn steak', 'Zalm moot'],
+                    'Merk':     ['AH', 'Lidl', 'Huismerk'],
+                  }},
+    'gerookte vis':   { groups: {
+                    'Soort':    ['Gerookte zalm', 'Gerookte makreel', 'Gerookte haring', 'Gerookte forel'],
+                    'Merk':     ['Foppen', 'Steur', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    'vis in blik':    { groups: {
+                    'Soort':    ['Tonijn op water', 'Tonijn op olie', 'Sardines', 'Makreel in tomatensaus', 'Haring in zuur', 'Zalm in blik'],
+                    'Merk':     ['Rio Mare', 'Princes', 'John West', 'AH', 'Huismerk'],
                   }},
     chocolade:    ['Pure chocolade', 'Melkchocolade', 'Witte chocolade', 'Hazelnoot chocolade'],
     chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
@@ -1192,25 +1201,30 @@
                     'Merk':  ['Albert Heijn huismerk', 'Baron de Lestac', 'Yellow Tail', 'Gallo', 'Hardys', 'Torres'],
                   }},
     bier:         { groups: {
-                    'Pils & helder':     ['Heineken', 'Hertog Jan', 'Grolsch', 'Amstel', 'Bavaria', 'Brand', 'Jupiler', 'Warsteiner', 'Bavaria 0.0', 'Heineken 0.0', 'Radler'],
-                    'Witbier':            ['Hoegaarden', 'Wieckse Witte', 'Texels Skuumkoppe', 'Korenwolf', 'Brand Weizen', 'Erdinger Weissbier'],
-                    'Tripel & abdij':    ['La Trappe Tripel', 'La Trappe Dubbel', 'La Trappe Blond', 'Affligem Tripel', 'Affligem Blond', 'Leffe Blond', 'Leffe Bruin', 'Westmalle Tripel', 'Karmeliet Tripel', 'Duvel', 'Chimay Rood'],
-                    'Craft & speciaal':  ['Brouwerij \'t IJ IPA', 'Lowlander IPA', 'Texels Skuumkoppe', 'La Chouffe', 'Maximus IPA', 'Jopen IPA', 'Gulpener', 'Vandestreek', 'Brand IPA', 'Brouwerij \'t IJ Zatte'],
+                    'Stijl': ['Pilsner', 'Witbier', 'IPA', 'Tripel', 'Dubbel', 'Abdijbier', 'Stout', 'Radler', 'Alcoholvrij bier'],
+                    'Merk':  ['Heineken', 'Amstel', 'Grolsch', 'Bavaria', 'Hertog Jan', 'Jupiler', 'Hoegaarden', 'La Trappe', 'Westmalle', 'Leffe', 'Duvel', 'Affligem', 'Brouwerij \'t IJ', 'Huismerk'],
                   }},
     water:        ['Spa rood', 'Spa blauw', 'Bronwater', 'Spa & fruit'],
     sap:          ['Sinaasappelsap', 'Appelsap', 'Multivit', 'Smoothie'],
     frisdrank:    ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris'],
     cola:         ['Coca-Cola', 'Coca-Cola Zero', 'Pepsi', 'Cola light'],
     pizza:        { groups: {
-                    'Diepvries':  ['Diepvries pizza Margherita', 'Diepvries pizza Salami', 'Diepvries pizza Hawaii', 'Diepvries pizza Quattro Stagioni', 'Diepvries pizza Pepperoni', 'Diepvries pizza Spinazie', 'Diepvries pizza BBQ kip'],
-                    'Vers':       ['Verse pizza Margherita', 'Verse pizza Salami', 'Verse pizza Hawaii', 'Verse pizza Quattro Formaggi', 'Verse pizza Pepperoni', 'Verse pizza Tonno'],
+                    'Soort':      ['Diepvries pizza', 'Verse pizza'],
+                  }},
+    'verse pizza':    { groups: {
+                    'Beleg':  ['Margherita', 'Salami', 'Hawaii', 'Quattro Formaggi', 'Pepperoni', 'Tonno', 'Vegetarisch'],
+                    'Merk':   ['AH', 'Lidl', 'Huismerk'],
                   }},
     ijs:          { groups: {
-                    'Emmertje':  ["Ben & Jerry's", 'Häagen-Dazs', 'Magnum emmertje', 'AH schepijs', 'Ola Carte d\'Or'],
-                    'Lolly':     ['Magnum', 'Cornetto', 'Calippo', 'Twister', 'Solero', 'Raketje'],
-                    'Smaak':     ['Vanille', 'Chocolade', 'Aardbei', 'Pistache', 'Stracciatella', 'Citroen'],
-                    'Overig':    ['IJsblokjes', 'Waterijs', 'Diepvries yoghurtijs'],
+                    'Type':      ['Schepijs emmertje', 'IJslolly', 'Waterijs', 'Yoghurtijs'],
+                    'Smaak':     ['Vanille', 'Chocolade', 'Aardbei', 'Pistache', 'Stracciatella', 'Citroen', 'Karamel'],
+                    'Merk':      ["Ben & Jerry's", 'Häagen-Dazs', 'Magnum', 'Ola', 'Cornetto', 'AH', 'Lidl', 'Huismerk'],
                   }},
+    ijslolly:     { groups: {
+                    'Soort':     ['Magnum', 'Cornetto', 'Calippo', 'Twister', 'Solero', 'Raketje', 'Waterijsje'],
+                    'Merk':      ['Ola', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    ijsblokjes:   ['IJsblokjes zak', 'IJsblokjes bol', 'IJsblokjes crushed'],
     crackers:     ['Cream crackers', 'Knäckebröd', 'Rijstwafels', 'Maïswafels'],
     beleg:        ['Hagelslag', 'Pindakaas', 'Chocopasta', 'Jam', 'Honing', 'Smeerkaas', 'Vleeswaren'],
     soep:         ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Bouillon'],
@@ -1268,15 +1282,85 @@
                     'Merk':   ['Lotus', 'Zewa', 'Hakle', 'Kleenex', 'Huismerk'],
                   }},
     'vochtig toiletpapier': ['Andrex vochtig', 'Cottonelle vochtig', 'Huismerk vochtig toiletpapier'],
+    zonnebrand:   { groups: {
+                    'SPF':    ['SPF 15', 'SPF 30', 'SPF 50', 'SPF 50+'],
+                    'Type':   ['Zonnebrand lotion', 'Zonnebrand spray', 'Zonnebrand stick', 'Kids zonnebrand', 'Gezicht zonnebrand', 'Aftersun'],
+                    'Merk':   ['Nivea Sun', 'Ambre Solaire', 'Piz Buin', 'Riemann P20', 'Eucerin', 'Zwitsal', 'Huismerk'],
+                  }},
+    luiers:       { groups: {
+                    'Maat':   ['Maat 1 (2-5 kg)', 'Maat 2 (3-6 kg)', 'Maat 3 (4-9 kg)', 'Maat 4 (7-18 kg)', 'Maat 5 (11-25 kg)', 'Maat 6 (13+ kg)'],
+                    'Type':   ['Luiers', 'Broekjesluiers', 'Nacht luiers'],
+                    'Merk':   ['Pampers', 'Huggies', 'Libero', 'Lillydoo', 'Lidl Lupilu', 'Huismerk'],
+                  }},
+    maandverband: { groups: {
+                    'Type':   ['Maandverband normaal', 'Maandverband nacht', 'Maandverband super', 'Inlegkruisjes', 'Tampons normaal', 'Tampons super', 'Menstruatiecup'],
+                    'Merk':   ['Always', 'Libresse', 'Tampax', 'OB', 'Huismerk'],
+                  }},
+    handzeep:     { groups: {
+                    'Type':   ['Vloeibare handzeep', 'Handzeep navulling', 'Antibacteriële handzeep', 'Handcrème'],
+                    'Merk':   ['Palmolive', 'Dettol', 'Dove', 'Sagrotan', 'Huismerk'],
+                  }},
+    bodylotion:   { groups: {
+                    'Type':   ['Bodylotion normaal', 'Bodylotion droge huid', 'Bodylotion parfumvrij', 'Body butter', 'Bodyolie'],
+                    'Merk':   ['Nivea', 'Dove', 'Palmer\'s', 'Vaseline', 'Zwitsal', 'Huismerk'],
+                  }},
+    vitaminen:    { groups: {
+                    'Type':   ['Vitamine D', 'Vitamine C', 'Vitamine B12', 'Multivitamine', 'Omega 3', 'Magnesium', 'IJzer', 'Zink', 'Foliumzuur'],
+                    'Merk':   ['Davitamon', 'Orthica', 'Holland & Barrett', 'AH huismerk'],
+                  }},
+    babydoekjes:  { groups: {
+                    'Type':   ['Babydoekjes normaal', 'Babydoekjes parfumvrij', 'Babydoekjes gevoelige huid', 'Billendoekjes'],
+                    'Merk':   ['Pampers', 'Huggies', 'WaterWipes', 'Zwitsal', 'Huismerk'],
+                  }},
+    // Diepvries
+    'diepvries groente': { groups: {
+                    'Soort':  ['Spinazie','Doperwten','Broccoli','Bloemkool','Haricots verts','Wokgroenten','Groentenmix','Maïs','Paprika mix','Uiringen','Courgette','Edamame'],
+                    'Type':   ['Heel','Fijngehakt','In stukjes','Mix'],
+                    'Merk':   ['McCain','Bonduelle','AH','Lidl','Huismerk'],
+                  }},
+    'diepvries fruit':  { groups: {
+                    'Soort':  ['Bosvruchten','Mango','Framboos','Aardbei','Blauwe bes','Kersen','Perzik','Ananas','Fruitcocktail'],
+                    'Type':   ['Heel','Gepureerd','Mix'],
+                    'Merk':   ['AH','Lidl','Huismerk'],
+                  }},
+    'diepvries pizza':  { groups: {
+                    'Bodem':  ['Dunne bodem','Dikke bodem','Volkoren','Glutenvrij'],
+                    'Beleg':  ['Margherita','Salami','Ham','Vier kazen','Tonijn','Hawai','BBQ kip','Vegetarisch'],
+                    'Merk':   ['Dr. Oetker','Wagner','AH','Lidl','Casa di Mama','Chicago Town','Huismerk'],
+                  }},
+    'diepvries vlees':  { groups: {
+                    'Soort':  ['Kipfilet','Kipnuggets','Kipschnitzel','Kippenpoten','Runderburger','Vegaburger'],
+                    'Merk':   ['Mora','AH','Lidl','Huismerk'],
+                  }},
+    'diepvries vis':    { groups: {
+                    'Soort':  ['Vissticks','Zalmfilet','Kabeljauwfilet','Garnalen','Calamares','Pangasius'],
+                    'Merk':   ['Iglo','AH','Lidl','Huismerk'],
+                  }},
+    'diepvries snacks': { groups: {
+                    'Soort':  ['Frikandel','Kroket','Loempia','Bitterballen','Kaassoufflé','Samosa','Naan brood','Bladerdeeg'],
+                    'Merk':   ['Mora','AH','Lidl','Huismerk'],
+                  }},
+    'diepvries maaltijd': { groups: {
+                    'Keuken': ['Pasta','Rijst','Aziatisch','Indiaas','Mexicaans','Hollands'],
+                    'Soort':  ['Lasagne','Spaghetti bolognese','Nasi','Bami','Paella','Kerrie'],
+                    'Merk':   ['AH','Iglo','Lidl','La Famiglia','Huismerk'],
+                  }},
+    friet:          { groups: {
+                    'Type':   ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes','Rösti','Hasselback','Zoete aardappelfriet'],
+                    'Merk':   ['McCain','Aviko','AH','Lidl','Huismerk'],
+                  }},
+    patat:          { groups: {
+                    'Type':   ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes'],
+                    'Merk':   ['McCain','Aviko','AH','Lidl','Huismerk'],
+                  }},
     // Sauzen & condimenten
     mayonaise:    ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise', 'Vegan mayonaise'],
     mayo:         ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise'],
     ketchup:      ['Heinz ketchup', 'Calvé ketchup', 'Remia ketchup', 'AH ketchup'],
     mosterd:      ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd'],
     chips:        { groups: {
-                    'Naturel':    ['Lays naturel', 'Croky naturel', 'AH naturel chips', 'Pringles original'],
-                    'Smaak':      ['Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Pickles chips', 'Pringles paprika', 'Pringles sour cream'],
-                    'Tortilla':   ['Tortilla chips naturel', 'Tortilla chips paprika', 'Doritos nacho cheese', 'Doritos cool ranch'],
+                    'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream', 'Cheese', 'Tortilla naturel', 'Tortilla paprika'],
+                    'Merk':  ['Lays', 'Croky', 'Pringles', 'Doritos', 'AH', 'Lidl', 'Huismerk'],
                   }},
   };
 
@@ -2457,13 +2541,14 @@
       'Beschuit','Crackers','Knäckebröd','Wraps','Tortilla','Pita','Naan','Bagel',
     ],
     vlees: [
-      'Kip','Gehakt','Vlees','Vis','Beleg',
-      'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst','Frikandel','Kroket',
-      'Garnalen','Mosselen','Haring','Sardines',
+      'Kip','Gehakt','Vlees','Beleg',
+      'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst',
+      'Verse vis','Gerookte vis','Vis in blik','Garnalen','Mosselen',
     ],
     diepvries: [
-      'Pizza','Ijs','Friet',
-      'Vissticks','Loempia','Doperwten','Diepvries groente','Bevroren fruit','Diepvries pasta',
+      'Diepvries groente','Diepvries fruit','Diepvries pizza','Verse pizza',
+      'Diepvries vlees','Diepvries vis','Diepvries snacks','Diepvries maaltijd',
+      'Friet','Ijs','IJslolly','IJsblokjes',
     ],
     houdbaar: [
       'Pasta','Rijst','Noedels','Olie','Soep',
