@@ -900,15 +900,19 @@
     const data = storeData[storeId];
     if (!data || !data.products || !data.products.length) return null;
     const store = STORE_BY_ID[storeId];
-    const itemWords = normWords(itemName);
-    if (!itemWords.length) return null;
+    // Strip woorden die de categorie zelf benoemen (bijv. "diepvries" in "Diepvries pizza"),
+    // zodat alleen het inhoudelijke deel matcht en de catBoost de rest doet.
+    const catIdWords = itemCategory ? [itemCategory] : [];
+    const itemWords = normWords(itemName).filter(w => !catIdWords.some(c => stemMatch(w, c)));
+    const effectiveWords = itemWords.length ? itemWords : normWords(itemName);
+    if (!effectiveWords.length) return null;
     const today = new Date().toISOString().slice(0, 10);
     const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
     const candidates = [];
     for (const p of data.products) {
       const productWords = normWords(p.name);
-      const allMatch = itemWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
+      const allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
       if (!allMatch) continue;
 
       let eff = (typeof p.price === 'number') ? p.price : null;
@@ -926,11 +930,11 @@
       // Hoog = product gáát over dit item. "Appel" → "Appel"=1.0, "1fruit appel"=0.5.
       const content = productWords.filter(w => !BRAND_NOISE.has(w));
       const denom = Math.max(content.length, 1);
-      const matchedContent = content.filter(pw => itemWords.some(iw => wordMatches(iw, pw))).length;
+      const matchedContent = content.filter(pw => effectiveWords.some(iw => wordMatches(iw, pw))).length;
       const coverage = matchedContent / denom;
       // Positie-bonus: item-woord vroeg in de naam
       let posBonus = 0;
-      for (const iw of itemWords) {
+      for (const iw of effectiveWords) {
         const idx = productWords.findIndex(pw => wordMatches(iw, pw));
         if (idx === 0) posBonus += 0.4;
         else if (idx === 1) posBonus += 0.2;
@@ -938,7 +942,7 @@
       // Ruis-penalty: bewerkte-product-woorden die het item niet noemt
       let noise = 0;
       for (const pw of productWords) {
-        if (NOISE_WORDS.has(pw) && !itemWords.some(iw => wordMatches(iw, pw))) noise++;
+        if (NOISE_WORDS.has(pw) && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
       }
       let catBoost = 0;
       if (itemCategory) {
