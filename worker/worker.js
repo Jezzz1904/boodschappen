@@ -104,6 +104,36 @@ export default {
     if (mode === 'ping') {
       return json({ ok: true, model: MODEL }, 200, corsHeaders);
     }
+
+    // ── LIJST DELEN (KV) ──────────────────────────────────────────────────────
+    if (mode === 'share-create') {
+      if (!env.LISTS) return json({ error: 'KV-namespace LISTS niet gekoppeld' }, 500, corsHeaders);
+      const code = randomCode();
+      const payload = { items: body.items || [], updatedAt: Date.now(), owner: body.owner || '' };
+      await env.LISTS.put(`list:${code}`, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 30 }); // 30 dagen
+      return json({ code }, 200, corsHeaders);
+    }
+    if (mode === 'share-read') {
+      if (!env.LISTS) return json({ error: 'KV-namespace LISTS niet gekoppeld' }, 500, corsHeaders);
+      const { code } = body;
+      if (!code) return json({ error: 'code vereist' }, 400, corsHeaders);
+      const raw = await env.LISTS.get(`list:${code}`);
+      if (!raw) return json({ error: 'Onbekende code' }, 404, corsHeaders);
+      return json(JSON.parse(raw), 200, corsHeaders);
+    }
+    if (mode === 'share-write') {
+      if (!env.LISTS) return json({ error: 'KV-namespace LISTS niet gekoppeld' }, 500, corsHeaders);
+      const { code, items } = body;
+      if (!code || !Array.isArray(items)) return json({ error: 'code + items vereist' }, 400, corsHeaders);
+      const existing = await env.LISTS.get(`list:${code}`);
+      if (!existing) return json({ error: 'Onbekende code' }, 404, corsHeaders);
+      const prev = JSON.parse(existing);
+      const payload = { ...prev, items, updatedAt: Date.now() };
+      await env.LISTS.put(`list:${code}`, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 30 });
+      return json({ ok: true, updatedAt: payload.updatedAt }, 200, corsHeaders);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     if (!PROMPTS[mode]) {
       return json({ error: `Onbekende modus: ${mode}. Geldig: ${Object.keys(PROMPTS).join(', ')}` }, 400, corsHeaders);
     }
@@ -141,6 +171,13 @@ export default {
     }
   },
 };
+
+function randomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // geen 0/O/I/1 (verwarring)
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
 
 function json(obj, status, extra) {
   return new Response(JSON.stringify(obj), {
