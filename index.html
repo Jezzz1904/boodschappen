@@ -119,12 +119,13 @@
 
     /* Multi-select variant builder */
     .variant-group-row {
-      display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .variant-group-label {
+      display: block;
       font-size: 10px; font-weight: 700; color: var(--slate-400);
-      text-transform: uppercase; letter-spacing: .05em;
-      min-width: 38px; padding-top: 6px; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 4px;
     }
     .chip.variant-chip-selected {
       background: var(--green-600); color: white; border-color: var(--green-600);
@@ -2222,7 +2223,7 @@
           const items = variants.groups[g];
           html += `<div class="variant-group-row">
             <span class="variant-group-label">${escapeHtml(g)}</span>
-            <div class="suggestions" style="flex:1;margin:0">
+            <div class="suggestions">
               ${items.map(v => {
                 const sel = picks[g] === v;
                 return `<span class="chip variant-chip${sel ? ' variant-chip-selected' : ''}"
@@ -2429,83 +2430,72 @@
   // Title-case zodat het direct als productnaam de lijst in kan.
   const BROWSE_CATALOG = {
     groente: [
+      // Fruit
       'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Druiven','Kiwi',
       'Aardbeien','Framboos','Blauwe bes','Meloen','Watermeloen','Ananas','Perzik','Nectarine',
-      'Pruim','Avocado','Tomaat','Cherrytomaten','Komkommer','Paprika','Wortel','Ui','Rode ui',
-      'Knoflook','Sla','IJsbergsla','Andijvie','Spinazie','Rucola','Broccoli','Bloemkool',
-      'Courgette','Aubergine','Prei','Aardappel','Krieltjes','Zoete aardappel','Champignons',
-      'Radijs','Rode kool','Witte kool','Spruitjes','Bieten','Sperziebonen','Asperges',
-      'Mais','Bosui','Peterselie','Basilicum','Gember','Munt',
+      'Pruim','Avocado',
+      // Groente
+      'Tomaat','Komkommer','Paprika','Wortel','Ui','Knoflook','Sla',
+      'Andijvie','Spinazie','Rucola','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
+      'Aardappel','Zoete aardappel','Champignons','Radijs','Rode kool','Witte kool',
+      'Spruitjes','Bieten','Sperziebonen','Asperges','Mais','Bosui',
+      // Kruiden
+      'Peterselie','Basilicum','Gember','Munt','Koriander','Tijm','Rozemarijn',
     ],
     zuivel: [
-      'Halfvolle melk','Volle melk','Magere melk','Karnemelk','Sojadrink','Havermelk',
-      'Yoghurt naturel','Griekse yoghurt','Magere kwark','Volle kwark','Vanillevla','Chocoladevla',
-      'Slagroom','Kookroom','Crème fraîche','Roomboter','Margarine','Eieren',
-      'Jong belegen kaas','Belegen kaas','Oude kaas','Geraspte kaas','Smeerkaas','Mozzarella',
-      'Feta','Geitenkaas','Brie','Cottage cheese','Pudding','Dessert',
+      'Melk','Yoghurt','Kwark','Vla','Karnemelk','Slagroom','Room','Boter','Kaas','Eieren',
+      'Smeerkaas','Pudding','Toetje',
     ],
     bakkerij: [
-      'Bruin brood','Wit brood','Volkoren brood','Tijgerbrood','Stokbrood','Pistolet','Broodje',
-      'Bolletje','Croissant','Krentenbol','Rozijnenbol','Beschuit','Crackers','Knäckebröd',
-      'Wraps','Tortilla','Pita','Naan','Bagel','Cake','Muffin',
+      'Brood','Croissant','Viennoiserie',
+      'Beschuit','Crackers','Knäckebröd','Wraps','Tortilla','Pita','Naan','Bagel',
     ],
     vlees: [
-      'Kipfilet','Kipdijfilet','Kippenpoten','Kipschnitzel','Kipgehakt','Kalkoenfilet',
-      'Rundergehakt','Half-om-half gehakt','Biefstuk','Runderlap','Varkenshaas','Speklap',
-      'Spek','Bacon','Ham','Beenham','Schouderham','Salami','Worst','Rookworst','Knakworst',
-      'Braadworst','Frikandel','Kroket','Zalmfilet','Tonijn','Kabeljauw','Tilapia',
-      'Garnalen','Mosselen','Haring','Makreel','Sardines','Schol',
+      'Kip','Gehakt','Vlees','Vis','Beleg',
+      'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst','Frikandel','Kroket',
+      'Garnalen','Mosselen','Haring','Sardines',
     ],
     diepvries: [
-      'Diepvries pizza','Friet','Aardappelpartjes','Vanille-ijs','IJsblokjes','Ben & Jerry\'s',
-      'Magnum','Vissticks','Loempia','Spinazie diepvries','Doperwten','Diepvries groente',
-      'Bevroren fruit','Pizza margherita','Diepvries pasta',
+      'Pizza','Ijs','Friet',
+      'Vissticks','Loempia','Doperwten','Diepvries groente','Bevroren fruit','Diepvries pasta',
     ],
     houdbaar: [
-      'Spaghetti','Penne','Macaroni','Lasagne','Tagliatelle','Farfalle','Basmati rijst',
-      'Jasmijnrijst','Risottorijst','Couscous','Bulgur','Quinoa','Noedels','Mie',
-      'Olijfolie','Zonnebloemolie','Azijn','Balsamico','Sojasaus','Ketchup','Mayonaise',
-      'Mosterd','Sambal','Pesto','Bouillon','Tomatenblokjes','Tomatenpuree','Passata',
-      'Kikkererwten in blik','Bonen in blik','Linzen','Soep','Bloem','Suiker','Zout','Peper',
-      'Honing','Jam','Hagelslag','Pindakaas','Chocoladepasta','Muesli','Cornflakes','Havermout',
-      'Rijstwafels','Olijven','Augurken','Kappertjes',
+      'Pasta','Rijst','Noedels','Olie','Soep',
+      'Azijn','Balsamico','Sojasaus','Ketchup','Mayonaise','Mosterd','Sambal','Pesto',
+      'Bouillon','Tomatenblokjes','Tomatenpuree','Passata',
+      'Kikkererwten in blik','Bonen in blik','Linzen',
+      'Bloem','Suiker','Zout','Peper','Honing','Jam','Hagelslag','Pindakaas','Chocoladepasta',
+      'Muesli','Cornflakes','Havermout','Rijstwafels','Olijven','Augurken',
     ],
     snacks: [
-      'Chips naturel','Paprika chips','Bolognese chips','Tortilla chips','Borrelnootjes',
-      'Popcorn','Ongezouten noten','Cashewnoten','Pinda\'s','Pure chocolade','Melkchocolade',
-      'Witte chocolade','Tony Chocolonely','Reep','Drop','Wine gums','Stroopwafel','Speculaas',
-      'Liga','Sultana','Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
+      'Chips','Chocolade',
+      'Borrelnootjes','Popcorn','Cashewnoten','Pinda\'s',
+      'Drop','Wine gums','Stroopwafel','Speculaas','Liga','Sultana',
+      'Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
     ],
     frisdranken: [
-      'Spa rood','Spa blauw','Bronwater','Sinaasappelsap','Appelsap','Multivit','Smoothie',
-      'Cola','Cola Zero','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris',
-      'Red Bull',
+      'Water','Sap','Cola','Frisdrank',
+      'Spa rood','Spa blauw','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris','Red Bull',
     ],
     koffie: [
-      'Koffiebonen','Filterkoffie','Koffiepads','Koffiecups','Instant koffie',
-      'Douwe Egberts','Senseo','Nespresso','Jacobs','Lavazza',
-      'Espresso','Lungo','Ristretto',
-      'Zwarte thee','Groene thee','Rooibos','Earl Grey','Pepermunt thee','Kruidenthee',
-      'Pickwick','Lipton','Yogi Tea',
+      'Koffie','Thee',
     ],
     alcoholisch: [
-      'Heineken','Hertog Jan','Grolsch','Amstel','Bavaria','Brand','Jupiler','Pils',
-      'Hoegaarden','Leffe','Duvel','Alcoholvrij bier','Rode wijn','Witte wijn','Rosé',
-      'Prosecco','Cava','Champagne','Gin','Wodka','Whisky','Rum','Jenever',
+      'Bier','Wijn',
+      'Gin','Wodka','Whisky','Rum','Jenever',
     ],
     drogist: [
-      'Shampoo','Conditioner','Douchegel','Handzeep','Tandpasta','Tandenborstel','Flosdraad',
-      'Mondwater','Deodorant','Bodylotion','Dagcrème','Zonnebrand','Aftersun','Make-up remover',
-      'Wattenstaafjes','Wattenschijfjes','Maandverband','Tampons','Inlegkruisjes','Luiers',
-      'Babydoekjes','Paracetamol','Ibuprofen','Aspirine','Pleisters','Vitaminen',
-      'Scheermesjes','Scheerschuim',
+      'Shampoo','Conditioner','Douchegel','Tandpasta','Deodorant',
+      'Handzeep','Tandenborstel','Flosdraad','Mondwater','Bodylotion',
+      'Dagcrème','Zonnebrand','Aftersun','Make-up remover',
+      'Maandverband','Tampons','Luiers','Babydoekjes',
+      'Paracetamol','Ibuprofen','Pleisters','Vitaminen','Scheermesjes',
     ],
     huishouden: [
-      'WC papier','Keukenpapier','Tissues','Zakdoekjes','Vuilniszakken','Vaatwastabletten',
-      'Afwasmiddel','Allesreiniger','Wasmiddel','Wasverzachter','Vlekverwijderaar',
-      'Aluminiumfolie','Vershoudfolie','Bakpapier','Boterhamzakjes','Sponzen','Vaatdoek',
-      'Dweil','Luchtverfrisser','WC reiniger','Bleek','Batterijen','Lampen','Aansteker',
-      'Lucifers','Kaarsen','Bloemen','Houtskool','Aanmaakblokjes',
+      'Toiletpapier','Vaatwastabletten','Afwasmiddel','Wasmiddel','Wasverzachter','Allesreiniger',
+      'Keukenpapier','Tissues','Vuilniszakken','Vlekverwijderaar',
+      'Aluminiumfolie','Vershoudfolie','Bakpapier','Sponzen',
+      'Batterijen','Kaarsen','Lucifers',
     ],
   };
 
