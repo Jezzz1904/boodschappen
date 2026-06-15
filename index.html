@@ -1494,9 +1494,26 @@
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
       // Merknaam + verpakking tonen
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
-      // Verpakkingstype uit naam extraheren (blik, fles, pak, karton, etc.)
-      const packMatch = m.p.name.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik|fust|vat|doos)\b/i);
-      const packBadge = packMatch ? `<span class="pack-badge">${packMatch[1].toLowerCase()}</span>` : '';
+      // Verpakkingstype: expliciet woord in naam, anders afleiden uit volume
+      const packWordMatch = m.p.name.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik|fust|vat|doos)\b/i);
+      let packLabel = packWordMatch ? packWordMatch[1].toLowerCase() : null;
+      if (!packLabel) {
+        // Volume-inferentie: "6 x 250ml" of "250ml" → blikje; "1,5l" / "2l" → fles
+        const src = (m.p.name + ' ' + (m.p.unit || '')).toLowerCase();
+        const singleVol = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*ml\b/);
+        const multiVol  = src.match(/(\d+)\s*x\s*(\d+(?:[.,]\d+)?)\s*ml\b/i);
+        const litres    = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*(?:l|liter)\b/);
+        if (multiVol) {
+          const ml = parseFloat(multiVol[2].replace(',', '.'));
+          packLabel = ml <= 500 ? 'blikjes' : 'flesjes';
+        } else if (singleVol) {
+          const ml = parseFloat(singleVol[1].replace(',', '.'));
+          packLabel = ml <= 500 ? 'blikje' : 'fles';
+        } else if (litres) {
+          packLabel = 'fles';
+        }
+      }
+      const packBadge = packLabel ? `<span class="pack-badge">${packLabel}</span>` : '';
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
