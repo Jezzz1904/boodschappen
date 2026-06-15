@@ -837,6 +837,11 @@
     [/\bappelsap\b/g, 'appel sap'],
     [/\bsinaasappelsap\b/g, 'sinaasappel sap'],
     [/\bvruchtensap\b/g, 'vruchtensap'],
+    [/\bpastasaus\b/g, 'pastasaus'],        // bewust niet splitsen — compound houden
+    [/\bpestosaus\b/g, 'pestosaus'],
+    [/\bpasta saus\b/g, 'pastasaus'],       // AH schrijft het soms los
+    [/\bpesto saus\b/g, 'pestosaus'],
+    [/\bverse pasta\b/g, 'verse pasta'],
     [/\bkipfilet\b/g, 'kip filet'],
     [/\bkipschnitzel\b/g, 'kip schnitzel'],
     [/\bkipgehakt\b/g, 'kip gehakt'],
@@ -853,11 +858,17 @@
   const BRAND_NOISE = new Set(['ah','jumbo','g','de','jumbos']);
   // Bewerkte-product-indicatoren: als product dit bevat maar het item niet, straf af
   // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
-  const NOISE_WORDS = new Set(['drink','sap','sapje','saus','wafels','wafel','koek','koekjes','snack','snacks','mix','ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak','toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep','pasta','pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade','puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread']);
+  // "pasta" en "saus" zijn hier bewust weggelaten: ze zitten in samengestelde productnamen
+  // zoals "pastasaus" en "pestosaus" en veroorzaken anders onterechte noise-penalty.
+  const NOISE_WORDS = new Set(['drink','sap','sapje','wafels','wafel','koek','koekjes','snack','snacks','mix','ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak','toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep','pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade','puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread']);
 
   // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
   const VARIANTS = {
-    pasta:        ['Spaghetti', 'Penne', 'Macaroni', 'Lasagne', 'Tagliatelle', 'Farfalle', 'Fusilli'],
+    pasta:        { groups: {
+                    'Droog':       ['Spaghetti', 'Penne', 'Macaroni', 'Lasagne', 'Tagliatelle', 'Farfalle', 'Fusilli'],
+                    'Vers gevuld': ['Tortelloni', 'Cappelletti', 'Ravioli', 'Tortellini'],
+                    'Vers overig': ['Verse gnocchi', 'Verse tagliatelle', 'Verse spaghetti'],
+                  }},
     rijst:        ['Basmati rijst', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst'],
     noedels:      ['Mie', 'Boemboe noedels', 'Ramen', 'Soba'],
     melk:         ['Halfvolle melk', 'Volle melk', 'Magere melk', 'Karnemelk'],
@@ -913,6 +924,12 @@
     beleg:        ['Hagelslag', 'Pindakaas', 'Chocopasta', 'Jam', 'Honing', 'Smeerkaas', 'Vleeswaren'],
     soep:         ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Bouillon'],
     saus:         ['Pastasaus', 'Tomatensaus', 'Pesto', 'Sojasaus', 'Sweet chili', 'Ketchup'],
+    pastasaus:    ['Pastasaus basilicum', 'Pastasaus carbonara', 'Pastasaus bolognese', 'Pastasaus arrabbiata', 'Pastasaus pomodori'],
+    pestosaus:    ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese', 'Pestosaus'],
+    tortelloni:   ['Tortelloni ricotta spinazie', 'Tortelloni kaas', 'Tortelloni ham'],
+    cappelletti:  ['Cappelletti prosciutto', 'Cappelletti kaas', 'Cappelletti kip'],
+    ravioli:      ['Ravioli ricotta spinazie', 'Ravioli 5 formaggio', 'Ravioli funghi'],
+    gnocchi:      ['Verse gnocchi', 'Gnocchi tomaat mozzarella'],
     olie:         ['Olijfolie', 'Zonnebloemolie', 'Bakolie', 'Sesamolie'],
     bonen:        ['Sperziebonen', 'Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Kikkererwten'],
     shampoo:      ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo'],

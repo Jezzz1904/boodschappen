@@ -32,7 +32,10 @@ const SEARCH_TERMS = [
   'kipfilet','kipdij','kippenpoot','kalkoen','rundergehakt','gehakt','biefstuk','varkenshaas','speklap',
   'spek','bacon','ham','salami','worst','rookworst','knakworst','zalm','tonijn','kabeljauw','garnalen','vis',
   // Diepvries
-  'pizza','friet','ijs','ijsje','vissticks','loempia','doperwten','spinaziepuree',
+  'pizza','friet','ijs','ijsje','vissticks','loempia','doperwten','spinaziepuree','aardappelpartjes','aardappelschijfjes',
+  // Verse pasta & pastasauzen
+  'verse pasta','tortelloni','cappelletti','ravioli','gnocchi','tortellini','verse gnocchi',
+  'pastasaus','pestosaus','pastasaus carbonara','pastasaus bolognese',
   // Houdbaar
   'pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','noedels','mie','olijfolie','zonnebloemolie',
   'azijn','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','bouillon','tomatenblok','tomatenpuree',
