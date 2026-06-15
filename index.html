@@ -2067,8 +2067,9 @@
 
   // ── AI TIPS ──
   const AI_URL_KEY = 'boodschappen.aiUrl';
+  const AI_URL_DEFAULT = 'https://boodschappen-ai.jerome-67a.workers.dev';
 
-  function getAIUrl() { try { return localStorage.getItem(AI_URL_KEY) || ''; } catch { return ''; } }
+  function getAIUrl() { try { return localStorage.getItem(AI_URL_KEY) || AI_URL_DEFAULT; } catch { return AI_URL_DEFAULT; } }
   function setAIUrl(url) {
     try { localStorage.setItem(AI_URL_KEY, url.replace(/\/$/, '')); } catch {}
     renderTipsConfig();
