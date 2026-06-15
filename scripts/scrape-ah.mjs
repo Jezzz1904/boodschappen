@@ -45,9 +45,14 @@ const SEARCH_TERMS = [
   'chips','popcorn','chocolade','reep','snoep','drop','koekjes','stroopwafel','speculaas','liga',
   'water','spa','vruchtensap','sinaasappelsap','appelsap','cola','fanta','sprite','ice tea','aquarius',
   'dubbelfris','red bull','bier','heineken','wijn','rode wijn','witte wijn','koffie','koffiepads','thee',
+  'tonic','royal club tonic','ginger beer','bitter lemon',
+  'coca cola zero','coca cola light','fanta orange','sprite zero',
   // Drogist
   'shampoo','douchegel','tandpasta','tandenborstel','deodorant','bodylotion','zonnebrand','paracetamol',
   'ibuprofen','pleisters','luiers','babydoekjes','maandverband',
+  // Wereldkeuken
+  'conimex','kroepoek','kokosmelk','nasigoreng','bamigoreng','ketjap','seroendeng',
+  'heinz ketchup','heinz','worcestersaus',
   // Huishouden
   'wc papier','keukenpapier','tissues','vuilniszakken','vaatwastabletten','afwasmiddel','allesreiniger',
   'wasmiddel','wasverzachter','aluminiumfolie','vershoudfolie','bakpapier','sponzen','batterijen',
@@ -136,9 +141,9 @@ function computeEffectivePrice(p) {
       case 'DISCOUNT_ONE_FREE': {
         // "2e gratis" → count=2, freeCount=1 → betaal 1, krijg 2 = before/2
         // "2+1 gratis" → count=3, freeCount=1 → betaal 2, krijg 3 = before * 2/3
+        // "2e halve prijs" → count=2, free=0.5 → betaal 1.5, krijg 2 = before * 0.75
         let count = dl.count, free = dl.freeCount;
         if (count == null || free == null) {
-          // freeCount ontbreekt vaak — leid af uit mechanism text
           const m = (p.bonusMechanism || dl.defaultDescription || '').toLowerCase();
           if (/2e gratis/.test(m)) { count = 2; free = 1; }
           else if (/1\s*\+\s*1/.test(m)) { count = 2; free = 1; }
@@ -146,9 +151,11 @@ function computeEffectivePrice(p) {
           else if (/3\s*\+\s*1/.test(m)) { count = 4; free = 1; }
           else if (/2e halve/.test(m)) { count = 2; free = 0.5; }
         }
-        if (before != null && count > 0 && free != null) {
+        // AH vult priceBeforeBonus soms niet in bij conditionele deals — gebruik dan currentPrice
+        const basePrice = before ?? cur;
+        if (basePrice != null && count > 0 && free != null) {
           const paid = count - free;
-          if (paid > 0) return +(before * paid / count).toFixed(2);
+          if (paid > 0) return +(basePrice * paid / count).toFixed(2);
         }
         break;
       }
