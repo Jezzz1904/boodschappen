@@ -1472,199 +1472,139 @@
     wrap.innerHTML = html;
   }
 
-  function renderSuggestions() {
-    const wrap = document.getElementById('suggestions-wrap');
-    const inp = document.getElementById('add-input').value.trim().toLowerCase();
-    const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
-
-    // 0. Recept-match: exacte of gedeeltelijke naam
-    if (inp && inp.length >= 3) {
-      const recipeKey = Object.keys(RECIPES).find(k => k.includes(inp) || inp.includes(k));
-      if (recipeKey) {
-        const recipe = RECIPES[recipeKey];
-        const safeName = recipeKey.replace(/'/g, "\\'");
-        wrap.innerHTML = `
-          <div class="recipe-card">
-            <div class="recipe-title">${recipe.emo} ${titleCase(recipeKey)}</div>
-            <div class="recipe-ingredients">
-              ${recipe.ingredients.map(i => `<span class="recipe-ing-chip">${escapeHtml(i)}</span>`).join('')}
-            </div>
-            <button class="recipe-add-btn" onclick="addRecipe('${safeName}')">
-              + Voeg alle ingrediënten toe
-            </button>
-          </div>`;
-        return;
-      }
-    }
-
-    // 1. Generieke term → varianten tonen (jouw historie sorteert ze)
+  // Geeft HTML terug voor VARIANTS-submenu's, autocomplete en "vaak gekocht" (zonder recepten).
+  function buildRestHTML(inp, onList) {
     const variants = inp && VARIANTS[inp];
     if (variants) {
-      // 1a. Genest schema (bv. bier → submenu's per stijl)
       if (variants.groups) {
         const groupNames = Object.keys(variants.groups);
-        // Drill-in: een submenu geselecteerd?
         if (activeVariantGroup && activeVariantGroup.term === inp && variants.groups[activeVariantGroup.name]) {
           const list = variants.groups[activeVariantGroup.name]
             .filter(v => !onList.has(normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')))
             .map(v => ({ name: v, count: history[normalize(v) + (activePackaging ? ' ' + normalize(activePackaging) : '')]?.count || 0 }))
             .sort((a, b) => b.count - a.count);
           const packs = PACKAGINGS[inp] || [];
-          wrap.innerHTML = `
+          return `
             <div class="suggestions-label">${escapeHtml(activeVariantGroup.name)} <span style="color:var(--slate-400);font-weight:600;letter-spacing:0;text-transform:none">— soort ${escapeHtml(inp)}</span></div>
-            ${packs.length ? `
-              <div class="suggestions" style="margin-bottom:8px">
-                ${packs.map(p => `
-                  <span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">
-                    📦 ${escapeHtml(p)}
-                  </span>`).join('')}
-              </div>` : ''}
+            ${packs.length ? `<div class="suggestions" style="margin-bottom:8px">
+              ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">📦 ${escapeHtml(p)}</span>`).join('')}
+            </div>` : ''}
             <div class="suggestions">
               <span class="chip chip-back" onclick="clearVariantGroup()">← Terug</span>
-              ${list.map(v => `
-                <span class="chip variant-chip" onclick="quickAddWithPack('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
-                  ${escapeHtml(v.name)}${activePackaging ? ` <span class="chip-cnt">${escapeHtml(activePackaging)}</span>` : ''}
-                  ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
-                </span>`).join('')}
-              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
-                + ${escapeHtml(inp)} (zonder soort)
-              </span>
+              ${list.map(v => `<span class="chip variant-chip" onclick="quickAddWithPack('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+                ${escapeHtml(v.name)}${activePackaging ? ` <span class="chip-cnt">${escapeHtml(activePackaging)}</span>` : ''}
+                ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+              </span>`).join('')}
+              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
             </div>`;
-          return;
         }
-        // Hoofdmenu: 4 groep-chips
-        wrap.innerHTML = `
+        return `
           <div class="suggestions-label">Welke soort ${escapeHtml(inp)}?</div>
           <div class="suggestions">
-            ${groupNames.map(g => `
-              <span class="chip chip-group" onclick="setVariantGroup('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g, "\\'")}')">
-                ${escapeHtml(g)} →
-              </span>`).join('')}
-            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
-              + ${escapeHtml(inp)} (zonder soort)
-            </span>
+            ${groupNames.map(g => `<span class="chip chip-group" onclick="setVariantGroup('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g, "\\'")}')">
+              ${escapeHtml(g)} →
+            </span>`).join('')}
+            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
           </div>`;
-        return;
       }
-      // 1b. Plat schema (bestaande logica)
-      if (variants.length) {
-        const ranked = variants
-          .filter(v => !onList.has(normalize(v)))
+      if (Array.isArray(variants) && variants.length) {
+        const ranked = variants.filter(v => !onList.has(normalize(v)))
           .map(v => ({ name: v, count: history[normalize(v)]?.count || 0 }))
           .sort((a, b) => b.count - a.count);
-        if (ranked.length) {
-          wrap.innerHTML = `
-            <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
-            <div class="suggestions">
-              ${ranked.map(v => `
-                <span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
-                  ${escapeHtml(v.name)}
-                  ${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
-                </span>`).join('')}
-              <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">
-                + ${escapeHtml(inp)} (zonder soort)
-              </span>
-            </div>`;
-          return;
-        }
+        if (ranked.length) return `
+          <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
+          <div class="suggestions">
+            ${ranked.map(v => `<span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+              ${escapeHtml(v.name)}${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+            </span>`).join('')}
+            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+          </div>`;
       }
     }
-
-    // 2. Autocomplete: combineer VARIANTS-sleutels, alle variant-waarden en historie
     if (inp) {
-      const results = []; // { label, name, isVariantKey, histCount, startsWith }
-
-      // 2a. VARIANTS-sleutels die matchen (bv. "piz" → "pizza")
+      const results = [];
       for (const key of Object.keys(VARIANTS)) {
         if (onList.has(key)) continue;
         const norm = normalize(key);
-        if (norm.includes(inp)) {
-          results.push({ label: titleCase(key), name: key, isVariantKey: true,
-                         histCount: history[key]?.count || 0,
-                         startsWith: norm.startsWith(inp) });
-        }
+        if (norm.includes(inp)) results.push({ label: titleCase(key), name: key, isVariantKey: true, histCount: history[key]?.count || 0, startsWith: norm.startsWith(inp) });
       }
-
-      // 2b. Alle individuele variant-waarden (plat + genest) die matchen
-      for (const [key, val] of Object.entries(VARIANTS)) {
-        const items2 = val.groups
-          ? Object.values(val.groups).flat()
-          : (Array.isArray(val) ? val : []);
-        for (const v of items2) {
+      for (const [, val] of Object.entries(VARIANTS)) {
+        const flat = val.groups ? Object.values(val.groups).flat() : (Array.isArray(val) ? val : []);
+        for (const v of flat) {
           const norm = normalize(v);
-          if (norm.includes(inp) && !onList.has(norm)) {
-            // Sla op als VARIANTS-sleutel al toegevoegd is
-            if (results.some(r => r.name === key && r.isVariantKey) && norm === normalize(key)) continue;
-            results.push({ label: v, name: v, isVariantKey: false,
-                           histCount: history[norm]?.count || 0,
-                           startsWith: norm.startsWith(inp) });
-          }
+          if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
+            results.push({ label: v, name: v, isVariantKey: false, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
         }
       }
-
-      // 2c. Historie-entries die nog niet door bovenstaande gedekt zijn
       for (const [k, v] of Object.entries(history)) {
         if (onList.has(k)) continue;
         const norm = normalize(v.name);
-        if ((k.includes(inp) || norm.includes(inp)) && !results.some(r => normalize(r.name) === k)) {
-          results.push({ label: v.name, name: v.name, isVariantKey: false,
-                         histCount: v.count || 0, startsWith: k.startsWith(inp),
-                         category: v.category });
-        }
+        if ((k.includes(inp) || norm.includes(inp)) && !results.some(r => normalize(r.name) === k))
+          results.push({ label: v.name, name: v.name, isVariantKey: false, histCount: v.count || 0, startsWith: k.startsWith(inp), category: v.category });
       }
-
-      // Sorteren: starts-with eerst, dan variant-sleutels voor, dan op histCount
-      results.sort((a, b) => {
-        if (a.startsWith !== b.startsWith) return a.startsWith ? -1 : 1;
-        if (a.isVariantKey !== b.isVariantKey) return a.isVariantKey ? -1 : 1;
-        return b.histCount - a.histCount;
-      });
-
+      results.sort((a, b) => (b.startsWith - a.startsWith) || (b.isVariantKey - a.isVariantKey) || (b.histCount - a.histCount));
       const shown = results.slice(0, 10);
-      if (!shown.length) { wrap.innerHTML = ''; return; }
-
-      wrap.innerHTML = `
+      if (!shown.length) return '';
+      return `
         <div class="suggestions-label">Suggesties</div>
         <div class="suggestions">
           ${shown.map(r => {
             const cat = r.category ? (CAT_BY_ID[r.category]?.emo || '📦') : (r.isVariantKey ? '🔍' : '📦');
             const cnt = r.histCount ? `<span class="chip-cnt">×${r.histCount}</span>` : '';
             const arrow = r.isVariantKey ? ` <span class="chip-cnt">→</span>` : '';
-            const safeName = escapeHtml(r.name).replace(/'/g, "\\'");
-            const action = r.isVariantKey
-              ? `document.getElementById('add-input').value='${safeName}';onInputChange()`
-              : `quickAdd('${safeName}')`;
-            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">
-              ${cat} ${escapeHtml(r.label)}${arrow}${cnt}
-            </span>`;
+            const safe = escapeHtml(r.name).replace(/'/g, "\\'");
+            const action = r.isVariantKey ? `document.getElementById('add-input').value='${safe}';onInputChange()` : `quickAdd('${safe}')`;
+            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">${cat} ${escapeHtml(r.label)}${arrow}${cnt}</span>`;
           }).join('')}
         </div>`;
-      return;
     }
-
-    // 3. Leeg veld: meest recent / vaak gekocht uit historie
-    let entries = Object.entries(history)
-      .filter(([k]) => !onList.has(k))
-      .map(([k, v]) => ({ key:k, ...v }));
+    // Leeg veld: vaak gekocht
+    let entries = Object.entries(history).filter(([k]) => !onList.has(k)).map(([k, v]) => ({ key: k, ...v }));
     const now = Date.now();
-    entries.forEach(e => {
-      const daysAgo = (now - (e.lastBought || 0)) / 86400000;
-      e._score = e.count * Math.max(0.3, 1 - daysAgo / 60);
-    });
-    entries.sort((a,b) => b._score - a._score);
+    entries.forEach(e => { const d = (now - (e.lastBought || 0)) / 86400000; e._score = e.count * Math.max(0.3, 1 - d / 60); });
+    entries.sort((a, b) => b._score - a._score);
     entries = entries.slice(0, 8);
-
-    if (!entries.length) { wrap.innerHTML = ''; return; }
-    wrap.innerHTML = `
+    if (!entries.length) return '';
+    return `
       <div class="suggestions-label">Vaak gekocht</div>
       <div class="suggestions">
-        ${entries.map(e => `
-          <span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
-            ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}
-            <span class="chip-cnt">×${e.count}</span>
-          </span>
-        `).join('')}
+        ${entries.map(e => `<span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
+          ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}<span class="chip-cnt">×${e.count}</span>
+        </span>`).join('')}
       </div>`;
+  }
+
+  function renderSuggestions() {
+    const wrap = document.getElementById('suggestions-wrap');
+    const inp = document.getElementById('add-input').value.trim().toLowerCase();
+    const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+
+    // 0. Recepten: exacte/unieke match → volledige kaart; meerdere → chips bóven VARIANTS
+    if (inp && inp.length >= 3) {
+      const matching = Object.keys(RECIPES).filter(k => k.includes(inp) || inp.includes(k));
+      if (matching.length === 1 && (matching[0] === inp || inp.includes(matching[0]))) {
+        const recipe = RECIPES[matching[0]];
+        const safe = matching[0].replace(/'/g, "\\'");
+        wrap.innerHTML = `
+          <div class="recipe-card">
+            <div class="recipe-title">${recipe.emo} ${titleCase(matching[0])}</div>
+            <div class="recipe-ingredients">${recipe.ingredients.map(i => `<span class="recipe-ing-chip">${escapeHtml(i)}</span>`).join('')}</div>
+            <button class="recipe-add-btn" onclick="addRecipe('${safe}')">+ Voeg alle ingrediënten toe</button>
+          </div>`;
+        return;
+      }
+      if (matching.length > 1) {
+        const recipeChips = matching.map(k => {
+          const r = RECIPES[k];
+          const safe = k.replace(/'/g, "\\'");
+          return `<span class="chip chip-group" onclick="document.getElementById('add-input').value='${safe}';onInputChange()">${r.emo} ${escapeHtml(titleCase(k))}</span>`;
+        }).join('');
+        wrap.innerHTML = `<div class="suggestions-label">Recepten</div><div class="suggestions">${recipeChips}</div>` + buildRestHTML(inp, onList);
+        return;
+      }
+    }
+
+    wrap.innerHTML = buildRestHTML(inp, onList);
   }
   function quickAdd(name) {
     addItem(name, 1);
