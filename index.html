@@ -368,6 +368,11 @@
       padding:12px; box-shadow: 0 6px 24px rgba(15,23,42,.06);
       margin-bottom:14px;
     }
+    #suggestions-wrap {
+      max-height: 55vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     .add-row { display:flex; gap:8px; }
     .add-input {
       flex:1; padding:14px 14px; font-size:16px; font-weight:600;
@@ -1259,9 +1264,10 @@
                     'Merk':   ['Dettol', 'Mr. Proper', 'Flash', 'Ajax', 'Cif', 'Glorix', 'Huismerk'],
                   }},
     toiletpapier: { groups: {
-                    'Type':   ['2-laags toiletpapier', '3-laags toiletpapier', 'Vochtig toiletpapier', 'Bamboe toiletpapier'],
+                    'Type':   ['2-laags toiletpapier', '3-laags toiletpapier', 'Bamboe toiletpapier', 'Gerecycled toiletpapier'],
                     'Merk':   ['Lotus', 'Zewa', 'Hakle', 'Kleenex', 'Huismerk'],
                   }},
+    'vochtig toiletpapier': ['Andrex vochtig', 'Cottonelle vochtig', 'Huismerk vochtig toiletpapier'],
     // Sauzen & condimenten
     mayonaise:    ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise', 'Vegan mayonaise'],
     mayo:         ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise'],
