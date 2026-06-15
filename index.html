@@ -2552,6 +2552,17 @@
     }</div>`;
   }
   function browseAdd(name, el) {
+    const key = normalize(name);
+    const variant = VARIANTS[key];
+    if (variant && variant.groups) {
+      // Heeft sub-groepen → sluit modal, vul input, toon variant-picker
+      closeBrowse();
+      const inp = document.getElementById('add-input');
+      inp.value = name;
+      inp.focus();
+      onInputChange();
+      return;
+    }
     addItem(name, 1);
     if (el) el.classList.add('added');
   }
