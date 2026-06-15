@@ -106,6 +106,28 @@
       padding: 2px 7px; border-radius: 10px; font-weight: 700;
     }
 
+    /* Recept-kaart in suggesties */
+    .recipe-card {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1.5px solid #fcd34d;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-top: 4px;
+    }
+    .recipe-title { font-size: 15px; font-weight: 800; color: var(--slate-800); margin-bottom: 6px; }
+    .recipe-ingredients { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .recipe-ing-chip {
+      font-size: 12px; font-weight: 600; padding: 3px 9px;
+      background: white; border-radius: 20px; color: var(--slate-700);
+      border: 1px solid #fcd34d;
+    }
+    .recipe-add-btn {
+      width: 100%; padding: 9px; border-radius: 10px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white; font-weight: 800; font-size: 14px;
+      border: none; cursor: pointer;
+    }
+
     /* Route view */
     .route-rec {
       background: linear-gradient(135deg, var(--green-500), var(--green-600));
@@ -847,6 +869,29 @@
     tandpasta:    ['Tandpasta white', 'Tandpasta gevoelige tanden', 'Tandpasta kids', 'Tandpasta original'],
   };
 
+  const RECIPES = {
+    'pasta carbonara':      { emo:'🍝', ingredients:['Spaghetti','Spekjes','Ei','Parmezaan','Room'] },
+    'spaghetti bolognese':  { emo:'🍝', ingredients:['Spaghetti','Rundergehakt','Tomatensaus','Ui','Knoflook'] },
+    'lasagne':              { emo:'🫕', ingredients:['Lasagnebladen','Rundergehakt','Tomatensaus','Melk','Bloem','Boter','Geraspte kaas'] },
+    'stamppot boerenkool':  { emo:'🥬', ingredients:['Aardappels','Boerenkool','Rookworst','Spekjes'] },
+    'stamppot andijvie':    { emo:'🥔', ingredients:['Aardappels','Andijvie','Spekjes','Ui'] },
+    'hutspot':              { emo:'🥕', ingredients:['Aardappels','Wortel','Ui','Runderlap'] },
+    'erwtensoep':           { emo:'🫛', ingredients:['Spliterwten','Rookworst','Aardappel','Ui','Wortel','Prei','Selderij'] },
+    'pannenkoeken':         { emo:'🥞', ingredients:['Bloem','Ei','Melk','Boter','Poedersuiker'] },
+    'nasi goreng':          { emo:'🍚', ingredients:['Rijst','Ei','Ui','Kipfilet','Ketjap','Sambal'] },
+    'bami goreng':          { emo:'🍜', ingredients:['Mie','Ei','Ui','Kipfilet','Ketjap','Sambal'] },
+    'kippensoep':           { emo:'🍲', ingredients:['Kip','Soepgroenten','Bouillon','Vermicelli','Peterselie'] },
+    'caesar salade':        { emo:'🥗', ingredients:['Romaine sla','Kipfilet','Parmezaan','Croutons','Caesar dressing'] },
+    'bruschetta':           { emo:'🍅', ingredients:['Stokbrood','Tomaten','Knoflook','Basilicum','Olijfolie'] },
+    'chili con carne':      { emo:'🌶️', ingredients:['Rundergehakt','Kidney bonen','Tomatensaus','Ui','Knoflook','Sambal','Paprikapoeder'] },
+    'omelet':               { emo:'🍳', ingredients:['Ei','Melk','Boter','Zout','Peper'] },
+    'quiche':               { emo:'🥧', ingredients:['Bladerdeeg','Ei','Room','Geraspte kaas','Spekjes','Ui'] },
+    'risotto':              { emo:'🍚', ingredients:['Risottorijst','Bouillon','Ui','Witte wijn','Parmezaan','Boter'] },
+    'gehaktballen':         { emo:'🍖', ingredients:['Half-om-half gehakt','Ei','Paneermeel','Ui','Nootmuskaat','Boter'] },
+    'wraps kip':            { emo:'🌯', ingredients:['Wraps','Kipfilet','Paprika','Sla','Tomatensaus','Geraspte kaas'] },
+    'soep':                 { emo:'🍲', ingredients:['Soepgroenten','Bouillon','Ui','Wortel','Prei'] },
+  };
+
   // Mijn categorie → AH-categorieen (boost score als de match daarin valt)
   const USER_CAT_TO_AH = {
     groente:   ['Groente, aardappelen', 'Fruit, verse sappen'],
@@ -1385,6 +1430,26 @@
     const inp = document.getElementById('add-input').value.trim().toLowerCase();
     const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
 
+    // 0. Recept-match: exacte of gedeeltelijke naam
+    if (inp && inp.length >= 3) {
+      const recipeKey = Object.keys(RECIPES).find(k => k.includes(inp) || inp.includes(k));
+      if (recipeKey) {
+        const recipe = RECIPES[recipeKey];
+        const safeName = recipeKey.replace(/'/g, "\\'");
+        wrap.innerHTML = `
+          <div class="recipe-card">
+            <div class="recipe-title">${recipe.emo} ${titleCase(recipeKey)}</div>
+            <div class="recipe-ingredients">
+              ${recipe.ingredients.map(i => `<span class="recipe-ing-chip">${escapeHtml(i)}</span>`).join('')}
+            </div>
+            <button class="recipe-add-btn" onclick="addRecipe('${safeName}')">
+              + Voeg alle ingrediënten toe
+            </button>
+          </div>`;
+        return;
+      }
+    }
+
     // 1. Generieke term → varianten tonen (jouw historie sorteert ze)
     const variants = inp && VARIANTS[inp];
     if (variants) {
@@ -1564,6 +1629,15 @@
   }
   function quickAddWithPack(name) {
     quickAdd(activePackaging ? `${name} ${activePackaging}` : name);
+  }
+  function addRecipe(recipeKey) {
+    const recipe = RECIPES[recipeKey];
+    if (!recipe) return;
+    recipe.ingredients.forEach(ing => addItem(ing, 1));
+    document.getElementById('add-input').value = '';
+    document.getElementById('qty-input').value = '';
+    renderSuggestions();
+    toast(`${recipe.emo} ${titleCase(recipeKey)} toegevoegd (${recipe.ingredients.length} ingrediënten)`);
   }
   function onInputChange() {
     // Sub-groep wissen zodra je iets anders intikt
