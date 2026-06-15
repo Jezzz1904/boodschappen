@@ -1015,8 +1015,22 @@
     vla:          ['Vanillevla', 'Chocoladevla', 'Hopjesvla'],
     kaas:         ['Jong belegen kaas', 'Belegen kaas', 'Oude kaas', 'Brie', 'Mozzarella', 'Feta'],
     boter:        ['Roomboter', 'Halvarine', 'Margarine', 'Bakboter'],
-    brood:        ['Bruin brood', 'Wit brood', 'Volkoren brood', 'Bruin tijgerbrood', 'Wit tijgerbrood', 'Stokbrood', 'Krentenbrood'],
+    brood:        { groups: {
+                    'Bruin/Volkoren': ['Bruin brood', 'Volkoren brood', 'Meergranen brood', 'Roggebrood', 'Speltbrood', 'Bruin tijgerbrood'],
+                    'Wit':            ['Wit brood', 'Wit tijgerbrood', 'Sandwich brood', 'Toast brood'],
+                    'Speciaal':       ['Zuurdesem', 'Krentenbrood', 'Rozijnenbrood', 'Noten-rozijnenbrood'],
+                    'Afbak':          ['Afbak stokbrood', 'Afbak pistolets', 'Afbak baguette', 'Afbak ciabatta', 'Stokbrood'],
+                    'Diepvries':      ['Diepvries brood', 'Diepvries stokbrood', 'Diepvries pistolets'],
+                  }},
     tijgerbrood:  ['Bruin tijgerbrood', 'Wit tijgerbrood'],
+    viennoiserie: { groups: {
+                    'Type':     ['Croissant', 'Pain au chocolat', 'Chocoladebol', 'Rozijnenbol', 'Krentenbol', 'Appelflap', 'Worstenbroodje', 'Suikerbol', 'Boterkoek'],
+                    'Versheid': ['Vers', 'Afbak', 'Diepvries'],
+                  }},
+    croissant:    { groups: {
+                    'Versheid': ['Vers croissant', 'Afbak croissant', 'Diepvries croissant'],
+                    'Vulling':  ['Boter croissant', 'Amandel croissant', 'Ham-kaas croissant', 'Pain au chocolat'],
+                  }},
     appel:        ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
     appels:       ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
     peer:         ['Conference peer', 'Doyenne peer', 'Gieser Wildeman'],
