@@ -1034,8 +1034,39 @@
                     'Smaak':      ['Aardbei', 'Bosvruchten', 'Perzik-mango', 'Vanille', 'Honing'],
                     'Merk':       ['Campina', 'Danone', 'Alpro', 'Arla', 'AH huismerk'],
                   }},
-    kwark:        ['Magere kwark', 'Volle kwark', 'Kwark vanille', 'Kwark aardbei'],
-    vla:          ['Vanillevla', 'Chocoladevla', 'Hopjesvla'],
+    kwark:        { groups: {
+                    'Vetgehalte': ['Magere kwark', 'Halfvolle kwark', 'Volle kwark'],
+                    'Smaak':      ['Naturel', 'Vanille', 'Aardbei', 'Bosvruchten', 'Perzik'],
+                    'Merk':       ['Campina', 'Danone', 'Arla', 'Skyr', 'Huismerk'],
+                  }},
+    vla:          { groups: {
+                    'Smaak':  ['Vanillevla', 'Chocoladevla', 'Hopjesvla', 'Karamel vla', 'Boterscotch vla'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Mona', 'Huismerk'],
+                  }},
+    room:         { groups: {
+                    'Type':  ['Slagroom', 'Kookroom', 'Crème fraîche', 'Zure room', 'Koffieroom'],
+                    'Merk':  ['Campina', 'Friesche Vlag', 'Arla', 'President', 'Huismerk'],
+                  }},
+    slagroom:     { groups: {
+                    'Type':  ['Slagroom spuitbus', 'Slagroom pak', 'Plantaardige slagroom'],
+                    'Merk':  ['Campina', 'Friesche Vlag', 'Arla', 'Huismerk'],
+                  }},
+    karnemelk:    { groups: {
+                    'Type':  ['Karnemelk naturel', 'Karnemelk met fruit'],
+                    'Merk':  ['Campina', 'Friesche Vlag', 'Huismerk'],
+                  }},
+    pudding:      { groups: {
+                    'Smaak': ['Vanillepudding', 'Chocoladepudding', 'Karamelpudding', 'Aardbeipudding'],
+                    'Merk':  ['Dr. Oetker', 'Koopmans', 'Mona', 'Huismerk'],
+                  }},
+    toetje:       { groups: {
+                    'Type':  ['Vla', 'Pudding', 'Panna cotta', 'Mousse', 'Tiramisu', 'Crème brûlée'],
+                    'Merk':  ['Mona', 'Campina', 'Danone', 'Dr. Oetker', 'Huismerk'],
+                  }},
+    smeerkaas:    { groups: {
+                    'Type':  ['Smeerkaas naturel', 'Smeerkaas light', 'Smeerkaas kruiden', 'Cottage cheese', 'Roomkaas', 'Hüttenkäse'],
+                    'Merk':  ['Philadelphia', 'Boursin', 'Président', 'Huismerk'],
+                  }},
     kaas:         { groups: {
                     'Soort':      ['Goudse kaas', 'Edammer', 'Geitenkaas', 'Mozzarella', 'Feta', 'Brie', 'Camembert', 'Parmezaan', 'Cheddar'],
                     'Rijping':    ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud', 'Extra oud'],
