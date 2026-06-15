@@ -106,6 +106,17 @@
       padding: 2px 7px; border-radius: 10px; font-weight: 700;
     }
 
+    /* Aanbieding-tip onder prijsvergelijking */
+    .bonus-tip {
+      margin-top: 7px; padding: 7px 10px; border-radius: 10px;
+      background: #fefce8; border: 1.5px solid #fde68a;
+      font-size: 12px; color: var(--slate-700); cursor: pointer;
+      display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+    }
+    .bonus-tip:active { background: #fef9c3; }
+    .bonus-tip-mech { background: #fcd34d; color: #78350f; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
+    .bonus-tip-add { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--green-600); }
+
     /* Merk-toggle (huismerk / a-merk) */
     .brand-toggle { display:flex; gap:5px; margin-top:6px; }
     .brand-chip {
@@ -810,6 +821,27 @@
     [/\bgehakt half om half\b/g, 'gehakt'],
     [/\bspa rood\b/g, 'spa rood'],
     [/\bcoca\s*cola\b/g, 'coca cola'],
+    // Compound aardappel-producten splitsen zodat "aardappelpartjes" ↔ "aardappel partjes" matcht
+    [/\baardappelpartjes\b/g, 'aardappel partjes'],
+    [/\baardappelschijfjes\b/g, 'aardappel schijfjes'],
+    [/\baardappelballetjes\b/g, 'aardappel balletjes'],
+    [/\baardappelkroketjes\b/g, 'aardappel kroketjes'],
+    [/\baardappelpuree\b/g, 'aardappel puree'],
+    [/\bbakaardappeltjes\b/g, 'bak aardappeltjes'],
+    [/\bkruimige aardappelen?\b/g, 'kruimige aardappel'],
+    [/\bvastkokende aardappelen?\b/g, 'vastkokende aardappel'],
+    // Andere compound-woorden
+    [/\bkerstomaatjes?\b/g, 'cherry tomaat'],
+    [/\bcherrytomaat(en)?\b/g, 'cherry tomaat'],
+    [/\btomatensoep\b/g, 'tomaten soep'],
+    [/\bappelsap\b/g, 'appel sap'],
+    [/\bsinaasappelsap\b/g, 'sinaasappel sap'],
+    [/\bvruchtensap\b/g, 'vruchtensap'],
+    [/\bkipfilet\b/g, 'kip filet'],
+    [/\bkipschnitzel\b/g, 'kip schnitzel'],
+    [/\bkipgehakt\b/g, 'kip gehakt'],
+    [/\brundergehakt\b/g, 'runder gehakt'],
+    [/\bbloemkool\b/g, 'bloemkool'],
   ];
   function applySynonyms(s) {
     let out = s;
@@ -838,8 +870,16 @@
     appel:        ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
     appels:       ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
     peer:         ['Conference peer', 'Doyenne peer', 'Gieser Wildeman'],
-    aardappel:    ['Kruimige aardappel', 'Vastkokende aardappel', 'Drielingen', 'Krieltjes'],
-    aardappels:   ['Kruimige aardappel', 'Vastkokende aardappel', 'Drielingen', 'Krieltjes'],
+    aardappel:    { groups: {
+                    'Vers':       ['Kruimige aardappelen', 'Vastkokende aardappelen', 'Drielingen', 'Krieltjes', 'Zoete aardappel'],
+                    'Diepvries':  ['Aardappel partjes', 'Aardappel schijfjes', 'Aardappel balletjes', 'Bak aardappeltjes', 'Aardappel puree'],
+                    'Voorverpakt':['Aardappel ovenschaal', 'Aardappelgratin', 'Puree pakket'],
+                  }},
+    aardappels:   { groups: {
+                    'Vers':       ['Kruimige aardappelen', 'Vastkokende aardappelen', 'Drielingen', 'Krieltjes', 'Zoete aardappel'],
+                    'Diepvries':  ['Aardappel partjes', 'Aardappel schijfjes', 'Aardappel balletjes', 'Bak aardappeltjes', 'Aardappel puree'],
+                    'Voorverpakt':['Aardappel ovenschaal', 'Aardappelgratin', 'Puree pakket'],
+                  }},
     ui:           ['Gele ui', 'Rode ui', 'Sjalot', 'Zilveruitjes', 'Bosui'],
     tomaat:       ['Cherrytomaat', 'Vleestomaat', 'Trostomaat', 'Snoeptomaat', 'Pruimtomaat'],
     tomaten:      ['Cherrytomaten', 'Vleestomaat', 'Trostomaten', 'Snoeptomaten'],
@@ -1377,7 +1417,58 @@
           ${bonusBadge}
         </div>`;
     }).join('');
-    return `<div class="cmp">${rows}${brandToggle}</div>`;
+    // Aanbieding-tip: zoek vergelijkbaar product dat nu in bonus is en goedkoper
+    const bonusTip = findBonusAlternative(it.name, it.category, matches);
+    const bonusTipHtml = bonusTip ? `
+      <div class="bonus-tip" onclick="quickAdd('${escapeHtml(bonusTip.name).replace(/'/g,"\\'")}')">
+        💡 <strong>${escapeHtml(bonusTip.storeName)}</strong> heeft
+        <strong>${escapeHtml(bonusTip.name)}</strong> in aanbieding voor
+        <strong>${fmtPrice(bonusTip.price)}</strong>
+        ${bonusTip.mechanism ? `<span class="bonus-tip-mech">${escapeHtml(bonusTip.mechanism)}</span>` : ''}
+        <span class="bonus-tip-add">+ voeg toe</span>
+      </div>` : '';
+
+    return `<div class="cmp">${rows}${brandToggle}${bonusTipHtml}</div>`;
+  }
+
+  // Zoek een vergelijkbaar product dat nu in aanbieding is en goedkoper dan de huidige beste match.
+  // Geeft { name, storeName, price, mechanism } terug of null.
+  function findBonusAlternative(itemName, itemCategory, currentMatches) {
+    const today = new Date().toISOString().slice(0, 10);
+    const cheapestPrice = currentMatches.length ? Math.min(...currentMatches.map(m => m.eff)) : Infinity;
+    const itemWords = normWords(itemName);
+    // Pak de hoofd-stam: het langste niet-stopwoord (bijv. "tomaat" uit "trostomaten")
+    const stem = itemWords.reduce((a, b) => a.length >= b.length ? a : b, '');
+    if (stem.length < 4) return null;
+
+    const allowedCats = itemCategory ? (USER_CAT_TO_AH[itemCategory] || []) : [];
+
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data?.products) continue;
+      for (const p of data.products) {
+        if (!p.bonus?.start || !p.bonus?.end) continue;
+        if (p.bonus.start > today || today > p.bonus.end) continue;
+        const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : p.price;
+        if (typeof bonusPrice !== 'number') continue;
+        // Moet goedkoper zijn dan huidige beste
+        if (bonusPrice >= cheapestPrice * 0.85) continue;
+        // Moet hetzelfde hoofd-ingrediënt bevatten (stem-match op productnaam)
+        const pWords = normWords(p.name);
+        if (!pWords.some(pw => stemMatch(pw, stem))) continue;
+        // Mag niet al in de currentMatches zitten
+        if (currentMatches.some(m => m.storeId === store.id && m.p.name === p.name)) continue;
+        // Categorie-check als beschikbaar
+        if (allowedCats.length && p.category && !allowedCats.includes(p.category)) continue;
+        return {
+          name: p.name,
+          storeName: store.name,
+          price: bonusPrice,
+          mechanism: p.bonus.mechanism || null,
+        };
+      }
+    }
+    return null;
   }
 
   function renderPriceSummary() {
