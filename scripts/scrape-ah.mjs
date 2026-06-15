@@ -38,11 +38,12 @@ const SEARCH_TERMS = [
   'pastasaus','pestosaus','pastasaus carbonara','pastasaus bolognese',
   // Houdbaar
   'pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','noedels','mie','olijfolie','zonnebloemolie',
-  'azijn','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','bouillon','tomatenblok','tomatenpuree',
+  'azijn','sojasaus','ketchup','mayonaise','calvé mayonaise','calvé','remia mayonaise','mosterd','sambal','curry','bouillon','tomatenblok','tomatenpuree',
   'pesto','kikkererwten','bonen in blik','linzen','soep','bloem','suiker','honing','jam','hagelslag','pindakaas',
   'choco','nutella','noten','rozijnen','muesli','cornflakes','havermout','rijstwafels','olijven','augurken',
   // Snacks dranken
-  'chips','popcorn','chocolade','reep','snoep','drop','koekjes','stroopwafel','speculaas','liga',
+  'chips','lays','croky','doritos','pringles','cheetos','bugles',
+  'popcorn','chocolade','reep','snoep','drop','koekjes','stroopwafel','speculaas','liga',
   'water','spa','vruchtensap','sinaasappelsap','appelsap','cola','fanta','sprite','ice tea','aquarius',
   'dubbelfris','red bull','bier','heineken','wijn','rode wijn','witte wijn','koffie','koffiepads','thee',
   'tonic','royal club tonic','ginger beer','bitter lemon',

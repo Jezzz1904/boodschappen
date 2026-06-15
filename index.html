@@ -125,6 +125,7 @@
       border:1.5px solid transparent; user-select:none;
     }
     .brand-chip.active { background:#eff6ff; color:#1d4ed8; border-color:#3b82f6; }
+    .pack-badge { font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; background:var(--slate-100); color:var(--slate-500); margin-left:4px; flex-shrink:0; }
     .cmp-product { font-size:11px; color:var(--slate-500); font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     /* Recept-kaart in suggesties */
@@ -772,9 +773,10 @@
     { id:'vlees',     name:'Vlees & Vis',     emo:'🥩' },
     { id:'diepvries', name:'Diepvries',       emo:'🧊' },
     { id:'houdbaar',  name:'Houdbaar',        emo:'🥫' },
-    { id:'snacks',    name:'Snacks & Snoep',  emo:'🍫' },
-    { id:'dranken',   name:'Dranken',         emo:'🥤' },
-    { id:'drogist',   name:'Drogist',         emo:'🧴' },
+    { id:'snacks',      name:'Snacks & Snoep',    emo:'🍫' },
+    { id:'frisdranken', name:'Frisdranken',        emo:'🥤' },
+    { id:'alcoholisch', name:'Alcoholisch',         emo:'🍺' },
+    { id:'drogist',     name:'Drogist',             emo:'🧴' },
     { id:'huishouden',name:'Huishouden',      emo:'🧻' },
     { id:'overig',    name:'Overig',          emo:'📦' },
   ];
@@ -789,7 +791,8 @@
     diepvries: ['diepvries','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','bevroren','frikandel'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
     snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
-    dranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster','bier','heineken','grolsch','amstel','speciaalbier','wijn','rode wijn','witte wijn','rosé','prosecco','cava','champagne','sterke drank','wodka','whisky','rum','gin','koffie','koffiepads','koffiecups','senseo','nespresso','dolce gusto','thee','thee zakjes','groene thee','rooibos'],
+    frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster','koffie','koffiepads','koffiecups','senseo','nespresso','dolce gusto','thee','thee zakjes','groene thee','rooibos'],
+    alcoholisch: ['bier','heineken','grolsch','amstel','speciaalbier','hertog jan','hoegaarden','leffe','duvel','weizen','ipa','pils','wijn','rode wijn','witte wijn','rosé','prosecco','cava','champagne','sterke drank','wodka','whisky','rum','gin','tequila','likeur','port','sherry','jenever','alcoholvrij bier'],
     drogist: ['shampoo','conditioner','douchegel','zeep','handzeep','tandpasta','tandenborstel','flosdraad','mondwater','deodorant','deo','parfum','bodylotion','crème','creme','dagcreme','nachtcreme','zonnebrand','aftersun','make-up','mascara','lippenstift','foundation','wattenstaafjes','wattenschijfjes','maandverband','tampons','inlegkruisjes','luiers','babydoekjes','billendoekjes','paracetamol','ibuprofen','aspirine','pleisters','pleister','desinfecterend','scheermes','scheerschuim','vitaminen','vitamine','supplementen','condooms'],
     huishouden: ['wc papier','toiletpapier','keukenpapier','tissues','zakdoekjes','vuilniszakken','afvalzakken','vaatwastabletten','vaatwasmiddel','afwasmiddel','allesreiniger','schoonmaakmiddel','wasmiddel','wasverzachter','vlekverwijderaar','aluminiumfolie','plasticfolie','vershoudfolie','bakpapier','boterhamzakjes','sponzen','vaatdoek','dweil','luchtverfrisser','wc reiniger','bleek','batterijen','batterij','lampen','lamp','aansteker','lucifers','kaarsen','plant','bloemen','aanmaakblokjes','houtskool'],
   };
@@ -800,11 +803,14 @@
   let items   = loadJson(ITEMS_KEY, []);
   let history = loadJson(HIST_KEY,  {});
 
+  // Migreer opgeslagen items: 'dranken' → 'frisdranken' (categorie-split)
+  items.forEach(it => { if (it.category === 'dranken') it.category = 'frisdranken'; });
+
   // ── PRIJSDATA (meerdere winkels) ──
   // AH heeft bonus-data (eigen mobile-API scrape) + categorie. Jumbo via checkjebon: alleen reguliere prijs.
   const STORES = [
     { id:'ah',    name:'AH',    file:'./data/ah.json',    hasCategory:true,  hasBonus:true,  color:'#00A0E2' },
-    { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:false, color:'#EAB308' },
+    { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:true,  color:'#EAB308' },
     { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:false, color:'#E11D48' },
     { id:'lidl',  name:'Lidl',  file:'./data/lidl.json',  hasCategory:false, hasBonus:true,  color:'#1E40AF' },
   ];
@@ -867,6 +873,9 @@
     [/\bvarkensribben\b/g, 'varken ribben'],
     [/\brundergehakt\b/g, 'runder gehakt'],
     [/\blamsgehakt\b/g, 'lams gehakt'],
+    // Sauzen afkortingen
+    [/\bmayo\b/g, 'mayonaise'],
+    [/\bketchup\b/g, 'ketchup'],
     // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
@@ -992,7 +1001,8 @@
     diepvries: ['Diepvries'],
     houdbaar:  ['Soepen, sauzen, kruiden, olie', 'Pasta, rijst, wereldkeuken', 'Ontbijtgranen, beleg', 'Maaltijden, salades', 'Glutenvrij', 'Vegetarisch, vegan en plantaardig'],
     snacks:    ['Koek, snoep, chocolade', 'Borrel, chips, snacks', 'Tussendoortjes'],
-    dranken:   ['Frisdrank, sappen, water', 'Bier, wijn, aperitieven', 'Koffie, thee'],
+    frisdranken: ['Frisdrank, sappen, water', 'Koffie, thee'],
+    alcoholisch: ['Bier, wijn, aperitieven', 'Sterke drank'],
     drogist:   ['Drogisterij', 'Gezondheid en sport', 'Baby en kind'],
     huishouden:['Huishouden'],
   };
@@ -1384,16 +1394,41 @@
 
   const UNIT_LABEL = { l: '/l', kg: '/kg', st: '/st' };
   // Prijsvergelijking-block voor één item: goedkoopste winkel uitgelicht + andere winkels ernaast.
-  // Detecteer of een productnaam een huismerk is (begint met winkelnaam of bevat 'huismerk')
-  function isHuismerk(productName) {
-    const n = normalize(productName);
-    return /^(ah|jumbo|plus|lidl|etos|kruidvat)\b/.test(n) || n.includes('huismerk');
+  // Bekende A-merk producenten (subset, gericht op supermarkt-assortiment NL)
+  const AMERK_RE = new RegExp(
+    '\\b(' + [
+      'lays','croky','doritos','pringles','cheetos','bugles',
+      'coca.?cola','pepsi','fanta','sprite','7up','sourcy','rivella','innocent','tropicana',
+      'dr\\.?\\s*oetker','iglo','birds\\s*eye','calve','calv\\xe9','knorr','maggi','unox','hak','bonduelle','heinz',
+      'heineken','amstel','grolsch','jupiler','bavaria','leffe','corona','desperados',
+      'activia','danone','alpro','campina','melkunie','karvan\\s*cevitam','chocomel',
+      'senseo','douwe\\s*egberts','nescaf[e\\xe9]','pickwick','lipton',
+      'ariel','lenor','fairy','dreft','vanish','persil','robijn','dettol','domestos',
+      'gillette','dove','axe','nivea','head\\s*&?\\s*shoulders','pantene','andrelon',
+      'snickers','mars','bounty','twix','kitkat','m&m','oreo','liga','sultana',
+      'milka','ferrero','nutella','haribo','mentos',
+      'philadelphia','boursin','beemster','leerdammer',
+      'conimex','blue\\s*band','remia',
+      'whiskas','pedigree','purina',
+    ].join('|') + ')\\b', 'i'
+  );
+
+  // Detecteer of een match een huismerk is.
+  // • Naam begint met winkelnaam of bevat 'huismerk' → altijd huismerk
+  // • Lidl/Plus checkjebon-data: geen winkelnaam in naam → huismerk TENZIJ bekende A-merk
+  function isHuismerk(match) {
+    const n = normalize(match.p.name);
+    if (/^(ah|jumbo|plus|lidl|etos|kruidvat)\b/.test(n) || n.includes('huismerk')) return true;
+    if (match.storeId === 'lidl' || match.storeId === 'plus') {
+      return !AMERK_RE.test(n);
+    }
+    return false;
   }
 
   // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
   function applyBrandPref(matches, pref) {
     if (!pref) return matches;
-    const filtered = matches.filter(m => pref === 'huismerk' ? isHuismerk(m.p.name) : !isHuismerk(m.p.name));
+    const filtered = matches.filter(m => pref === 'huismerk' ? isHuismerk(m) : !isHuismerk(m));
     return filtered.length ? filtered : matches; // altijd iets tonen
   }
 
@@ -1422,8 +1457,8 @@
     const sorted = [...matches].sort((a, b) => key(a) - key(b));
 
     // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
-    const hasHuis = res.matches.some(m => isHuismerk(m.p.name));
-    const hasAmerk = res.matches.some(m => !isHuismerk(m.p.name));
+    const hasHuis = res.matches.some(m => isHuismerk(m));
+    const hasAmerk = res.matches.some(m => !isHuismerk(m));
     const safeId = it.id.replace(/'/g, "\\'");
     const brandToggle = (hasHuis && hasAmerk) ? `
       <div class="brand-toggle">
@@ -1446,8 +1481,11 @@
       const diff = canDiff ? key(m) - key(cheapest) : 0;
       const diffTag = (!isCheapest && canDiff && diff > 0)
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
-      // Merknaam altijd tonen (verkort)
-      const brandName = escapeHtml(m.p.name.length > 28 ? m.p.name.slice(0, 26) + '…' : m.p.name);
+      // Merknaam + verpakking tonen
+      const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
+      // Verpakkingstype uit naam extraheren (blik, fles, pak, karton, etc.)
+      const packMatch = m.p.name.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik|fust|vat|doos)\b/i);
+      const packBadge = packMatch ? `<span class="pack-badge">${packMatch[1].toLowerCase()}</span>` : '';
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       return `
         <div class="cmp-row ${isCheapest ? 'best' : ''}">
@@ -1455,7 +1493,7 @@
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
           ${unitTag}
-          <span class="cmp-product">${brandName}${unitStr}</span>
+          <span class="cmp-product">${brandName}${unitStr}</span>${packBadge}
           ${isCheapest ? '' : diffTag}
           ${bonusBadge}
         </div>`;
@@ -1830,13 +1868,16 @@
       'Witte chocolade','Tony Chocolonely','Reep','Drop','Wine gums','Stroopwafel','Speculaas',
       'Liga','Sultana','Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
     ],
-    dranken: [
+    frisdranken: [
       'Spa rood','Spa blauw','Bronwater','Sinaasappelsap','Appelsap','Multivit','Smoothie',
       'Cola','Cola Zero','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris',
-      'Red Bull','Heineken','Hertog Jan','Grolsch','Amstel','Bavaria','Brand','Jupiler','Pils',
-      'Hoegaarden','Leffe','Duvel','Rode wijn','Witte wijn','Rosé','Prosecco','Koffiebonen',
-      'Filterkoffie','Koffiepads','Senseo','Nespresso cups','Zwarte thee','Groene thee',
-      'Rooibos','Earl Grey',
+      'Red Bull','Koffiebonen','Filterkoffie','Koffiepads','Senseo','Nespresso cups',
+      'Zwarte thee','Groene thee','Rooibos','Earl Grey',
+    ],
+    alcoholisch: [
+      'Heineken','Hertog Jan','Grolsch','Amstel','Bavaria','Brand','Jupiler','Pils',
+      'Hoegaarden','Leffe','Duvel','Alcoholvrij bier','Rode wijn','Witte wijn','Rosé',
+      'Prosecco','Cava','Champagne','Gin','Wodka','Whisky','Rum','Jenever',
     ],
     drogist: [
       'Shampoo','Conditioner','Douchegel','Handzeep','Tandpasta','Tandenborstel','Flosdraad',
