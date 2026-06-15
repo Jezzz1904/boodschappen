@@ -1365,14 +1365,14 @@
         </div>`;
     } else {
       el.innerHTML = `
-        <div class="share-bar">
+        <div class="share-bar" style="flex-direction:column;gap:8px;align-items:stretch">
+          <button class="share-btn" style="width:100%;padding:10px;font-size:14px" onclick="startShare()">📤 Deel lijst met iemand</button>
           <div class="share-join">
-            <input id="share-code-input" placeholder="Code of link" maxlength="80"
+            <input id="share-code-input" placeholder="Code van iemand anders invoeren" maxlength="80"
               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
               onkeydown="if(event.key==='Enter')joinShare()">
             <button class="share-btn secondary" onclick="joinShare()">Verbinden</button>
           </div>
-          <button class="share-btn" onclick="startShare()">Deel lijst</button>
         </div>`;
     }
   }
