@@ -849,7 +849,6 @@
     { id:'alcoholisch', name:'Alcoholisch',         emo:'🍺' },
     { id:'drogist',     name:'Drogist',             emo:'🧴' },
     { id:'huishouden',name:'Huishouden',      emo:'🧻' },
-    { id:'overig',    name:'Overig',          emo:'📦' },
   ];
   const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
@@ -1684,7 +1683,7 @@
   }
   function guessCategory(name) {
     const n = normalize(name);
-    if (!n) return 'overig';
+    if (!n) return null;
     // exacte match eerst
     for (const cat of Object.keys(AUTO_CAT)) {
       if (AUTO_CAT[cat].includes(n)) return cat;
@@ -1700,7 +1699,7 @@
         }
       }
     }
-    return 'overig';
+    return null;
   }
 
   function toast(msg) {
@@ -2473,9 +2472,6 @@
       'Aluminiumfolie','Vershoudfolie','Bakpapier','Boterhamzakjes','Sponzen','Vaatdoek',
       'Dweil','Luchtverfrisser','WC reiniger','Bleek','Batterijen','Lampen','Aansteker',
       'Lucifers','Kaarsen','Bloemen','Houtskool','Aanmaakblokjes',
-    ],
-    overig: [
-      'Cadeau','Bloemen','Plant','Wenskaart','Postzegels','Krant','Tijdschrift',
     ],
   };
 
