@@ -69,6 +69,43 @@
     }
     .tab.active { background: linear-gradient(135deg, var(--green-500), var(--green-600)); color:white; box-shadow:0 3px 10px rgba(5,150,105,.3); }
 
+    /* Totaalprijs-balk op lijst-tab */
+    #price-summary { margin: 0 0 12px; }
+    .price-bar {
+      background: white;
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .price-bar-label { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--slate-500); }
+    .price-bar-stores { display: flex; flex-wrap: wrap; gap: 6px; }
+    .price-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 20px;
+      font-size: 13px; font-weight: 700;
+      background: var(--slate-100); color: var(--slate-700);
+      border: 2px solid transparent;
+    }
+    .price-pill.cheapest {
+      background: #ecfdf5; color: var(--green-700);
+      border-color: var(--green-500);
+    }
+    .price-pill .pill-name { font-weight: 600; opacity: .75; font-size: 11px; }
+    .price-pill .pill-missing { font-size: 10px; color: var(--slate-400); }
+    .price-bar-optimal {
+      font-size: 12px; color: var(--slate-600); font-weight: 600;
+      padding-top: 4px; border-top: 1px solid var(--slate-100);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .price-bar-optimal strong { color: var(--green-600); font-size: 14px; }
+    .price-bar-optimal .save-badge {
+      font-size: 11px; background: #dcfce7; color: var(--green-700);
+      padding: 2px 7px; border-radius: 10px; font-weight: 700;
+    }
+
     /* Route view */
     .route-rec {
       background: linear-gradient(135deg, var(--green-500), var(--green-600));
@@ -604,6 +641,7 @@
       <button class="browse-link" onclick="openBrowse()">📋 Bladeren door categorieën</button>
     </div>
 
+    <div id="price-summary"></div>
     <div id="list-wrap"></div>
   </div>
 
@@ -1250,8 +1288,59 @@
     return `<div class="cmp">${rows}</div>`;
   }
 
+  function renderPriceSummary() {
+    const el = document.getElementById('price-summary');
+    if (!el) return;
+    const activeItems = items.filter(x => !x.checked);
+    if (!activeItems.length) { el.innerHTML = ''; return; }
+
+    const route = buildRoute();
+    if (!route) { el.innerHTML = ''; return; }
+
+    const { singles, multi, found } = route;
+    const foundCount = found.length;
+    const totalCount = activeItems.length;
+
+    // Alleen winkels tonen waar ≥1 item gevonden is
+    const storesWithHits = singles.filter(s => s.hit > 0)
+      .sort((a, b) => a.total - b.total);
+    if (!storesWithHits.length) { el.innerHTML = ''; return; }
+
+    const cheapestSingle = storesWithHits[0];
+    const optimalTotal = multi;
+    const saving = cheapestSingle.total - optimalTotal;
+
+    const pillsHtml = storesWithHits.map(s => {
+      const isCheapest = s.store.id === cheapestSingle.store.id;
+      const missing = s.missingInStore > 0 ? `<span class="pill-missing">−${s.missingInStore}</span>` : '';
+      return `<span class="price-pill${isCheapest ? ' cheapest' : ''}">
+        <span class="pill-name">${s.store.name}</span>
+        ${fmtPrice(s.total)}${missing}
+      </span>`;
+    }).join('');
+
+    const optimalRow = saving > 0.01
+      ? `<div class="price-bar-optimal">
+           <span>Optimaal gesplitst: <strong>${fmtPrice(optimalTotal)}</strong></span>
+           <span class="save-badge">bespaar ${fmtPrice(saving)}</span>
+         </div>`
+      : `<div class="price-bar-optimal"><span>Optimaal: <strong>${fmtPrice(optimalTotal)}</strong></span></div>`;
+
+    const label = foundCount < totalCount
+      ? `${foundCount} van ${totalCount} items geprijsd`
+      : `${totalCount} item${totalCount === 1 ? '' : 's'}`;
+
+    el.innerHTML = `
+      <div class="price-bar">
+        <div class="price-bar-label">💰 Totaalprijs · ${label}</div>
+        <div class="price-bar-stores">${pillsHtml}</div>
+        ${optimalRow}
+      </div>`;
+  }
+
   function renderList() {
     const wrap = document.getElementById('list-wrap');
+    renderPriceSummary();
     if (!items.length) {
       wrap.innerHTML = `
         <div class="empty">
