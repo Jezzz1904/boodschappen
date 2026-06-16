@@ -23,7 +23,7 @@ const SEARCH_TERMS = [
   'plantaardig drink','havermelk','sojadrink',
   // Bakkerij
   'brood','bruin brood','wit brood','volkoren','stokbrood','tijgerbrood','croissant','beschuit','crackers',
-  'wraps','pita','rozijnenbol','krentenbol',
+  'wraps','pita','rozijnenbol','krentenbol','saucijzenbrood','worstenbroodje','bolletjes','bollen',
   // Groente fruit
   'appel','peer','banaan','sinaasappel','mandarijn','citroen','druiven','aardbei','kiwi','meloen','ananas',
   'avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','spinazie','rucola','broccoli',
