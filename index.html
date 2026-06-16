@@ -374,6 +374,21 @@
       color:white; border:none; border-radius:10px;
       font-size:13px; font-weight:800; cursor:pointer;
     }
+    .store-pref-card {
+      background:white; border-radius:14px; padding:14px 16px;
+      border:1.5px solid var(--slate-100);
+    }
+    .store-pref-label { font-size:13px; font-weight:800; color:var(--slate-500); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+    .store-pref-chips { display:flex; gap:8px; flex-wrap:wrap; }
+    .store-pref-chip {
+      padding: 8px 14px; border-radius:99px; border:2px solid var(--slate-200);
+      background:white; font-size:13px; font-weight:700; cursor:pointer;
+      color:var(--slate-600); transition:all .15s;
+    }
+    .store-pref-chip.active { border-color: var(--green-500); background: var(--green-50); color: var(--green-700); }
+    .store-pref-chip.none { color:var(--slate-400); }
+    .store-pref-row-fav { background: rgba(16,185,129,.06); border-left:3px solid var(--green-500); }
+    .store-pref-row-fav .store-chip::after { content: ' ⭐'; font-size:10px; }
 
     /* INPUT KAART */
     .add-card {
@@ -884,6 +899,7 @@
       </button>
     </div>
     <div id="tips-output"></div>
+    <div id="store-pref-section" style="margin-top:16px"></div>
   </div>
 
   <!-- TAB: HISTORIE -->
@@ -3234,7 +3250,15 @@
       : (m => m.eff);
     const cheapest = matches.reduce((a, b) => key(b) < key(a) ? b : a);
 
-    const sorted = [...matches].sort((a, b) => key(a) - key(b));
+    const prefStore = getPrefStore();
+    const sorted = [...matches].sort((a, b) => {
+      if (prefStore) {
+        const aFav = a.storeId === prefStore ? 0 : 1;
+        const bFav = b.storeId === prefStore ? 0 : 1;
+        if (aFav !== bFav) return aFav - bFav;
+      }
+      return key(a) - key(b);
+    });
 
     // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
     const hasHuis = res.matches.some(m => isHuismerk(m));
@@ -3278,7 +3302,8 @@
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
-      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : ''].filter(Boolean).join(' ');
+      const isFav = m.storeId === prefStore;
+      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : ''].filter(Boolean).join(' ');
       return `
         <div class="${rowClass}">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
@@ -4308,7 +4333,7 @@
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderHistory(); }
     if (tab === 'route') renderRoute();
-    if (tab === 'tips')  renderTipsConfig();
+    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); }
   }
 
   // ── AI TIPS ──
@@ -4319,6 +4344,35 @@
   function setAIUrl(url) {
     try { localStorage.setItem(AI_URL_KEY, url.replace(/\/$/, '')); } catch {}
     renderTipsConfig();
+  }
+
+  // ── WINKEL-VOORKEUR ──
+  const PREF_STORE_KEY = 'boodschappen.prefStore';
+  function getPrefStore() { try { return localStorage.getItem(PREF_STORE_KEY) || ''; } catch { return ''; } }
+  function setPrefStore(id) {
+    try {
+      if (getPrefStore() === id) localStorage.removeItem(PREF_STORE_KEY); // toggle off
+      else localStorage.setItem(PREF_STORE_KEY, id);
+    } catch {}
+    renderStorePref();
+    render(); // herrender prijzen
+  }
+  function renderStorePref() {
+    const sec = document.getElementById('store-pref-section');
+    if (!sec) return;
+    const pref = getPrefStore();
+    const chips = STORES.map(s => `
+      <button class="store-pref-chip${pref === s.id ? ' active' : ''}" onclick="setPrefStore('${s.id}')" style="${pref === s.id ? '--sc:'+s.color+';border-color:'+s.color : ''}">
+        ${s.name}
+      </button>`).join('');
+    sec.innerHTML = `
+      <div class="store-pref-card">
+        <div class="store-pref-label">⭐ Mijn vaste winkel</div>
+        <div class="store-pref-chips">
+          <button class="store-pref-chip none${!pref ? ' active' : ''}" onclick="setPrefStore('')">Geen voorkeur</button>
+          ${chips}
+        </div>
+      </div>`;
   }
 
   function renderTipsConfig() {
