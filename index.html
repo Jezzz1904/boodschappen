@@ -201,6 +201,16 @@
     }
 
     /* Route view */
+    .route-filter {
+      display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; align-items:center;
+    }
+    .route-filter-label { font-size:11px; font-weight:800; color:var(--slate-400); text-transform:uppercase; letter-spacing:.5px; margin-right:2px; }
+    .route-filter-chip {
+      padding:6px 12px; border-radius:99px; border:2px solid var(--slate-200);
+      background:white; font-size:12px; font-weight:700; cursor:pointer; color:var(--slate-500);
+      transition:all .15s; opacity:.55;
+    }
+    .route-filter-chip.on { border-color: var(--green-500); background: var(--green-50); color: var(--green-700); opacity:1; }
     .route-rec {
       background: linear-gradient(135deg, var(--green-500), var(--green-600));
       color:white; border-radius:18px; padding:16px;
@@ -863,6 +873,7 @@
 
   <!-- TAB: ROUTE -->
   <div id="view-route" style="display:none">
+    <div id="route-store-filter"></div>
     <div id="route-wrap"></div>
   </div>
 
@@ -4332,7 +4343,7 @@
     document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderHistory(); }
-    if (tab === 'route') renderRoute();
+    if (tab === 'route') { renderRouteFilter(); renderRoute(); }
     if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); }
   }
 
@@ -4493,11 +4504,48 @@
   // Jouw regel: als single-store maximaal 3% duurder is dan optimale split → één winkel (scheelt rondrijden).
   const SINGLE_STORE_THRESHOLD = 0.03;
 
+  // ── ROUTE WINKEL-FILTER ──
+  const ROUTE_STORES_KEY = 'boodschappen.routeStores';
+  function getRouteStores() {
+    try {
+      const v = localStorage.getItem(ROUTE_STORES_KEY);
+      if (v) return new Set(JSON.parse(v));
+    } catch {}
+    return new Set(STORES.map(s => s.id)); // default: alles aan
+  }
+  function toggleRouteStore(id) {
+    const sel = getRouteStores();
+    if (sel.has(id)) { if (sel.size > 1) sel.delete(id); } // altijd min. 1
+    else sel.add(id);
+    try { localStorage.setItem(ROUTE_STORES_KEY, JSON.stringify([...sel])); } catch {}
+    renderRouteFilter();
+    renderRoute();
+  }
+  function renderRouteFilter() {
+    const div = document.getElementById('route-store-filter');
+    if (!div) return;
+    const sel = getRouteStores();
+    const chips = STORES.map(s => `
+      <button class="route-filter-chip${sel.has(s.id) ? ' on' : ''}" onclick="toggleRouteStore('${s.id}')"
+              style="${sel.has(s.id) ? 'border-color:'+s.color+';color:'+s.color : ''}">${s.name}</button>`).join('');
+    div.innerHTML = `<div class="route-filter"><span class="route-filter-label">Winkels:</span>${chips}</div>`;
+  }
+
   function buildRoute() {
     const active = items.filter(i => !i.checked);
     if (!active.length) return null;
 
-    const itemPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category) }));
+    const selStores = getRouteStores();
+    const activeStores = STORES.filter(s => selStores.has(s.id));
+
+    const allPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category) }));
+    // Filter matches op geselecteerde winkels
+    const itemPlans = allPlans.map(p => ({
+      ...p,
+      matches: p.matches.filter(m => selStores.has(m.storeId)),
+      cheapest: p.matches.filter(m => selStores.has(m.storeId)).reduce((a, b) => b.eff < a.eff ? b : a, p.matches.filter(m => selStores.has(m.storeId))[0]),
+    })).map(p => ({ ...p, hasData: p.matches.length > 0 }));
+
     const missing = itemPlans.filter(p => !p.matches.length).map(p => p.item);
     const found   = itemPlans.filter(p => p.matches.length);
 
@@ -4505,13 +4553,14 @@
     let multi = 0;
     const byStore = {};
     for (const p of found) {
+      if (!p.cheapest) continue;
       const qty = p.item.qty || 1;
       multi += p.cheapest.eff * qty;
       (byStore[p.cheapest.storeId] ||= []).push({ item: p.item, match: p.cheapest });
     }
 
     // Per-winkel totaal als je daar ALLES haalt (en bij hoeveel items je dan misloopt)
-    const singles = STORES.map(store => {
+    const singles = activeStores.map(store => {
       let total = 0, hit = 0;
       const rows = [];
       for (const p of found) {
