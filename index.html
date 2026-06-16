@@ -1763,7 +1763,7 @@
                   }},
     wijn:         { groups: {
                     'Type':  ['Rode wijn', 'Witte wijn', 'Rosé', 'Prosecco', 'Cava', 'Champagne'],
-                    'Merk':  ['Albert Heijn huismerk', 'Baron de Lestac', 'Yellow Tail', 'Gallo', 'Hardys', 'Torres'],
+                    'Merk':  ['Huismerk', 'Baron de Lestac', 'Yellow Tail', 'Gallo', 'Hardys', 'Torres'],
                   }},
     bier:         { groups: {
                     'Stijl': ['Pilsner', 'Witbier', 'IPA', 'Tripel', 'Dubbel', 'Abdijbier', 'Stout', 'Radler', 'Alcoholvrij bier'],
@@ -3821,6 +3821,21 @@
       inp.focus();
       onInputChange();
       return;
+    }
+    // Controleer of naam een sub-optie is van een VARIANTS-groep
+    const normName = normalize(name);
+    for (const [parentKey, val] of Object.entries(VARIANTS)) {
+      if (!val.groups) continue;
+      for (const [groupName, opts] of Object.entries(val.groups)) {
+        if (opts.some(o => normalize(o) === normName)) {
+          closeBrowse();
+          const inp = document.getElementById('add-input');
+          inp.value = parentKey;
+          inp.focus();
+          selectVariantItem(parentKey, groupName, name);
+          return;
+        }
+      }
     }
     addItem(name, 1);
     if (el) el.classList.add('added');
