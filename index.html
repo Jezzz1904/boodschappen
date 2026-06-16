@@ -1091,9 +1091,21 @@
   // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
   const VARIANTS = {
     pasta:        { groups: {
-                    'Droog':       ['Spaghetti', 'Penne', 'Macaroni', 'Lasagne', 'Tagliatelle', 'Farfalle', 'Fusilli'],
+                    'Droog':       ['Spaghetti', 'Penne', 'Macaroni', 'Lasagnebladen', 'Tagliatelle', 'Farfalle', 'Fusilli'],
                     'Vers gevuld': ['Tortelloni', 'Cappelletti', 'Ravioli', 'Tortellini'],
                     'Vers overig': ['Verse gnocchi', 'Verse tagliatelle', 'Verse spaghetti'],
+                  }},
+    lasagne:      { groups: {
+                    'Soort': ['Lasagnebladen', 'Verse lasagne bolognese', 'Verse lasagne spinazie ricotta', 'Verse lasagne vegetarisch', 'Diepvries lasagne bolognese'],
+                    'Merk':  ['AH', 'Jumbo', 'Plus', 'Lidl', 'Huismerk'],
+                  }},
+    'nasi goreng':{ groups: {
+                    'Soort': ['Kant-en-klaar nasi goreng', 'Nasi goreng pakket', 'Nasi rijst los'],
+                    'Merk':  ['AH', 'Jumbo', 'Plus', 'Lidl', 'Huismerk'],
+                  }},
+    'bami goreng':{ groups: {
+                    'Soort': ['Kant-en-klaar bami goreng', 'Bami goreng pakket', 'Bami mie los'],
+                    'Merk':  ['AH', 'Jumbo', 'Plus', 'Lidl', 'Huismerk'],
                   }},
     rijst:        { groups: {
                     'Soort': ['Basmati', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst', 'Pandanrijst', 'Bruine rijst'],
@@ -3524,9 +3536,11 @@
     const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
 
     // 0. Recepten: exacte/unieke match → volledige kaart; meerdere → chips bóven VARIANTS
+    // Uitzondering: als er ook een VARIANTS-key is voor deze invoer, toon dan eerst de variant-picker
     if (inp && inp.length >= 3) {
       const matching = Object.keys(RECIPES).filter(k => k.includes(inp) || inp.includes(k));
-      if (matching.length === 1 && (matching[0] === inp || inp.includes(matching[0]))) {
+      const hasVariant = !!VARIANTS[normalize(inp)]?.groups;
+      if (!hasVariant && matching.length === 1 && (matching[0] === inp || inp.includes(matching[0]))) {
         const recipe = RECIPES[matching[0]];
         const safe = matching[0].replace(/'/g, "\\'");
         wrap.innerHTML = `
