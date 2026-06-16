@@ -2670,6 +2670,9 @@
     render();
   }
 
+  // Laad server-correcties parallel met winkeldata
+  loadServerCorrections().then(() => { matchCache.clear(); render(); });
+
   // Eenheid-tokens die uit productnamen gestript worden vóór het matchen
   // (anders verdunnen "1", "l", "500ml" de woord-dichtheid).
   const UNIT_TOKENS = new Set(['l','ml','cl','dl','g','gr','gram','kg','kilo','st','stuk','stuks','stk','pak','pack','x','liter','stems','rollen','rol','tabletten','wasbeurten','plakken','zakjes','bossen','bos','tros','per','ca','001']);
@@ -3312,7 +3315,24 @@
 
   // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
   // ── FOUT-RAPPORTAGE & BLACKLIST ──
-  function loadBlacklist() { return loadJson(BLACKLIST_KEY, {}); }
+  let serverCorrections = { blacklist: {} }; // geladen vanuit data/corrections.json
+
+  async function loadServerCorrections() {
+    try {
+      const res = await fetch('./data/corrections.json?v=' + Date.now());
+      if (res.ok) serverCorrections = await res.json();
+    } catch {}
+  }
+
+  function loadBlacklist() {
+    const local = loadJson(BLACKLIST_KEY, {});
+    // Samenvoegen: lokale blacklist + server corrections
+    const merged = { ...serverCorrections.blacklist };
+    for (const [k, v] of Object.entries(local)) {
+      merged[k] = [...new Set([...(merged[k] || []), ...v])];
+    }
+    return merged;
+  }
   function saveBlacklist(bl) { try { localStorage.setItem(BLACKLIST_KEY, JSON.stringify(bl)); } catch {} }
 
   function isBlacklisted(itemNorm, productName) {

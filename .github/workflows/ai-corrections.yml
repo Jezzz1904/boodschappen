@@ -1,0 +1,47 @@
+name: AI-correcties verwerken
+
+on:
+  schedule:
+    # Elke nacht om 06:00 UTC (na de scrape)
+    - cron: '0 6 * * *'
+  workflow_dispatch:   # ook handmatig te triggeren
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-corrections
+  cancel-in-progress: false
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installeer Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+
+      - name: Verwerk foutmeldingen met AI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SHARE_WORKER_URL: ${{ secrets.SHARE_WORKER_URL }}
+        run: node scripts/ai-corrections.mjs
+
+      - name: Commit corrections als er wijzigingen zijn
+        run: |
+          git config user.name  "boodschappen-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/corrections.json
+          if git diff --cached --quiet; then
+            echo "Geen nieuwe correcties."
+          else
+            git commit -m "ai: automatische correcties bijgewerkt [skip ci]"
+            git pull --rebase
+            git push
+          fi
