@@ -2854,20 +2854,26 @@
   }
 
   // Parse formaat-string → { qty, unit:'l'|'kg'|'st' } voor prijs-per-eenheid.
-  function parseUnit(unitStr) {
-    if (!unitStr) return null;
-    const s = normalize(unitStr).replace(',', '.');
-    let m;
-    // multipack: "6 x 0.2 l", "3x1l"
-    let mult = 1;
-    if ((m = s.match(/(\d+)\s*x\s*(.+)/))) { mult = parseInt(m[1], 10) || 1; }
-    const rest = mult > 1 ? s.slice(s.indexOf('x') + 1) : s;
-    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(l|liter)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'l' };
-    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(ml)\b/)))             return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'l' };
-    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(cl)\b/)))             return { qty: parseFloat(m[1]) / 100 * mult, unit: 'l' };
-    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(kg|kilo)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'kg' };
-    if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(g|gr|gram)\b/)))      return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'kg' };
-    if ((m = rest.match(/(\d+)\s*(stuks?|stk|st|x)\b/)))          return { qty: parseInt(m[1], 10) * mult, unit: 'st' };
+  function parseUnit(unitStr, fallbackName) {
+    // Probeer eerst de unit-string, daarna de productnaam als fallback
+    const sources = [unitStr, fallbackName].filter(Boolean);
+    for (const src of sources) {
+      const s = normalize(src).replace(',', '.');
+      let m;
+      // multipack: "6 x 0.2 l", "3x1l"
+      let mult = 1;
+      if ((m = s.match(/(\d+)\s*x\s*(.+)/))) { mult = parseInt(m[1], 10) || 1; }
+      const rest = mult > 1 ? s.slice(s.indexOf('x') + 1) : s;
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(l|liter)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(ml)\b/)))             return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(cl)\b/)))             return { qty: parseFloat(m[1]) / 100 * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(kg|kilo)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'kg' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(g|gr|gram)\b/)))      return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'kg' };
+      if ((m = rest.match(/(\d+)\s*(stuks?|stk|st|x)\b/)))          return { qty: parseInt(m[1], 10) * mult, unit: 'st' };
+      // "per kilo" / "per liter" zonder getal → 1 eenheid
+      if (/\bper\s*kilo\b/.test(s))  return { qty: 1, unit: 'kg' };
+      if (/\bper\s*liter\b/.test(s)) return { qty: 1, unit: 'l' };
+    }
     return null;
   }
 
@@ -2983,14 +2989,14 @@
     // probleem terwijl per liter de 1l-versie veel goedkoper is.
     const tier = candidates.filter(c => c.score >= top.score - 1.0);
     for (const c of tier) {
-      c.unitPrice = computeUnitPrice(c.eff, c.p.unit);
+      c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
       c.multipack = isMultipack(c.p.name, c.p.unit);
     }
     const singles = tier.filter(c => !c.multipack && c.unitPrice);
     const best = singles.length
       ? singles.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a)
       : top;
-    if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit);
+    if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit, best.p.name);
     matchCache.set(cacheKey, best);
     return best;
   }
@@ -3013,8 +3019,8 @@
   }
 
   // Prijs per liter/kg/stuk voor eerlijke vergelijking.
-  function computeUnitPrice(price, unitStr) {
-    const u = parseUnit(unitStr);
+  function computeUnitPrice(price, unitStr, name) {
+    const u = parseUnit(unitStr, name);
     if (!u || !u.qty) return null;
     return { value: price / u.qty, unit: u.unit };
   }
