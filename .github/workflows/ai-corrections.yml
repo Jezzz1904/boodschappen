@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Installeer Anthropic SDK
         run: npm install @anthropic-ai/sdk
