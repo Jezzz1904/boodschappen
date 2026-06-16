@@ -997,6 +997,8 @@
     // Sauzen afkortingen
     [/\bmayo\b/g, 'mayonaise'],
     [/\bketchup\b/g, 'ketchup'],
+    [/\bbbq[- ]?saus\b/gi, 'barbecuesaus'],
+    [/\bbarbecue[- ]saus\b/gi, 'barbecuesaus'],
     // Koffie compound-woorden splitsen zodat stemMatch werkt
     [/\bkoffiebonen\b/g, 'koffie bonen'],
     [/\bkoffiepads\b/g, 'koffie pads'],
@@ -2062,6 +2064,10 @@
     mosterd:      { groups: {
                     'Type':  ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd', 'Amerikaans mosterd'],
                     'Merk':  ['Maille', 'Calvé', 'Remia', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    barbecuesaus: { groups: {
+                    'Smaak': ['Original', 'Smoky', 'Honey', 'Spicy', 'Jack Daniel\'s', 'Memphis BBQ'],
+                    'Merk':  ['Heinz', 'Remia', 'Sweet Baby Ray\'s', 'Bull\'s-Eye', 'AH', 'Lidl', 'Huismerk'],
                   }},
     chips:        { groups: {
                     'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream & onion', 'Cheese & onion', 'BBQ', 'Zout & azijn', 'Bacon', 'Jalapeño'],
