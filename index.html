@@ -2819,6 +2819,16 @@
     const qtyInput = document.getElementById('qty-input');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
+    // Als de invoer exact een variant-suboptie is → open variant-picker
+    const normInp = normalize(name);
+    for (const [key, val] of Object.entries(VARIANTS)) {
+      if (val.groups) {
+        for (const [groupName, opts] of Object.entries(val.groups)) {
+          const match = opts.find(o => normalize(o) === normInp);
+          if (match) { selectVariantItem(key, groupName, match); return; }
+        }
+      }
+    }
     const qty = parseInt(qtyInput.value, 10) || 1;
     addItem(name, qty);
     input.value = '';
