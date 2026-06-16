@@ -1040,8 +1040,14 @@
                     'Vers gevuld': ['Tortelloni', 'Cappelletti', 'Ravioli', 'Tortellini'],
                     'Vers overig': ['Verse gnocchi', 'Verse tagliatelle', 'Verse spaghetti'],
                   }},
-    rijst:        ['Basmati rijst', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst'],
-    noedels:      ['Mie', 'Boemboe noedels', 'Ramen', 'Soba'],
+    rijst:        { groups: {
+                    'Soort': ['Basmati', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst', 'Pandanrijst', 'Bruine rijst'],
+                    'Merk':  ['Uncle Ben\'s', 'Lassie', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    noedels:      { groups: {
+                    'Soort': ['Mie', 'Ramen', 'Soba', 'Udon', 'Glasnoedels', 'Rice noodles', 'Instant noedels', 'Cup noodles'],
+                    'Merk':  ['Doll', 'Nissin', 'Maggi', 'Blue Dragon', 'AH', 'Lidl', 'Huismerk'],
+                  }},
     melk:         { groups: {
                     'Vetgehalte': ['Halfvolle melk', 'Volle melk', 'Magere melk', 'Karnemelk'],
                     'Plantaardig':['Havermelk', 'Sojamelk', 'Amandelmelk', 'Kokosmelk', 'Rijstmelk'],
@@ -1081,6 +1087,34 @@
     toetje:       { groups: {
                     'Type':  ['Vla', 'Pudding', 'Panna cotta', 'Mousse', 'Tiramisu', 'Crème brûlée'],
                     'Merk':  ['Mona', 'Campina', 'Danone', 'Dr. Oetker', 'Huismerk'],
+                  }},
+    drinkyoghurt: { groups: {
+                    'Type':  ['Drinkyoghurt naturel', 'Drinkyoghurt aardbei', 'Drinkyoghurt bosvruchten', 'Chocolademelk', 'Chocomel', 'Warme chocolademelk'],
+                    'Merk':  ['Campina', 'Chocomel', 'Yazoo', 'AH', 'Huismerk'],
+                  }},
+    chocolademelk:{ groups: {
+                    'Type':  ['Chocolademelk', 'Warme chocolademelk', 'Chocolademelk light'],
+                    'Merk':  ['Chocomel', 'Campina', 'AH', 'Huismerk'],
+                  }},
+    koffiemelk:   { groups: {
+                    'Type':  ['Koffiemelk', 'Koffiecreamer', 'Koffieroom', 'Halfvolle koffiemelk', 'Plantaardige koffiemelk'],
+                    'Merk':  ['Campina', 'Friesche Vlag', 'Alpro', 'AH', 'Huismerk'],
+                  }},
+    probiotica:   { groups: {
+                    'Type':  ['Actimel', 'Yakult', 'Activia drinkyoghurt', 'Kefir', 'Bifidus'],
+                    'Merk':  ['Yakult', 'Danone', 'Müller', 'AH', 'Huismerk'],
+                  }},
+    kefir:        { groups: {
+                    'Type':  ['Kefir naturel', 'Kefir drank', 'Water kefir'],
+                    'Merk':  ['Biotona', 'AH', 'Huismerk'],
+                  }},
+    'lactosevrij': { groups: {
+                    'Type':  ['Lactosevrije melk', 'Lactosevrije yoghurt', 'Lactosevrije room', 'Lactosevrije boter', 'Lactosevrije kaas'],
+                    'Merk':  ['Campina', 'Friesche Vlag', 'AH', 'Huismerk'],
+                  }},
+    'plantaardige melk': { groups: {
+                    'Soort': ['Havermelk', 'Sojamelk', 'Amandelmelk', 'Kokosmelk', 'Rijstmelk', 'Erwtenmelk'],
+                    'Merk':  ['Alpro', 'Oatly', 'Califia', 'AH', 'Huismerk'],
                   }},
     smeerkaas:    { groups: {
                     'Type':  ['Smeerkaas naturel', 'Smeerkaas light', 'Smeerkaas kruiden', 'Cottage cheese', 'Roomkaas', 'Hüttenkäse'],
@@ -1122,16 +1156,68 @@
                     'Aantal': ['6 eieren', '10 eieren', '12 eieren', '15 eieren'],
                   }},
     appel:        { groups: {
-                    'Ras':    ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
-                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio appel'],
+                    'Ras':    ['Elstar', 'Jonagold', 'Gala', 'Fuji', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Kanzi', 'Jazz', 'Cosmic Crisp', 'SPRANK', 'Junami'],
+                    'Type':   ['Losse appel', 'Schaal', 'Zak'],
+                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio Gala', 'Bio appel'],
                   }},
     appels:       { groups: {
-                    'Ras':    ['Elstar', 'Jonagold', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Junami'],
-                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio appel'],
+                    'Ras':    ['Elstar', 'Jonagold', 'Gala', 'Fuji', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Kanzi', 'Jazz', 'Cosmic Crisp', 'SPRANK', 'Junami'],
+                    'Type':   ['Losse appel', 'Schaal', 'Zak'],
+                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio Gala', 'Bio appel'],
                   }},
     peer:         { groups: {
-                    'Ras':    ['Conference peer', 'Doyenne peer', 'Gieser Wildeman'],
+                    'Ras':    ['Conference', 'Doyenne', 'Gieser Wildeman', 'Stofpeer', 'Pluot'],
+                    'Type':   ['Eetrijp', 'Bak', 'Schaal'],
                     'Bio':    ['Bio Conference peer', 'Bio peer'],
+                  }},
+    mandarijn:    { groups: {
+                    'Soort':  ['Mandarijn', 'Clementine', 'Satsuma', 'Leanri mandarijn'],
+                    'Type':   ['Los', 'Net', 'Op sap (blik)'],
+                  }},
+    kersen:       { groups: {
+                    'Soort':  ['Zoete kersen', 'Nederlandse kersen', 'Zachte kersen', 'Cherry flamé', 'Cherry grande', 'Pitloze kersen'],
+                    'Bio':    ['Bio kersen'],
+                  }},
+    kiwi:         { groups: {
+                    'Soort':  ['Groene kiwi', 'Sungold kiwi', 'Zespri kiwi gold', 'Zespri kiwi groen', 'Verse kiwi'],
+                    'Type':   ['Los', 'Schaal'],
+                    'Bio':    ['Bio kiwi'],
+                  }},
+    perzik:       { groups: {
+                    'Soort':  ['Perzik', 'Wilde perziken', 'Witte perziken', 'Platte perzik'],
+                    'Type':   ['Los', 'Schaal', 'Op lichte siroop'],
+                    'Bio':    ['Bio perzik'],
+                  }},
+    nectarine:    { groups: {
+                    'Soort':  ['Gele nectarine', 'Rode nectarine', 'Sanguine rode nectarine', 'Witte nectarine'],
+                    'Type':   ['Los', 'Schaal'],
+                    'Bio':    ['Bio nectarines'],
+                  }},
+    meloen:       { groups: {
+                    'Soort':  ['Galia meloen', 'Cantaloupe meloen', 'Honingmeloen', 'Gele honingmeloen', 'Limelon meloen', 'Piel de sapo meloen', 'Watermeloen', 'Mini watermeloen'],
+                    'Type':   ['Heel', 'Gesneden', 'Stukjes', 'Sticks'],
+                  }},
+    passievrucht: { groups: {
+                    'Type':   ['Los', 'Zak'],
+                  }},
+    cranberries:  { groups: {
+                    'Soort':  ['Verse cranberries', 'Gedroogde cranberries'],
+                  }},
+    bramen:       { groups: {
+                    'Bio':    ['Bio bramen'],
+                  }},
+    'rode bessen': { groups: {
+                    'Soort':  ['Rode bessen', 'Zwarte bessen', 'Aalbessen'],
+                  }},
+    dadels:       { groups: {
+                    'Soort':  ['Medjoul dadels', 'Deglet dadels', 'Zachte dadels'],
+                  }},
+    kokos:        { groups: {
+                    'Soort':  ['Kokos rasp', 'Kokos geraspte', 'Kokosmelk', 'Kokoswater', 'Verse kokos'],
+                  }},
+    appelmoes:    { groups: {
+                    'Type':   ['Appelmoes', 'Appelmoes 0% suiker', 'Appel-peer moes'],
+                    'Merk':   ['Hak', 'Huismerk'],
                   }},
     aardappel:    { groups: {
                     'Vers':       ['Kruimige aardappelen', 'Vastkokende aardappelen', 'Drielingen', 'Krieltjes', 'Zoete aardappel'],
@@ -1160,12 +1246,186 @@
                     'Bio':   ['Bio rode paprika', 'Bio paprika mix', 'Bio mini paprika'],
                   }},
     sla:          { groups: {
-                    'Soort': ['IJsbergsla', 'Veldsla', 'Eikenbladsla', 'Little gem', 'Romaine', 'Rucola'],
-                    'Bio':   ['Bio veldsla', 'Bio rucola', 'Bio sla mix'],
+                    'Soort': ['IJsbergsla', 'Kropsla', 'Botersla', 'Veldsla', 'Rucola', 'Romaine', 'Eikenbladsla', 'Little gem', 'Gemengde salade', 'Salademix'],
+                    'Bio':   ['Bio veldsla', 'Bio rucola', 'Bio romaine', 'Bio sla mix'],
+                  }},
+    slamelange:   { groups: {
+                    'Type':  ['IJsbergsla melange', 'Rucola slamelange', 'Eikenblad slamelange', 'Krulslamelange', 'Jonge bladsla veldsla', 'Rodebiet slamelange', 'Krulsla IJsbergsla'],
+                    'Bio':   ['Bio rucola veldsla', 'Bio milde kiemgroente'],
+                  }},
+    rauwkost:     { groups: {
+                    'Type':  ['Rauwkost komkommer', 'Rauwkost radijs', 'Rauwkost Amsterdamse ui', 'Koolmix', 'Taugé'],
+                  }},
+    taugé:        ['Taugé', 'Bio taugé'],
+    kool:         { groups: {
+                    'Soort': ['Rode kool', 'Witte kool', 'Spitskool', 'Savooiekool', 'Boerenkool', 'Paksoi', 'Chinese kool', 'Spruitjes'],
+                    'Bio':   ['Bio boerenkool', 'Bio spitskool'],
+                  }},
+    andijvie:     { groups: {
+                    'Soort': ['Andijvie', 'Krullandijvie', 'Gesneden andijvie'],
+                    'Bio':   ['Bio andijvie'],
+                  }},
+    witlof:       { groups: {
+                    'Soort': ['Witlof', 'Roodlof', 'Witlof duo'],
+                    'Bio':   ['Bio witlof'],
+                  }},
+    pompoen:      { groups: {
+                    'Soort': ['Butternut pompoen', 'Hokkaido pompoen', 'Spaghettipompoen', 'Pompoenblokjes', 'Flespompoen'],
+                    'Bio':   ['Bio butternut'],
+                  }},
+    venkel:       { groups: {
+                    'Soort': ['Venkel heel', 'Venkel gesneden', 'Venkelknol'],
+                    'Bio':   ['Bio venkel'],
+                  }},
+    snijbonen:    { groups: {
+                    'Soort': ['Snijbonen vers', 'Snijbonen diepvries', 'Sperziebonen vers', 'Sperziebonen blik'],
+                    'Bio':   ['Bio snijbonen'],
+                  }},
+    snoepgroente: { groups: {
+                    'Soort': ['Snoeptomaat', 'Snackpaprika', 'Snackkomkommer', 'Snackworteltjes', 'Snackradijs', 'Sugarsnap'],
+                    'Bio':   ['Bio snoeptomaat', 'Bio snackgroente'],
+                  }},
+    gember:       { groups: {
+                    'Soort': ['Verse gember', 'Gemberpoeder', 'Gember in siroop', 'Gemberpasta'],
+                  }},
+    peper:        { groups: {
+                    'Soort': ['Rode peper', 'Groene peper', 'Chili peper', 'Jalapeño', 'Paprikapoeder', 'Cayennepeper'],
+                  }},
+    kiemgroenten: { groups: {
+                    'Soort': ['Tuinkers', 'Radijskiemen', 'Broccolikiemen', 'Zonnebloemkiemen', 'Gemengde kiemen', 'Erwtensckeuten'],
+                    'Bio':   ['Bio kiemgroenten', 'Bio milde kiemgroente'],
+                  }},
+    groentepasta: { groups: {
+                    'Soort': ['Courgettespaghetti', 'Bloemkoolrijst', 'Bietenspaghetti', 'Wortellinten', 'Courgettepasta mix'],
+                  }},
+    komkommer:    { groups: {
+                    'Soort': ['Komkommer heel', 'Mini komkommer', 'Snack komkommer'],
+                    'Bio':   ['Bio komkommer', 'Bio mini komkommer'],
+                  }},
+    champignons:  { groups: {
+                    'Soort': ['Witte champignons', 'Bruine champignons', 'Portobello', 'Shiitake', 'Oesterzwam', 'Gemengde paddenstoelen', 'Champignons in blik'],
+                    'Bio':   ['Bio champignons', 'Bio gemengde paddenstoelen'],
+                  }},
+    knoflook:     { groups: {
+                    'Soort': ['Knoflookbol', 'Knoflookteentjes', 'Gehakte knoflook (potje)', 'Knoflookpoeder', 'Knoflookgranulaat', 'Knoflook in olie'],
+                  }},
+    wortel:       { groups: {
+                    'Soort': ['Wortelen', 'Babyworteltjes', 'Winterpeen', 'Geraspte wortel', 'Wortelpakket'],
+                    'Bio':   ['Bio wortelen', 'Bio babyworteltjes'],
+                  }},
+    broccoli:     { groups: {
+                    'Soort': ['Broccoli heel', 'Broccoliroosjes', 'Broccolini'],
+                    'Bio':   ['Bio broccoli'],
+                  }},
+    bloemkool:    { groups: {
+                    'Soort': ['Bloemkool heel', 'Bloemkoolroosjes', 'Romanesco', 'Gekleurde bloemkool'],
+                    'Bio':   ['Bio bloemkool'],
+                  }},
+    courgette:    { groups: {
+                    'Soort': ['Groene courgette', 'Gele courgette', 'Mini courgette'],
+                    'Bio':   ['Bio courgette'],
+                  }},
+    spinazie:     { groups: {
+                    'Soort': ['Verse spinazie', 'Baby spinazie', 'Diepvries spinazie', 'Spinazie gewassen'],
+                    'Bio':   ['Bio baby spinazie', 'Bio spinazie'],
+                  }},
+    prei:         { groups: {
+                    'Soort': ['Prei heel', 'Prei gesneden', 'Mini prei'],
+                    'Bio':   ['Bio prei'],
+                  }},
+    mais:         { groups: {
+                    'Soort': ['Maiskolven', 'Mais in blik', 'Mais diepvries', 'Mini maiskolven'],
+                    'Merk':  ['Bonduelle', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    asperges:     { groups: {
+                    'Soort': ['Witte asperges', 'Groene asperges', 'Asperges in pot', 'Asperges diepvries'],
+                    'Maat':  ['Dun', 'Normaal', 'Dik', 'AA'],
+                  }},
+    avocado:      { groups: {
+                    'Soort': ['Hass avocado', 'Rijpe avocado', 'Avocado duo', 'Mini avocado'],
+                    'Bio':   ['Bio avocado'],
+                  }},
+    sinaasappel:  { groups: {
+                    'Soort': ['Sinaasappel', 'Bloedsinaasappel', 'Mandarijn', 'Clementine', 'Satsuma', 'Navel sinaasappel'],
+                    'Bio':   ['Bio sinaasappel', 'Bio clementine'],
+                  }},
+    // Wokgroenten & bereide groentenmixen
+    wokgroenten:  { groups: {
+                    'Stijl': ['Chinees', 'Thais', 'Oosters', 'Japans', 'Naturel'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    roerbakgroenten: { groups: {
+                    'Stijl': ['Italiaans', 'Mexicaans', 'Hollands', 'Provençaals', 'Aziatisch', 'Italiaans champignons'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    soepgroenten: { groups: {
+                    'Type':  ['Fijne soepgroente', 'Basis soepgroente', 'Boeren soepgroente', 'Luxe soepgroente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'nasi groente': { groups: {
+                    'Type':  ['Nasi groente', 'Gele wortel nasi', 'Nasi bami groente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'bami groente': { groups: {
+                    'Type':  ['Bami groente', 'Nasi bami groente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'oven groente': { groups: {
+                    'Type':  ['Courgette rode paprika', 'Prei peen', 'Zoete aardappel', 'Mediterrane groente', 'Wortel biet'],
+                  }},
+    'broccoli mix': { groups: {
+                    'Type':  ['Broccoli wortel bloemkool', 'Broccoli champignons', 'Broccoli mix'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    groentenmix:  { groups: {
+                    'Type':  ['Stamppotgroenten', 'Mediterrane mix', 'Mexicaanse mix', 'Basismix Aziatisch', 'Saladkit'],
+                    'Soort': ['Vers', 'Diepvries'],
                   }},
     kip:          { groups: {
-                    'Bereiding': ['Kipfilet', 'Kipdijfilet', 'Kippenpoten', 'Kipschnitzel', 'Kipgehakt', 'Hele kip', 'Kippenvleugels'],
-                    'Merk':      ['Kipster', 'Plukon', 'AH huismerk'],
+                    'Soort':     ['Kipfilet', 'Kipdijfilet', 'Kippenpoten', 'Kipdrumsticks', 'Kippenvleugels', 'Kluifjes', 'Kiphaasjes', 'Kippenlevertjes', 'Hele kip', 'Kipgehakt', 'Soepvlees kip'],
+                    'Bereiding': ['Naturel', 'Gerookt', 'Gebraden', 'Gemarineerd', 'Gepaneerd', 'Gekruid', 'Provençaals', 'Thais', 'Cajun', 'Tex Mex', 'Sweet chili', 'Yoghurt-paprika', 'Italiaans', 'Mediterraan', 'American style', 'À la minute paprika'],
+                    'Snijwijze': ['Heel', 'Blokjes', 'Reepjes', 'Treesjes', 'Plakjes', 'Stukjes roerbak', 'Saté blokjes'],
+                    'Kant-en-klaar': ['Kipschnitzel', 'Kipschnitzel krokant', 'Kipburger', 'Kipburger smokey', 'Kipburger jalapeño', 'Kip cordon bleu', 'Kip saté', 'Kip satéspies', 'Kip shoarma', 'Kip kebab', 'Kip gyros', 'Kipkofte', 'Kipmerguez', 'Kipworst', 'Kip hotdog', 'Kipnuggets', 'Kip popcorn nuggets', 'Kip fingers', 'Kip krokant', 'Chicken tenders', 'Chicken wings', 'Chicken bites', 'Kip shaslick', 'Kipballetjes', 'Kipsoepballetjes', 'Borrelhaasjes', 'Rotirol kip'],
+                    'Kwaliteit': ['Scharrel', 'Biologisch', 'Frans scharrel', 'Maiskip', 'Streekgenoten', 'Halal', 'Diepvries'],
+                  }},
+    varkensvlees: { groups: {
+                    'Soort':     ['Varkenshaas', 'Varkensfilet', 'Karbonade', 'Ribkarbonade', 'Schouderkarbonade', 'Speklap', 'Filetlap', 'Hamlap', 'Casselerrib', 'Procureur', 'Spareribs', 'Gehakt varken', 'Half-om-half gehakt'],
+                    'Spek':      ['Ontbijtspek', 'Kateraspek', 'Pannenkoekspek', 'Bacon', 'Bacon reepjes', 'Spekblokjes', 'Vetspek', 'Zeeuws spek', 'Gerookt ontbijtspek', 'Pancetta', 'Guanciale'],
+                    'Worst':     ['Braadworst', 'Braadworst Catalaans', 'Braadworst Italiaans', 'Chipolataworstjes', 'Chorizo braadworst', 'Slavink', 'Verse worst', 'Varkensbraadworst biologisch'],
+                    'Kant-en-klaar': ['Varkensschnitzel', 'Gehaktschnitzel', 'Wiener schnitzel', 'Slavink', 'Boomstammetje', 'Gehaktbal', 'Shoarma', 'Gyros', 'Saté', 'BBQ spareribs', 'BBQ worst', 'BBQ hotdog', 'Hamburger', 'Nasi bami vlees'],
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Gerookt', 'Gekruid', 'À la minute', 'BBQ', 'Smokey', 'Indisch', 'Asian style', 'Black garlic'],
+                    'Bio':       ['Biologisch speklap', 'Biologisch ontbijtspek', 'Biologisch half-om-half', 'Biologisch slavink', 'Biologisch varkensschnitzel', 'Biologisch schouderkarbonade'],
+                  }},
+    rundvlees:    { groups: {
+                    'Soort':     ['Biefstuk', 'Kogelbiefstuk', 'Biefstukpuntjes', 'Entrecôte', 'Ribeye', 'Bavette', 'Ossenhaas', 'Diamanthaas', 'Flat iron steak', 'Wagyu rump steak', 'Runderlap', 'Riblap', 'Sukadelap', 'Stoofvlees', 'Hachee', 'Goulash', 'Schenkel', 'Rosbief', 'Runderreepjes', 'Runderhart', 'Mergpijp'],
+                    'Gehakt':    ['Rundergehakt', 'Rundergehakt mager', 'Rundergehakt minder vet', 'Runderkingehakt', 'Soepballetjes', 'Gehaktballetjes Hollands', 'Gehaktballetjes Italiaans', 'Rundergehaktbal', 'Gevulde gehaktbal'],
+                    'Hamburger': ['Hamburger', 'Hamburger naturel', 'Beefburger jalapeño', 'Beefburger bacon', 'Beefburger truffelsmaak', 'Beefburger tomaat', 'Black Angus burger', 'Wagyu burger', 'Ultimate burger', 'BBQ grillburger', 'BBQ partyburger'],
+                    'Worst':     ['Runderbraadworst', 'Rundervink', 'Chipolatawors'],
+                    'BBQ':       ['BBQ biefstukspies', 'BBQ biefstukspies black garlic', 'BBQ runderkebabspies', 'BBQ entrecôte smoked', 'BBQ hamburger'],
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Gekruid Italiaans', 'Smoked', 'Black garlic', 'Paprika'],
+                    'Bio':       ['Biologisch rundergehakt', 'Biologisch biefstuk', 'Biologisch hamburger', 'Biologisch rundertartaar', 'Biologisch rundervink', 'Biologisch runderbraadworst'],
+                  }},
+    lamsvlees:    { groups: {
+                    'Soort':  ['Lamskotelet', 'Lamsgehakt', 'Lamsbout', 'Lamsschouder', 'Lamsrack'],
+                  }},
+    kalkoen:      { groups: {
+                    'Soort':  ['Kalkoenfilet', 'Kalkoenfilet blokjes', 'Kalkoenfilet schnitzel', 'Kalkoenfilet à la minute', 'Kalkoengehakt', 'Kalkoenrollade', 'Magere spekreepjes kalkoen'],
+                  }},
+    ovenschotel:  { groups: {
+                    'Vlees':  ['Scharrelkip', 'Kipfilet', 'Varkenshaas', 'Beenham', 'Pulled pork', 'Varkensoesters'],
+                    'Saus':   ['Groene pesto', 'Kruidenroomsaus', 'Tandoori', 'Piri piri', 'Sweet chili', 'Koreaanse stijl', 'Sate ajam', 'Ham pepersaus', 'Tomaat mozzarella', 'Honing mosterd'],
+                  }},
+    eend:         { groups: {
+                    'Soort':  ['Eendenborstfilet', 'Gerookte eendenborstfilet', 'Eendenpoten confit'],
+                    'Merk':   ['AH Excellent', 'Streeckgenoten'],
+                  }},
+    hert:         { groups: {
+                    'Soort':  ['Hertenbiefstuk', 'Hertenstoofvlees', 'Hert gemarineerd'],
+                    'Merk':   ['AH Excellent'],
+                  }},
+    hachee:       { groups: {
+                    'Soort':  ['Hachee', 'Vlaamse hachee', 'Runderzuurvlees', 'Stoofvlees', 'Rundergoulash', 'Rundergoulash Hongaars'],
+                    'Merk':   ['Unox', 'Streeckgenoten', 'Coertjens', 'AH'],
                   }},
     vlees:        { groups: {
                     'Rund':   ['Rundergehakt', 'Biefstuk', 'Runderlap', 'Rosbief', 'Hamburger'],
@@ -1179,25 +1439,262 @@
                     'Smaak':  ['Naturel', 'Gekruid', 'Italiaans gekruid'],
                   }},
     beleg:        { groups: {
-                    'Zoet':       ['Hagelslag', 'Chocoladehagelslag', 'Pindakaas', 'Chocopasta', 'Jam', 'Honing', 'Appelstroop', 'Vruchtenhagel'],
-                    'Vleeswaren': ['Ham', 'Beenham', 'Kipfilet beleg', 'Salami', 'Rookvlees', 'Filet Americain', 'Rosbief', 'Cervelaat'],
-                    'Kaas':       ['Smeerkaas', 'Cottage cheese', 'Roomkaas', 'Hüttenkäse'],
-                    'Overig':     ['Hummus', 'Kippenleverpastei', 'Ansjovis'],
+                    'Soort': ['Vleeswaren', 'Ham', 'Salami', 'Rookvlees', 'Zoet beleg', 'Kaasbeleg', 'Vegetarisch beleg'],
+                  }},
+    vleeswaren:   { groups: {
+                    'Soort': ['Ham', 'Beenham', 'Schouderham', 'Achterham', 'Kipfilet beleg', 'Kalkoenfilet beleg', 'Kalkoenham', 'Kalkoen salami', 'Kalkoen bacon', 'Kalkoen chorizo', 'Salami', 'Cervelaat', 'Rookvlees', 'Runderrookvlees', 'Rosbief', 'Pastrami', 'Filet Americain', 'Chorizo', 'Mortadella', 'Sucuk', 'Smeerleversworst'],
+                    'Merk':  ['Hema', 'Stegeman', 'Zwan', 'Wahid', 'Marhaba', 'Ikbal', 'Chatar', 'Fulya', 'Koc', 'AH', 'Huismerk'],
+                  }},
+    sucuk:        { groups: {
+                    'Soort': ['Sucuk plakjes', 'Sucuk traditioneel', 'Sucuk gekruid'],
+                    'Merk':  ['Koc', 'Efepasa', 'Egetürk'],
+                  }},
+    ham:          { groups: {
+                    'Soort': ['Beenham', 'Schouderham', 'Achterham', 'Gekookte ham', 'Kipfilet beleg', 'Gerookte ham'],
+                    'Type':  ['Plakken', 'Heel stuk', 'Dun gesneden'],
+                    'Merk':  ['Hema', 'Stegeman', 'Zwan', 'AH', 'Huismerk'],
+                  }},
+    salami:       { groups: {
+                    'Soort': ['Salami', 'Cervelaat', 'Chorizo', 'Pepperoni', 'Droge worst', 'Mortadella'],
+                    'Merk':  ['Hema', 'Stegeman', 'Zwan', 'AH', 'Huismerk'],
+                  }},
+    rookvlees:    { groups: {
+                    'Soort': ['Rookvlees', 'Rosbief', 'Pastrami', 'Gerookte kip'],
+                    'Merk':  ['Hema', 'Stegeman', 'AH', 'Huismerk'],
+                  }},
+    'filet americain': { groups: {
+                    'Type':  ['Filet Americain naturel', 'Filet Americain pikant', 'Filet Americain light'],
+                    'Merk':  ['Hema', 'Stegeman', 'AH', 'Huismerk'],
+                  }},
+    paté:         { groups: {
+                    'Soort': ['Champignonpaté', 'Leverpaté', 'Wildpaté', 'Truffelpaté', 'Kippenleverpastei'],
+                    'Merk':  ['Unilever', 'AH', 'Huismerk'],
+                  }},
+    knakworst:    { groups: {
+                    'Soort': ['Kipknakworst', 'Varkensknakworst', 'Runderknakworst', 'Magere knakworst', 'Duitse knakworst', 'Pittige knakworst', 'Vegetarische knakworst', 'Party knaks', 'Mini knaks'],
+                    'Merk':  ['Unox', 'Wikinger', 'AH', 'Huismerk'],
+                  }},
+    ragout:       { groups: {
+                    'Soort': ['Kipragout', 'Kalfragout', 'Rundvleesragout', 'Champignonragout', 'Kippenragout ambachtelijk'],
+                    'Merk':  ['Unox', 'AH', 'Streeckgenoten', 'Huismerk'],
+                  }},
+    leverpastei:  { groups: {
+                    'Soort': ['Leverpastei', 'Magere leverpastei', 'Leverpastei naturel'],
+                    'Merk':  ['Unox', 'AH', 'Huismerk'],
+                  }},
+    hotdog:       { groups: {
+                    'Soort': ['Hotdogs naturel', 'American hotdogs', 'Frankfurters', 'Bockworsten', 'Cocktailworstjes'],
+                    'Merk':  ['Unox', 'Wikinger', 'Isla Délice', 'AH', 'Huismerk'],
+                  }},
+    'kip spread': { groups: {
+                    'Soort': ['Kip spread', 'Kip pikant spread', 'Kip halal spread', 'Salmon spread', 'Meatless chicken spread'],
+                    'Merk':  ['Argeta', 'AH', 'Huismerk'],
+                  }},
+    'vegetarisch beleg': { groups: {
+                    'Soort': ['Hummus', 'Vegetarische salami', 'Vegetarische ham', 'Falafel beleg', 'Notenpasta'],
+                    'Merk':  ['Hema', 'Vivera', 'AH', 'Huismerk'],
+                  }},
+    // Verse sappen & fruit
+    'verse sappen': { groups: {
+                    'Soort': ['Sinaasappel', 'Sinaasappel-banaan', 'Sinaasappel-aardbei', 'Appel-peer-framboos', 'Ananas-meloen-mango', 'Sinaasappel-mango-appel', 'Gember-passievrucht', 'Gember-kurkuma-sinaasappel', 'Groentesap', 'Wortelsap', 'Bietensap'],
+                    'Merk':  ['Innocent', 'CoolBest', 'AH', 'Huismerk'],
+                  }},
+    smoothie:     { groups: {
+                    'Soort': ['Mango-maracuja', 'Sinaasappel-mango', 'Yoghurt-aardbei', 'Groene smoothie', 'Rode smoothie', 'Tropische smoothie'],
+                    'Merk':  ['Innocent', 'CoolBest', 'AH', 'Huismerk'],
+                  }},
+    mango:        { groups: {
+                    'Soort': ['Mango heel', 'Mango gesneden', 'Mango diepvries', 'Mango smoothie'],
+                    'Bio':   ['Bio mango'],
+                  }},
+    ananas:       { groups: {
+                    'Soort': ['Ananas heel', 'Ananas gesneden', 'Ananas in blik', 'Ananas stukjes'],
+                  }},
+    druiven:      { groups: {
+                    'Soort': ['Groene druiven', 'Rode druiven', 'Blauwe druiven', 'Zwarte druiven', 'Druiven mix'],
+                    'Bio':   ['Bio groene druiven', 'Bio rode druiven'],
+                  }},
+    aardbeien:    { groups: {
+                    'Soort': ['Aardbeien', 'Mini aardbeien', 'Zoete aardbeien', 'Nederlandse aardbeien', 'Aardbeien diepvries'],
+                    'Bio':   ['Bio aardbeien'],
+                  }},
+    granaatappel: { groups: {
+                    'Soort': ['Granaatappel heel', 'Verse granaatappelpitjes', 'Granaatappelpitjes (bak)'],
+                  }},
+    vijgen:       { groups: {
+                    'Soort': ['Verse vijgen', 'Gedroogde vijgen'],
+                    'Bio':   ['Bio gedroogde vijgen'],
+                  }},
+    abrikozen:    { groups: {
+                    'Soort': ['Verse abrikozen', 'Gedroogde abrikozen', 'Gedroogde abrikozen geweld', 'Abrikozen op lichte siroop'],
+                    'Bio':   ['Bio abrikozen'],
+                  }},
+    grapefruit:   { groups: {
+                    'Soort': ['Rode grapefruit', 'Gele grapefruit', 'Grapefruit los', 'Grapefruit net'],
+                  }},
+    jackfruit:    { groups: {
+                    'Soort': ['Verse jackfruit', 'Pulled young jackfruit', 'Jackfruit op sap'],
+                    'Merk':  ['Fairtrade', 'Huismerk'],
+                  }},
+    'gedroogde vruchten': { groups: {
+                    'Soort': ['Rozijnen', 'Krenten', 'Pruimen zonder pit', 'Abrikozen gedroogd', 'Vijgen gedroogd', 'Mango gedroogd', 'Ananas gedroogd', 'Dadels gedroogd', 'Tutti frutti', 'Frambozen-dadels-amandel', 'Kokos snippers'],
+                    'Bio':   ['Bio rozijnen', 'Bio mango gedroogd', 'Bio pruimen gedroogd', 'Bio ananas droog'],
+                  }},
+    'fruit op sap': { groups: {
+                    'Soort': ['Ananasschijven', 'Ananasstukjes', 'Ananasschijven op siroop', 'Mandarijnen', 'Perziken halve', 'Fruitcocktail', 'Aardbeien op sap', 'Kersen pitloos', 'Kwetsen pruimen'],
+                    'Merk':  ['Del Monte', 'Dole', 'Aarts', 'Fairtrade', 'Huismerk'],
+                  }},
+    groentesap:   { groups: {
+                    'Soort': ['Wortel-sinaas-gember 50%', 'Rode biet-aardbei 50%', 'Gele wortel-mango-ananas 50%', 'Paprika-wortel 80%', 'Komkommer-spinazie 80%', 'Rode biet-appel 80%', 'Spinazie 85%', 'Wortel 85%', 'Rode biet-avocado 85%'],
+                    'Merk':  ['AH', 'Zonnatura', 'Huismerk'],
+                  }},
+    groentesmoothie: { groups: {
+                    'Soort': ['Spinazie-komkommer 75%', 'Rode biet-aardbei 75%', 'Wortel-mango 75%', 'Haver-banaan-appel', 'Banaan-haver-rode druif', 'Kokosmelk-appel-aardbei', 'Wortel-mango super'],
+                    'Merk':  ['AH', 'Huismerk'],
+                  }},
+    vitamineshot: { groups: {
+                    'Soort': ['Vitamine C', 'Vitamine D', 'Multivitamine', 'Gember-kurkuma', 'Immunity gember-turmeric'],
+                    'Merk':  ['AH', 'MOJU', 'Innocent'],
+                  }},
+    gembershot:   { groups: {
+                    'Soort': ['Gember mild', 'Fresh root ginger', 'Appel-gember-framboos', 'Appel-kiwi-gember', 'Mango boost', 'Mango-ananas immunity'],
+                    'Merk':  ['AH', 'MOJU'],
+                  }},
+    knijpfruit:   { groups: {
+                    'Soort': ['Appel-mango', 'Appel-aardbei', 'Mango-wortel bio', 'Appel-banaan', 'Appel-peer'],
+                    'Merk':  ['Zonnatura', 'AH', 'Healthy people', 'Servero'],
                   }},
     vis:          { groups: {
-                    'Soort':    ['Verse vis', 'Gerookte vis', 'Vis in blik', 'Diepvries vis', 'Garnalen'],
+                    'Soort':    ['Verse vis', 'Gerookte vis', 'Vis in blik', 'Diepvries vis', 'Gepaneerde vis', 'Vissalade', 'Garnalen', 'Sushi'],
                   }},
-    'verse vis':      { groups: {
-                    'Soort':    ['Zalmfilet', 'Kabeljauwfilet', 'Tilapia', 'Pangasius', 'Schol', 'Tonijn steak', 'Zalm moot'],
-                    'Merk':     ['AH', 'Lidl', 'Huismerk'],
+    zalm:         { groups: {
+                    'Soort':    ['Zalmfilet', 'Zalmfilet op huid', 'Wilde zalmfilet', 'Zalm moot', 'Zalmsteak', 'Zalmsnippers', 'Zalmfilet à la minute'],
+                    'Bereiding':['Vers', 'Gerookt', 'Warmgerookt', 'Biologisch'],
+                    'Merk':     ['AH', 'Fish Tales', 'Olav\'s', 'Huismerk'],
+                  }},
+    tonijn:       { groups: {
+                    'Verpakking':['In water', 'In olijfolie', 'In zonnebloemolie'],
+                    'Type':      ['Stukken', 'Steak wit', 'Filets'],
+                    'Merk':      ['Princes', 'John West', 'Statesman', 'Rio Mare', 'AH', 'Huismerk'],
+                  }},
+    kabeljauw:    { groups: {
+                    'Soort':    ['Kabeljauwfilet', 'Kabeljauwhaas', 'Kabeljauwburger gepaneerd', 'Kabeljauwschnitzel'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    pangasius:    { groups: {
+                    'Smaak':    ['Naturel', 'Knoflook-citroen', 'Tuinkruiden'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    haring:       { groups: {
+                    'Soort':    ['Haring met uitjes', 'Haringfilet', 'Maatjesharing', 'Gerookte haring', 'Zoute haring'],
+                  }},
+    kibbeling:    { groups: {
+                    'Smaak':    ['Naturel', 'Gekruid'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    surimi:       { groups: {
+                    'Soort':    ['Surimi sticks', 'Surimi-krab salade', 'Surimi reepjes'],
+                  }},
+    ansjovis:     { groups: {
+                    'Verpakking':['In olijfolie', 'In zonnebloemolie', 'In zout'],
+                    'Merk':      ['Princes', 'Huismerk'],
+                  }},
+    sardines:     { groups: {
+                    'Verpakking':['In water', 'In olijfolie', 'In tomatensaus'],
+                    'Merk':      ['Fish Tales', 'Princes', 'Huismerk'],
                   }},
     'gerookte vis':   { groups: {
-                    'Soort':    ['Gerookte zalm', 'Gerookte makreel', 'Gerookte haring', 'Gerookte forel'],
-                    'Merk':     ['Foppen', 'Steur', 'AH', 'Lidl', 'Huismerk'],
+                    'Soort':    ['Gerookte zalm', 'Warmgerookte zalm', 'Gerookte makreel', 'Gerookte haring', 'Gerookte forel', 'Gerookte paling'],
+                    'Merk':     ['Foppen', 'Steur', 'Olav\'s', 'Fish Tales', 'AH', 'Huismerk'],
                   }},
     'vis in blik':    { groups: {
-                    'Soort':    ['Tonijn op water', 'Tonijn op olie', 'Sardines', 'Makreel in tomatensaus', 'Haring in zuur', 'Zalm in blik'],
-                    'Merk':     ['Rio Mare', 'Princes', 'John West', 'AH', 'Huismerk'],
+                    'Soort':    ['Tonijn', 'Sardines', 'Makreel', 'Haring', 'Zalm', 'Ansjovis'],
+                    'Verpakking':['In water', 'In olijfolie', 'In zonnebloemolie', 'In tomatensaus'],
+                    'Merk':     ['Princes', 'John West', 'Fish Tales', 'Rio Mare', 'AH', 'Huismerk'],
+                  }},
+    vissticks:    { groups: {
+                    'Type':     ['Vissticks', 'Lekkerbekjes', 'Kipfiletschnitzel vis'],
+                    'Merk':     ['Iglo', 'AH', 'Huismerk'],
+                  }},
+    vissalade:    { groups: {
+                    'Soort':    ['Tonijnsalade', 'Zalmsalade', 'Forelsalade', 'Surimi-krab salade', 'Vitello tonnato'],
+                    'Merk':     ['Johma', 'AH Excellent', 'AH', 'Huismerk'],
+                  }},
+    'verse vis':      { groups: {
+                    'Soort':    ['Zalmfilet', 'Zalmhaas', 'Kabeljauwfilet', 'Kabeljauwhaas', 'Pangasiusfilet', 'Schol', 'Tonijnsteak', 'Haring', 'Forel', 'Zeebaars', 'Roodbaars', 'Dorade', 'Heek', 'Tilapia'],
+                    'Merk':     ['AH', 'Fish Tales', 'Huismerk'],
+                  }},
+    garnalen:     { groups: {
+                    'Soort':    ['Cocktailgarnalen', 'Hollandse garnalen', 'Grote garnalen', 'Reuzengarnalen', 'Roerbakgarnalen', 'Roerbakgarnalen knoflook', 'Gepelde roze garnalen', 'Biologische garnalen'],
+                    'Type':     ['Rauw en gepeld', 'Gekookt', 'Gemarineerd BBQ'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    mosselen:     { groups: {
+                    'Soort':    ['Verse mosselen', 'Mosselen in tomatensaus', 'Mosselen in witte wijnsaus', 'Gerookte mosselen'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    makreel:      { groups: {
+                    'Soort':    ['Gerookte makreel', 'Gerookte horsmakreel', 'Makreel in tomatensaus', 'Horsmakreel in zonnebloemolie', 'Horsmakreel in water'],
+                    'Merk':     ['Fish Tales', 'Princes', 'Statesman', 'Huismerk'],
+                  }},
+    zeebaars:     { groups: {
+                    'Bereiding':['Vers', 'BBQ', 'Gemarineerd'],
+                    'Merk':     ['AH Visspecialist', 'AH', 'Huismerk'],
+                  }},
+    dorade:       { groups: {
+                    'Bereiding':['Vers op huid', 'Gemarineerd'],
+                    'Merk':     ['AH Visspecialist', 'AH', 'Huismerk'],
+                  }},
+    tilapia:      { groups: {
+                    'Bereiding':['Naturel', 'Mediterraans', 'Thai stijl'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    zalmforel:    { groups: {
+                    'Soort':    ['Gerookte zalmforel', 'Zalmforel eitjes', 'Gravad lax'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    'gemengde zeevruchten': { groups: {
+                    'Bereiding':['Rauw', 'Gemarineerd', 'Roerbak zeezout-peper'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    rivierkreeftjes: { groups: {
+                    'Bereiding':['Naturel', 'Gemarineerd', 'Knoflook'],
+                  }},
+    sushi:        { groups: {
+                    'Soort':    ['Hosomaki zalm', 'Uramaki', 'Sushi cali', 'Sushi sumire', 'Sushi edo', 'Sushi mix', 'Onigiri tonijn', 'Onigiri zalm', 'Onigiri California', 'Sashimi'],
+                    'Merk':     ['AH', 'Soosh', 'Huismerk'],
+                  }},
+    coquilles:    { groups: {
+                    'Bereiding':['Naturel', 'Gemarineerd BBQ', 'Met roomsaus'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    kreeft:       { groups: {
+                    'Soort':    ['Kreeftenstaarten', 'Kreeftenbisque', 'Hele kreeft', 'Kreeftensoep'],
+                    'Merk':     ['AH Visspecialist', 'Huismerk'],
+                  }},
+    langoustines: { groups: {
+                    'Bereiding':['Vers', 'Gegrild', 'Gemarineerd'],
+                    'Merk':     ['AH Visspecialist'],
+                  }},
+    oesters:      { groups: {
+                    'Soort':    ['Zeeuwse oesters', 'Oesters zilt & robuust'],
+                    'Merk':     ['Premier Zeeland', 'Huismerk'],
+                  }},
+    oktopus:      { groups: {
+                    'Soort':    ['Oktopus staart', 'Oktopus tentakels', 'Inktvis'],
+                    'Merk':     ['AH', 'Huismerk'],
+                  }},
+    kaviaar:      { groups: {
+                    'Soort':    ['Kaviaar', 'Zwarte kaviaar', 'Rode kaviaar', 'Kaviaar imperial'],
+                    'Merk':     ['Cavinoir', 'AH', 'Huismerk'],
+                  }},
+    escargots:    { groups: {
+                    'Soort':    ['Escargots naturel', 'Escargots met kruidenboter'],
+                    'Merk':     ['Delby\'s', 'Huismerk'],
+                  }},
+    'black tiger garnalen': { groups: {
+                    'Bereiding':['Naturel', 'Knoflook', 'Cajun', 'BBQ'],
+                    'Merk':     ['AH', 'Huismerk'],
                   }},
     chocolade:    ['Pure chocolade', 'Melkchocolade', 'Witte chocolade', 'Hazelnoot chocolade'],
     chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
@@ -1239,18 +1736,147 @@
                     'Merk':      ['Ola', 'AH', 'Lidl', 'Huismerk'],
                   }},
     ijsblokjes:   ['IJsblokjes zak', 'IJsblokjes bol', 'IJsblokjes crushed'],
-    crackers:     ['Cream crackers', 'Knäckebröd', 'Rijstwafels', 'Maïswafels'],
-    beleg:        ['Hagelslag', 'Pindakaas', 'Chocopasta', 'Jam', 'Honing', 'Smeerkaas', 'Vleeswaren'],
-    soep:         ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Bouillon'],
-    saus:         ['Pastasaus', 'Tomatensaus', 'Pesto', 'Sojasaus', 'Sweet chili', 'Ketchup'],
-    pastasaus:    ['Pastasaus basilicum', 'Pastasaus carbonara', 'Pastasaus bolognese', 'Pastasaus arrabbiata', 'Pastasaus pomodori'],
-    pestosaus:    ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese', 'Pestosaus'],
+    crackers:     { groups: {
+                    'Soort': ['Cream crackers', 'Knäckebröd', 'Rijstwafels', 'Maïswafels', 'Rondos', 'Volkorencrackers'],
+                    'Merk':  ['Wasa', 'Ryvita', 'Bolletje', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    rijstwafels:  { groups: {
+                    'Smaak': ['Naturel', 'Zeezout', 'Karamel', 'Chocolade', 'Rijstwafels met mais'],
+                    'Merk':  ['Quaker', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    hagelslag:    { groups: {
+                    'Soort': ['Melk hagelslag', 'Puur hagelslag', 'Wit hagelslag', 'Vlokken', 'Muisjes'],
+                    'Merk':  ['De Ruijter', 'Venz', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    pindakaas:    { groups: {
+                    'Type':  ['Pindakaas smooth', 'Pindakaas crunchy', 'Pindakaas naturel', 'Notenpasta'],
+                    'Merk':  ['Calvé', 'Déef', 'Skippy', 'Sun Pat', 'AH', 'Huismerk'],
+                  }},
+    jam:          { groups: {
+                    'Smaak': ['Aardbeienjam', 'Frambozenijam', 'Abrikozenjam', 'Bosbessenjam', 'Kersenjam', 'Sinaasappelmarmelade'],
+                    'Type':  ['Jam', 'Extra jam', 'Confiture', 'Suikervrije jam'],
+                    'Merk':  ['Zwan', 'Hero', 'Smuckers', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    honing:       { groups: {
+                    'Type':  ['Vloeibare honing', 'Gecremeerde honing', 'Honingraat', 'Manuka honing'],
+                    'Smaak': ['Bloemenhoning', 'Acacia honing', 'Boekweithoning', 'Wildflower honing'],
+                    'Merk':  ['Langnese', 'Billy Bee', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    chocoladepasta:{ groups: {
+                    'Type':  ['Chocoladepasta melk', 'Chocoladepasta puur', 'Duo chocoladepasta', 'Hazelnootpasta'],
+                    'Merk':  ['Nutella', 'Côte d\'Or', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    chocopasta:   { groups: {
+                    'Type':  ['Chocoladepasta melk', 'Chocoladepasta puur', 'Duo chocoladepasta', 'Hazelnootpasta'],
+                    'Merk':  ['Nutella', 'Côte d\'Or', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    muesli:       { groups: {
+                    'Type':  ['Muesli naturel', 'Muesli fruit', 'Granola', 'Crunchy muesli', 'Havermout'],
+                    'Merk':  ['Dr. Oetker', 'Jordans', 'Quaker', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    cornflakes:   { groups: {
+                    'Type':  ['Cornflakes naturel', 'Cornflakes suikervrij', 'Choco krispies', 'Frosties', 'Loops'],
+                    'Merk':  ['Kellogg\'s', 'Nestlé', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    havermout:    { groups: {
+                    'Type':  ['Havermout grof', 'Havermout fijn', 'Havermout instant', 'Havermoutpap'],
+                    'Merk':  ['Quaker', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    soep:         { groups: {
+                    'Smaak':      ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Groentesoep', 'Minestrone', 'Uiensoep', 'Pompoensoep', 'Paprikasoep'],
+                    'Verpakking': ['Blik', 'Pak', 'Cup'],
+                    'Merk':       ['Unox', 'Campbell\'s', 'Knorr', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    bouillon:     { groups: {
+                    'Type':       ['Groentebouillon', 'Kippenbouillon', 'Runderbouillon', 'Visbouillon', 'Paddenstoelenbouillon'],
+                    'Verpakking': ['Blokjes', 'Pot', 'Vloeibaar', 'Zakjes'],
+                    'Merk':       ['Knorr', 'Maggi', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    saus:         { groups: {
+                    'Soort': ['Pastasaus', 'Pesto', 'Tomatensaus', 'Sojasaus', 'Sweet chili saus', 'Barbecuesaus', 'Teriyaki saus'],
+                  }},
+    pastasaus:    { groups: {
+                    'Smaak': ['Basilicum', 'Bolognese', 'Carbonara', 'Arrabbiata', 'Pomodori', 'Funghi', 'Puttanesca'],
+                    'Merk':  ['Barilla', 'Bertolli', 'Ragu', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    pesto:        { groups: {
+                    'Type':  ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese', 'Pesto met zongedroogde tomaat'],
+                    'Merk':  ['Barilla', 'Bertolli', 'Sacla', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    pestosaus:    { groups: {
+                    'Type':  ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese'],
+                    'Merk':  ['Barilla', 'Bertolli', 'Sacla', 'AH', 'Huismerk'],
+                  }},
     tortelloni:   ['Tortelloni ricotta spinazie', 'Tortelloni kaas', 'Tortelloni ham'],
     cappelletti:  ['Cappelletti prosciutto', 'Cappelletti kaas', 'Cappelletti kip'],
     ravioli:      ['Ravioli ricotta spinazie', 'Ravioli 5 formaggio', 'Ravioli funghi'],
     gnocchi:      ['Verse gnocchi', 'Gnocchi tomaat mozzarella'],
-    olie:         ['Olijfolie', 'Zonnebloemolie', 'Bakolie', 'Sesamolie'],
-    bonen:        ['Sperziebonen', 'Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Kikkererwten'],
+    olie:         { groups: {
+                    'Type':  ['Olijfolie extra vierge', 'Olijfolie', 'Zonnebloemolie', 'Koolzaadolie', 'Bakolie', 'Sesamolie', 'Kokosolie', 'Avocado-olie'],
+                    'Merk':  ['Bertolli', 'Carbonell', 'Becel', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    tomatenpuree: { groups: {
+                    'Type':  ['Tomatenpuree', 'Geconcentreerde tomatenpuree', 'Tomatenpuree met kruiden'],
+                    'Merk':  ['Mutti', 'Cirio', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    tomatenblokjes:{ groups: {
+                    'Type':  ['Tomatenblokjes naturel', 'Tomatenblokjes met knoflook', 'Tomatenblokjes met kruiden', 'Gepelde tomaten', 'Passata'],
+                    'Merk':  ['Mutti', 'Cirio', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    passata:      { groups: {
+                    'Type':  ['Passata naturel', 'Passata met basilicum', 'Passata met knoflook'],
+                    'Merk':  ['Mutti', 'Cirio', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    sambal:       { groups: {
+                    'Type':  ['Sambal oelek', 'Sambal manis', 'Sambal badjak', 'Sambal brandal', 'Sriracha'],
+                    'Merk':  ['Conimex', 'Koningsvogel', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    sojasaus:     { groups: {
+                    'Type':  ['Sojasaus licht', 'Sojasaus donker', 'Ketjap manis', 'Tamari', 'Teriyaki saus'],
+                    'Merk':  ['Kikkoman', 'Conimex', 'Blue Dragon', 'AH', 'Huismerk'],
+                  }},
+    azijn:        { groups: {
+                    'Type':  ['Witte wijnazijn', 'Rode wijnazijn', 'Balsamico azijn', 'Appelazijn', 'Rijstazijn', 'Malt azijn'],
+                    'Merk':  ['Mautner Markhof', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    zout:         { groups: {
+                    'Type':  ['Fijn zeezout', 'Grof zeezout', 'Keukenzout', 'Himalayazout', 'Rookzout', 'Minder zout', 'Kruidenzout'],
+                    'Merk':  ['Jozo', 'Maldon', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    suiker:       { groups: {
+                    'Type':  ['Witte basterdsuiker', 'Bruine basterdsuiker', 'Kristalsuiker', 'Poedersuiker', 'Rietsuiker', 'Suikervervanger'],
+                    'Merk':  ['Van Gilse', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    bloem:        { groups: {
+                    'Type':  ['Tarwebloem', 'Zelfrijzend bakmeel', 'Volkorenmeel', 'Speltbloem', 'Glutenvrije bloem', 'Maizena'],
+                    'Merk':  ['Patissier', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    olijven:      { groups: {
+                    'Type':  ['Groene olijven', 'Zwarte olijven', 'Olijven gevuld', 'Olijventapenade', 'Olijvenmix'],
+                    'Merk':  ['Mezzetta', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    augurken:     { groups: {
+                    'Type':  ['Augurken fijn', 'Augurken grof', 'Cornichons', 'Zilveruitjes', 'Augurken zoet-zuur'],
+                    'Merk':  ['Hengstenberg', 'Kühne', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    kikkererwten: { groups: {
+                    'Type':  ['Kikkererwten in blik', 'Gekookte kikkererwten', 'Gedroogde kikkererwten', 'Kikkererwten pasta'],
+                    'Merk':  ['Bonduelle', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    bonen:        { groups: {
+                    'Soort':      ['Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Zwarte bonen', 'Kapucijners', 'Linzen rood', 'Linzen groen'],
+                    'Verpakking': ['Blik', 'Glas', 'Gedroogd'],
+                    'Merk':       ['Bonduelle', 'Hak', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    linzen:       { groups: {
+                    'Soort':      ['Rode linzen', 'Groene linzen', 'Beluga linzen', 'Puy linzen'],
+                    'Verpakking': ['Droog', 'Blik', 'Gekookt'],
+                    'Merk':       ['AH', 'Lidl', 'Huismerk'],
+                  }},
+    sperziebonen: { groups: {
+                    'Verpakking': ['Vers', 'Blik', 'Diepvries'],
+                    'Merk':       ['Hak', 'Bonduelle', 'AH', 'Lidl', 'Huismerk'],
+                  }},
     shampoo:      { groups: {
                     'Type':   ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo', 'Shampoo gekleurd haar'],
                     'Merk':   ['Head & Shoulders', 'Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Herbal Essences', 'Huismerk'],
@@ -1368,10 +1994,22 @@
                     'Merk':   ['McCain','Aviko','AH','Lidl','Huismerk'],
                   }},
     // Sauzen & condimenten
-    mayonaise:    ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise', 'Vegan mayonaise'],
-    mayo:         ['Calvé mayonaise', 'Remia mayonaise', 'Hellmann\'s mayonaise', 'AH mayonaise', 'Zaanse mayonaise', 'Halfvolle mayonaise'],
-    ketchup:      ['Heinz ketchup', 'Calvé ketchup', 'Remia ketchup', 'AH ketchup'],
-    mosterd:      ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd'],
+    mayonaise:    { groups: {
+                    'Type':  ['Mayonaise vol', 'Mayonaise halfvol', 'Zaanse mayonaise', 'Vegan mayonaise', 'Aioli'],
+                    'Merk':  ['Calvé', 'Hellmann\'s', 'Remia', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    mayo:         { groups: {
+                    'Type':  ['Mayonaise vol', 'Mayonaise halfvol', 'Zaanse mayonaise', 'Vegan mayonaise'],
+                    'Merk':  ['Calvé', 'Hellmann\'s', 'Remia', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    ketchup:      { groups: {
+                    'Type':  ['Ketchup', 'Ketchup minder suiker', 'Ketchup pittig', 'Tomatenketchup'],
+                    'Merk':  ['Heinz', 'Calvé', 'Remia', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    mosterd:      { groups: {
+                    'Type':  ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd', 'Amerikaans mosterd'],
+                    'Merk':  ['Maille', 'Calvé', 'Remia', 'AH', 'Lidl', 'Huismerk'],
+                  }},
     chips:        { groups: {
                     'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream & onion', 'Cheese & onion', 'BBQ', 'Zout & azijn', 'Bacon', 'Jalapeño'],
                     'Merk':  ['Lays', 'Croky', 'Pringles', 'AH', 'Lidl', 'Huismerk'],
@@ -1379,6 +2017,285 @@
     tortilla:     { groups: {
                     'Smaak': ['Naturel', 'Paprika', 'Nacho cheese', 'Cool ranch', 'Sweet chili', 'Guacamole'],
                     'Merk':  ['Doritos', 'Old El Paso', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+
+    // Vegetarisch & plantaardig
+    vleesvervanger: { groups: {
+                    'Soort':   ['Vegaburger', 'Vega gehakt', 'Vega schnitzel', 'Vega nuggets', 'Vega worst', 'Vega balletjes', 'Vega kipstukjes', 'Vega shoarma', 'Vega saté', 'Vega gyros', 'Vega loempia', 'Vega merguez', 'Vega knakworst'],
+                    'Merk':    ['AH Terra', 'Vivera', 'Garden Gourmet', 'Beyond Meat', 'The Vegetarian Butcher', 'Valess', 'Fry\'s', 'Huismerk'],
+                  }},
+    vleesvervangers:{ groups: {
+                    'Soort':   ['Vegaburger', 'Vega gehakt', 'Vega schnitzel', 'Vega nuggets', 'Vega worst', 'Vega balletjes', 'Vega kipstukjes', 'Vega shoarma'],
+                    'Merk':    ['AH Terra', 'Vivera', 'Garden Gourmet', 'Beyond Meat', 'The Vegetarian Butcher', 'Valess', 'Huismerk'],
+                  }},
+    tofu:         { groups: {
+                    'Soort':   ['Naturel tofu', 'Gerookte tofu', 'Marinated tofu', 'Silken tofu', 'Smoked tofu', 'Tofu blokjes pittig'],
+                    'Merk':    ['Alpro', 'AH Terra', 'Provamel', 'Taifun', 'Huismerk'],
+                  }},
+    tempeh:       { groups: {
+                    'Soort':   ['Naturel tempeh', 'Gerookt tempeh', 'Gekruid tempeh', 'Tempeh blokjes'],
+                    'Merk':    ['AH Terra', 'Huismerk'],
+                  }},
+    hummus:       { groups: {
+                    'Smaak':   ['Naturel', 'Rode paprika', 'Knoflook', 'Jalapeño', 'Edamame', 'Biet', 'Zwarte olijf', 'Pittig', 'Zon-gedroogde tomaat'],
+                    'Merk':    ['Maza', 'Zorba', 'AH', 'Huismerk'],
+                  }},
+    falafel:      { groups: {
+                    'Soort':   ['Falafel balletjes', 'Falafel wrap', 'Mini falafel'],
+                    'Merk':    ['AH Terra', 'Cauldron', 'Huismerk'],
+                  }},
+
+    // Noten & gedroogde vruchten (borrel/snacks)
+    noten:        { groups: {
+                    'Soort':   ['Notenmix', 'Cashewnoten', 'Amandelen', 'Walnoten', 'Paranoten', 'Pecannoten', 'Macadamianoten', 'Pistaches', 'Pinda\'s', 'Hazelnoten'],
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Gebrand', 'Ongebrand', 'Gekarameliseerd', 'Gerookt'],
+                    'Merk':    ['AH Terra', 'AH', 'Duyvis', 'Huismerk'],
+                  }},
+    cashewnoten:  { groups: {
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Gebrand', 'Ongebrand'],
+                    'Merk':    ['AH Terra', 'AH', 'Huismerk'],
+                  }},
+    amandelen:    { groups: {
+                    'Bereiding':['Ongebrand', 'Gebrand', 'Gezouten', 'Geschaafd', 'Gemalen'],
+                    'Merk':    ['AH Terra', 'AH', 'Huismerk'],
+                  }},
+    walnoten:     { groups: {
+                    'Bereiding':['Ongebrand', 'Gebrand', 'Ongezouten'],
+                    'Merk':    ['AH Terra', 'AH', 'Huismerk'],
+                  }},
+    pistaches:    { groups: {
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Geroosterd'],
+                    'Merk':    ['AH Terra', 'AH', 'Huismerk'],
+                  }},
+    notenmix:     { groups: {
+                    'Soort':   ['Studentenhaver', 'Cranberry notenmix', 'Rood fruit notenmix', 'Dadel rozijn mix', 'Macadamia mix', 'Borrelnoten'],
+                    'Merk':    ['AH', 'Duyvis', 'Huismerk'],
+                  }},
+    borrelnootjes:{ groups: {
+                    'Soort':   ['Borrelnoten naturel', 'Borrelnoten gekruid', 'Pinda\'s gezouten', 'Borrelmix'],
+                    'Merk':    ['Duyvis', 'AH', 'Huismerk'],
+                  }},
+    olijven:      { groups: {
+                    'Soort':   ['Groene olijven', 'Zwarte olijven', 'Kalamata olijven', 'Gevulde olijven', 'Gemengde olijven', 'Olijventapenade'],
+                    'Merk':    ['Maza', 'Royal', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    pesto:        { groups: {
+                    'Soort':   ['Pesto alla genovese', 'Pesto rosso', 'Pesto arrabbiata', 'Pesto truffelsmaak', 'Pesto ricotta walnoot', 'Pesto calabrese', 'Vegan pesto'],
+                    'Merk':    ['Grand\'Italia', 'Bertolli', 'Costa Ligure', 'De Cecco', 'AH Terra', 'AH', 'Huismerk'],
+                  }},
+    popcorn:      { groups: {
+                    'Smaak':   ['Zoet', 'Zout', 'Karamel', 'Zoet & zout', 'Nacho cheese', 'Sweet chili', 'Butter', 'Churros'],
+                    'Merk':    ['Jimmy\'s', 'Proper', 'Pathé', 'AH', 'Huismerk'],
+                  }},
+
+    // Frisdrank specifics
+    'ice tea':    { groups: {
+                    'Smaak':   ['Green', 'Peach', 'Lemon', 'Sparkling', 'Mango chamomile'],
+                    'Suiker':  ['Normaal', 'Zero sugar'],
+                    'Merk':    ['Lipton', 'Fuze Tea', 'AH', 'Huismerk'],
+                  }},
+    'energy drink':{ groups: {
+                    'Smaak':   ['Original', 'Suikervrij', 'Watermeloen', 'Bosvrucht', 'Abrikoos-aardbei', 'Kersen', 'Tropical'],
+                    'Merk':    ['Red Bull', 'Monster', 'Bullit', 'Celsius', 'AA Drink', 'Huismerk'],
+                  }},
+    sinaasappelsap:{ groups: {
+                    'Type':    ['100% puur sap', 'Met vruchtvlees', 'Mild', 'Biologisch', 'Nectar'],
+                    'Merk':    ['Appelsientje', 'Tropicana', 'AH', 'Huismerk'],
+                  }},
+    appelsap:     { groups: {
+                    'Type':    ['Helder', 'Troebel', 'Elstar', 'Bio', 'Boomgaard'],
+                    'Merk':    ['Flevosap', 'Appelsientje', 'AH', 'Huismerk'],
+                  }},
+    mineraalwater:{ groups: {
+                    'Type':    ['Koolzuurvrij', 'Koolzuurhoudend', 'Licht bruisend'],
+                    'Merk':    ['Spa Reine', 'Spa Intense', 'Bar-le-Duc', 'AH', 'Huismerk'],
+                  }},
+    kokoswater:   { groups: {
+                    'Smaak':   ['Naturel', 'Ananas', 'Aardbei'],
+                    'Merk':    ['Healthy People', 'AH', 'Huismerk'],
+                  }},
+    kombucha:     { groups: {
+                    'Smaak':   ['Aardbei blauwe bes cranberry', 'Gember citroen', 'Passievrucht'],
+                    'Merk':    ['AH', 'Remedy', 'Huismerk'],
+                  }},
+
+    // Bakkerij specifics
+    brood:        { groups: {
+                    'Soort':   ['Tijger wit', 'Tijger bruin', 'Tijger volkoren', 'Waldkorn', 'Zaans wit', 'Zaans bruin', 'Zaans volkoren', 'Les pains', 'OerDesem', 'Casino wit', 'Rond wit', 'Vloerbrood', 'Liefde & Passie'],
+                    'Snit':    ['Heel', 'Half', 'Gesneden'],
+                    'Merk':    ['AH Extra lang lekker', 'AH Liefde & Passie', 'AH Biologisch', 'AH OerDesem', 'Huismerk'],
+                  }},
+    stokbrood:    { groups: {
+                    'Soort':   ['Wit stokbrood', 'Robuust stokbrood', 'Spelt stokbrood', 'Knoflookboter', 'Kruidenboter', 'Kaas-ui', 'Waldkorn', 'Tijger', 'Meerzaden'],
+                    'Merk':    ['AH', 'Huismerk'],
+                  }},
+    baguette:     { groups: {
+                    'Soort':   ['Baguette', 'Demi baguette', 'Petit stokbrood', 'Frans stokbrood', 'Biologisch stokbrood'],
+                    'Merk':    ['AH', 'Schnitzer', 'Schär (glutenvrij)', 'Huismerk'],
+                  }},
+    broodje:      { groups: {
+                    'Soort':   ['Pistolet', 'Volkoren bolletje', 'Witte bol', 'Hamburgerbroodje', 'Kaisertje', 'Schnittbroodje', 'Rozijnenbol', 'Mueslibol', 'Beschuitbol'],
+                    'Merk':    ['AH', 'Huismerk'],
+                  }},
+    beschuit:     { groups: {
+                    'Soort':   ['Beschuit naturel', 'Beschuit volkoren', 'Meerzadenbeschuit', 'Speltbeschuit', 'Eiwitrijke beschuit'],
+                    'Merk':    ['Bolletje', 'AH', 'TastyBasics', 'Huismerk'],
+                  }},
+    croissant:    { groups: {
+                    'Soort':   ['Roomboter croissant', 'Ham-kaas croissant', 'Chocolade croissant', 'Amandel croissant', 'Mini croissant', 'Super croissant', 'Praliné croissant'],
+                    'Merk':    ['AH', 'Danerolles', 'Huismerk'],
+                  }},
+
+    // Kaas specifics
+    'goudse kaas':{ groups: {
+                    'Rijping':  ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud'],
+                    'Vetgehalte':['48+', '30+', '20+'],
+                    'Vorm':     ['Plakken', 'Stuk', 'Geraspt'],
+                    'Merk':     ['AH Zaanlander', 'De Zaanse Hoeve', 'Beemster', 'Milner', 'AH', 'Huismerk'],
+                  }},
+    mozzarella:   { groups: {
+                    'Soort':    ['Mozzarella', 'Buffelmozzarella', 'Mini mozzarella', 'Mozzarella geraspt', 'Mozzarella light'],
+                    'Merk':     ['Galbani', 'AH', 'Biologisch', 'Huismerk'],
+                  }},
+    feta:         { groups: {
+                    'Soort':    ['Feta blok', 'Feta gecrumbled', 'Gemarineerde feta', 'Feta in olie'],
+                    'Merk':     ['Dodoni', 'Salakis', 'AH Excellent', 'AH', 'Huismerk'],
+                  }},
+    roomkaas:     { groups: {
+                    'Smaak':    ['Naturel', 'Knoflook & kruiden', 'Avocado feta', 'Ananas', 'Gember', 'Jalapeño', 'Sambal'],
+                    'Merk':     ['Philadelphia', 'Garlan', 'AH', 'Huismerk'],
+                  }},
+    smeerkaas:    { groups: {
+                    'Smaak':    ['Naturel', 'Sambal', 'Ham', 'Jalapeño', 'Kruiden'],
+                    'Vetgehalte':['15+', '48+'],
+                    'Merk':     ['Eru', 'La Vache Qui Rit', 'AH', 'Huismerk'],
+                  }},
+
+    // Koffie & thee
+    koffiebonen:  { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Filterkoffie', 'Americano', 'Decaf'],
+                    'Intensiteit':['Mild', 'Medium', 'Sterk', 'Extra sterk'],
+                    'Merk':    ['Douwe Egberts', 'Lavazza', 'Illy', 'Starbucks', 'Perla', 'Jacobs', 'De Koffie Jongens', 'AH', 'Huismerk'],
+                  }},
+    filterkoffie: { groups: {
+                    'Intensiteit':['Mild', 'Medium', 'Sterk', 'Decaf'],
+                    'Merk':    ['Douwe Egberts', 'Perla', 'Jacobs', 'AH', 'Huismerk'],
+                  }},
+    koffiepads:   { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Cappuccino', 'Latte macchiato'],
+                    'Merk':    ['Senseo', 'Douwe Egberts', 'AH', 'Huismerk'],
+                  }},
+    koffiecups:   { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Ristretto', 'Cappuccino', 'Latte macchiato', 'Decaf'],
+                    'Merk':    ['Nespresso', 'Dolce Gusto', 'Starbucks', 'Lavazza', 'Illy', 'AH', 'Huismerk'],
+                  }},
+    instantkoffie:{ groups: {
+                    'Soort':   ['Granulaat', 'Gevriesdroogd', '3-in-1'],
+                    'Merk':    ['Nescafé', 'Douwe Egberts', 'Jacobs', 'AH', 'Huismerk'],
+                  }},
+
+    // Drogist — persoonlijke verzorging
+    shampoo:      { groups: {
+                    'Type':    ['Normaal haar', 'Vet haar', 'Droog haar', 'Anti-roos', 'Gekleurd haar', 'Beschadigd haar', 'Volume', '2-in-1'],
+                    'Merk':    ['Head & Shoulders', 'Pantene', 'Elvive', 'Andrelon', 'Dove', 'Herbal Essences', 'AH', 'Huismerk'],
+                  }},
+    conditioner:  { groups: {
+                    'Type':    ['Normaal haar', 'Droog haar', 'Gekleurd haar', 'Beschadigd haar', 'Volume', 'Leave-in'],
+                    'Merk':    ['Pantene', 'Elvive', 'Andrelon', 'Dove', 'AH', 'Huismerk'],
+                  }},
+    douchegel:    { groups: {
+                    'Geur':    ['Fris', 'Bloemen', 'Houtachtig', 'Citrus', 'Vanille', 'Sport', 'Geurloos'],
+                    'Type':    ['Douchegel', 'Douchecrème', 'Doucheschuim', '2-in-1 haar & lichaam'],
+                    'Merk':    ['Dove', 'Nivea', 'Fa', 'Axe', 'Palmolive', 'AH', 'Huismerk'],
+                  }},
+    deodorant:    { groups: {
+                    'Type':    ['Spray', 'Roller', 'Stick', 'Crème'],
+                    'Soort':   ['Normaal', '48u', '72u', 'Sensitive', 'Sport', 'Whitening'],
+                    'Merk':    ['Dove', 'Rexona', 'Nivea', 'Axe', 'AH', 'Huismerk'],
+                  }},
+    bodylotion:   { groups: {
+                    'Type':    ['Normale huid', 'Droge huid', 'Gevoelige huid', 'Stralende huid', 'Zelfbruiner'],
+                    'Merk':    ['Dove', 'Nivea', 'Etos', 'AH', 'Huismerk'],
+                  }},
+    zonnebrand:   { groups: {
+                    'SPF':     ['SPF 15', 'SPF 20', 'SPF 30', 'SPF 50', 'SPF 50+'],
+                    'Type':    ['Lotion', 'Spray', 'Crème', 'Spray kids', 'After sun'],
+                    'Merk':    ['Zwitsal', 'Nivea', 'Eucerin', 'Ambre Solaire', 'AH', 'Huismerk'],
+                  }},
+    handzeep:     { groups: {
+                    'Type':    ['Vloeibare handzeep', 'Navulling', 'Antibacterieel', 'Geurloos'],
+                    'Merk':    ['Dettol', 'Dove', 'Sanytol', 'AH', 'Huismerk'],
+                  }},
+    maandverband: { groups: {
+                    'Type':    ['Normaal', 'Nacht', 'Mini', 'Super', 'Ultra thin'],
+                    'Merk':    ['Always', 'Libresse', 'Etos', 'AH', 'Huismerk'],
+                  }},
+    tampons:      { groups: {
+                    'Maat':    ['Mini', 'Normal', 'Super', 'Super plus'],
+                    'Merk':    ['Tampax', 'o.b.', 'Etos', 'AH', 'Huismerk'],
+                  }},
+    luiers:       { groups: {
+                    'Maat':    ['Maat 1', 'Maat 2', 'Maat 3', 'Maat 4', 'Maat 5', 'Maat 6'],
+                    'Type':    ['Normaal', 'Pants', 'Nacht'],
+                    'Merk':    ['Pampers', 'Huggies', 'Libero', 'AH', 'Huismerk'],
+                  }},
+    paracetamol:  { groups: {
+                    'Sterkte': ['500mg', '1000mg', 'Kind 120mg', 'Kind 250mg'],
+                    'Type':    ['Tablet', 'Zetpil', 'Siroop'],
+                    'Merk':    ['Paracetamol', 'Perdolan', 'Dafalgan', 'AH', 'Huismerk'],
+                  }},
+    ibuprofen:    { groups: {
+                    'Sterkte': ['200mg', '400mg', '600mg'],
+                    'Type':    ['Tablet', 'Capsule', 'Liquid caps'],
+                    'Merk':    ['Advil', 'Nurofen', 'AH', 'Huismerk'],
+                  }},
+    vitaminen:    { groups: {
+                    'Soort':   ['Vitamine C', 'Vitamine D', 'Vitamine B12', 'Multivitamine', 'Omega 3', 'Magnesium', 'Zink', 'IJzer'],
+                    'Merk':    ['Davitamon', 'Orthica', 'Jamieson', 'AH', 'Huismerk'],
+                  }},
+    scheermesjes: { groups: {
+                    'Type':    ['Wegwerpmesjes', 'Systeem mesjes', 'Dames scheermesjes'],
+                    'Merk':    ['Gillette', 'Wilkinson', 'Schick', 'BIC', 'AH', 'Huismerk'],
+                  }},
+
+    // Huishouden
+    toiletpapier: { groups: {
+                    'Laag':    ['2-laags', '3-laags', '4-laags'],
+                    'Type':    ['Normaal', 'Extra zacht', 'Vochtig', 'Recycled'],
+                    'Merk':    ['Zewa', 'Plenty', 'Lotus', 'AH', 'Huismerk'],
+                  }},
+    wasmiddel:    { groups: {
+                    'Type':    ['Poeder', 'Vloeibaar', 'Capsules', 'Pods', 'Color', 'Wol & fijn', 'Zwart'],
+                    'Merk':    ['Ariel', 'Persil', 'Omo', 'Robijn', 'AH', 'Huismerk'],
+                  }},
+    wasverzachter:{ groups: {
+                    'Geur':    ['Fris', 'Bloemen', 'Geurloos', 'Sport'],
+                    'Merk':    ['Robijn', 'Lenor', 'Snuggle', 'AH', 'Huismerk'],
+                  }},
+    vaatwastabletten:{ groups: {
+                    'Type':    ['Normaal', 'All-in-one', 'Eco', 'Extra krachtig'],
+                    'Merk':    ['Finish', 'Dreft', 'Somat', 'AH', 'Huismerk'],
+                  }},
+    afwasmiddel:  { groups: {
+                    'Type':    ['Normaal', 'Sensitive', 'Anti-vet', 'Geconcentreerd'],
+                    'Merk':    ['Dreft', 'Fairy', 'Sun', 'AH', 'Huismerk'],
+                  }},
+    allesreiniger:{ groups: {
+                    'Type':    ['Normaal', 'Ontvet', 'Anti-bacterieel', 'Schuurmiddel'],
+                    'Merk':    ['Dettol', 'Mr Proper', 'Flash', 'AH', 'Huismerk'],
+                  }},
+    vuilniszakken:{ groups: {
+                    'Inhoud':  ['20L', '40L', '60L', '80L', '120L'],
+                    'Type':    ['Normaal', 'Met sluitband', 'Composteerbaar', 'Extra sterk'],
+                    'Merk':    ['Toppits', 'AH', 'Huismerk'],
+                  }},
+    keukenpapier: { groups: {
+                    'Type':    ['Normaal', 'Extra sterk', '3-laags'],
+                    'Merk':    ['Zewa', 'Plenty', 'AH', 'Huismerk'],
+                  }},
+    aluminiumfolie:{ groups: {
+                    'Type':    ['Normaal', 'Extra sterk', 'BBQ'],
+                    'Merk':    ['Toppits', 'AH', 'Huismerk'],
                   }},
   };
 
@@ -2583,29 +3500,59 @@
   const BROWSE_CATALOG = {
     groente: [
       // Fruit
-      'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Druiven','Kiwi',
-      'Aardbeien','Framboos','Blauwe bes','Meloen','Watermeloen','Ananas','Perzik','Nectarine',
-      'Pruim','Avocado',
+      'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Kiwi',
+      'Aardbeien','Framboos','Blauwe bes','Bramen','Rode bessen','Cranberries',
+      'Meloen','Watermeloen','Ananas','Perzik','Nectarine','Pruim','Kersen',
+      'Avocado','Mango','Druiven','Passievrucht','Grapefruit','Vijgen','Abrikozen',
+      'Dadels','Kokos','Granaatappel','Jackfruit',
+      'Gedroogde vruchten','Fruit op sap','Appelmoes',
+      'Verse sappen','Smoothie','Groentesap','Groentesmoothie','Vitamineshot','Gembershot','Knijpfruit',
       // Groente
       'Tomaat','Komkommer','Paprika','Wortel','Ui','Knoflook','Sla',
-      'Andijvie','Spinazie','Rucola','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
-      'Aardappel','Zoete aardappel','Champignons','Radijs','Rode kool','Witte kool',
-      'Spruitjes','Bieten','Sperziebonen','Asperges','Mais','Bosui',
+      'Andijvie','Witlof','Kool','Spinazie','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
+      'Pompoen','Venkel','Snijbonen','Sperziebonen','Asperges','Mais','Bosui',
+      'Aardappel','Zoete aardappel','Champignons','Radijs','Bieten','Spruitjes',
+      'Snoepgroente','Slamelange','Rauwkost','Taugé','Kiemgroenten',
+      'Gember','Peper','Groentepasta',
+      // Mixen & bereide groente
+      'Wokgroenten','Roerbakgroenten','Soepgroenten',
+      'Nasi groente','Bami groente','Oven groente','Broccoli mix','Groentenmix',
       // Kruiden
       'Peterselie','Basilicum','Gember','Munt','Koriander','Tijm','Rozemarijn',
     ],
     zuivel: [
-      'Melk','Yoghurt','Kwark','Vla','Karnemelk','Slagroom','Room','Boter','Kaas','Eieren',
-      'Smeerkaas','Pudding','Toetje',
+      'Melk','Plantaardige melk','Yoghurt','Drinkyoghurt','Chocolademelk','Koffiemelk',
+      'Kwark','Vla','Karnemelk','Slagroom','Room','Boter','Kaas','Eieren',
+      'Smeerkaas','Pudding','Toetje','Probiotica','Kefir','Lactosevrij',
     ],
     bakkerij: [
-      'Brood','Croissant','Viennoiserie',
-      'Beschuit','Crackers','Knäckebröd','Wraps','Tortilla','Pita','Naan','Bagel',
+      // Brood
+      'Brood','Stokbrood','Baguette','Ciabatta','Focaccia','Broodje',
+      // Broodjes & bollen
+      'Pistolet','Hamburgerbroodje','Pita','Naan','Bagel','Wrap','Flatbread',
+      // Viennoiserie
+      'Croissant','Viennoiserie',
+      // Crackers & beschuit
+      'Beschuit','Crackers','Knäckebröd','Rijstwafels',
+      // Bakken
+      'Bloem','Tarwebloem','Zelfrijzend bakmeel','Bakpoeder','Gist',
+      // Zoetigheid bakkerij
+      'Stroopwafel','Speculaas','Eierkoek',
     ],
     vlees: [
-      'Kip','Gehakt','Vlees','Beleg',
-      'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst',
-      'Verse vis','Gerookte vis','Vis in blik','Garnalen','Mosselen',
+      // Vers vlees
+      'Kip','Varkensvlees','Rundvlees','Gehakt','Lamsvlees','Kalkoen',
+      'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst','Hotdog','Cocktailworstjes',
+      'Ragout','Leverpastei','Kip spread',
+      // Vleeswaren & beleg
+      'Beleg','Vleeswaren','Ham','Salami','Rookvlees','Filet Americain','Paté','Vegetarisch beleg','Sucuk',
+      'Ovenschotel','Hachee','Eend','Hert','Kalkoen',
+      // Vis
+      'Zalm','Tonijn','Kabeljauw','Pangasius','Haring','Kibbeling','Surimi','Ansjovis','Sardines',
+      'Verse vis','Gerookte vis','Vis in blik','Vissticks','Vissalade',
+      'Garnalen','Mosselen','Makreel','Zeebaars','Dorade','Tilapia','Zalmforel',
+      'Gemengde zeevruchten','Rivierkreeftjes','Sushi',
+      'Coquilles','Kreeft','Langoustines','Oesters','Oktopus','Kaviaar','Escargots',
     ],
     diepvries: [
       'Diepvries groente','Diepvries fruit','Diepvries pizza','Verse pizza',
@@ -2613,29 +3560,72 @@
       'Friet','Ijs','IJslolly','IJsblokjes',
     ],
     houdbaar: [
-      'Pasta','Rijst','Noedels','Olie','Soep',
-      'Azijn','Balsamico','Sojasaus','Ketchup','Mayonaise','Mosterd','Sambal','Pesto',
-      'Bouillon','Tomatenblokjes','Tomatenpuree','Passata',
-      'Kikkererwten in blik','Bonen in blik','Linzen',
-      'Bloem','Suiker','Zout','Peper','Honing','Jam','Hagelslag','Pindakaas','Chocoladepasta',
-      'Muesli','Cornflakes','Havermout','Rijstwafels','Olijven','Augurken',
+      // Pasta & rijst
+      'Pasta','Rijst','Noedels','Couscous','Quinoa','Bulgur',
+      // Soepen
+      'Soep','Bouillon',
+      // Sauzen & condimenten
+      'Pastasaus','Pesto','Ketchup','Mayonaise','Mosterd','Sambal','Sojasaus',
+      'Barbecuesaus','Sweet chili saus','Teriyaki saus','Worcestersaus',
+      // Tomaten
+      'Tomatenblokjes','Tomatenpuree','Passata',
+      // Conserven & peulvruchten
+      'Bonen','Linzen','Kikkererwten','Olijven','Augurken','Kappertjes','Zilveruitjes',
+      // Vis in blik
+      'Tonijn in blik','Sardines','Ansjovis','Makreel in blik',
+      // Olie & azijn
+      'Olie','Olijfolie','Zonnebloemolie','Azijn','Balsamico',
+      // Kruiden & specerijen
+      'Zout','Peper','Paprikapoeder','Komijn','Kerrie','Knoflookpoeder','Uienpoeder',
+      'Oregano','Basilicum droog','Tijm droog','Rozemarijn droog','Kaneel','Nootmuskaat',
+      // Bakken & koken
+      'Suiker','Bloem','Bakpoeder','Vanillesuiker','Maïzena',
+      // Ontbijt & beleg
+      'Hagelslag','Pindakaas','Chocoladepasta','Jam','Honing',
+      'Muesli','Cornflakes','Havermout','Granola',
+      // Rijstwafels & tussendoor
+      'Rijstwafels','Crackers',
+      // Vegetarisch & vegan
+      'Vleesvervangers','Tofu','Tempeh','Hummus','Falafel','Plantaardige melk',
     ],
     snacks: [
-      'Chips','Tortilla','Chocolade',
-      'Borrelnootjes','Popcorn','Cashewnoten','Pinda\'s',
-      'Drop','Wine gums','Stroopwafel','Speculaas','Liga','Sultana',
-      'Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
+      // Chips & zout
+      'Chips','Tortilla chips','Pringles','Popcorn',
+      // Noten
+      'Noten','Notenmix','Cashewnoten','Amandelen','Walnoten','Pistaches','Borrelnootjes','Pinda\'s',
+      // Dip & borrel
+      'Olijven','Pesto','Hummus','Salami borrel',
+      // Chocolade & snoep
+      'Chocolade','Drop','Wine gums','Stroopwafel','Speculaas','Daelmans','Lotus Biscoff',
+      'Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Tuc',
+      // Koek
+      'Liga','Sultana','Rijstwafels',
     ],
     frisdranken: [
-      'Water','Sap','Cola','Frisdrank',
-      'Spa rood','Spa blauw','Fanta','Sprite','7Up','Ice Tea','Aquarius','Rivella','Dubbelfris','Red Bull',
+      // Water
+      'Mineraalwater','Spa rood','Spa blauw','Bruisend water',
+      // Sap
+      'Sinaasappelsap','Appelsap','Multivruchtensap','Tomatensap','Kokoswater','Kombucha',
+      // Frisdrank
+      'Cola','Fanta','Sprite','7Up','Dubbelfris','Rivella',
+      // Ice tea & energy
+      'Ice tea','Energy drink','Red Bull','Aquarius',
+      // Siroop
+      'Vruchtensiroop','Karvan Cévitam',
     ],
     koffie: [
-      'Koffie','Thee',
+      // Koffie
+      'Koffie','Koffiebonen','Filterkoffie','Koffiepads','Koffiecups','Instantkoffie',
+      // Thee
+      'Thee','Groene thee','Rooibos','Kruidenthee','Pepermunthee','Gemberthee','Kamillethee','Earl Grey',
     ],
     alcoholisch: [
-      'Bier','Wijn',
-      'Gin','Wodka','Whisky','Rum','Jenever',
+      // Bier
+      'Bier','Speciaalbier','Alcoholvrij bier','Radler',
+      // Wijn
+      'Wijn','Rode wijn','Witte wijn','Rosé','Prosecco','Cava','Champagne',
+      // Sterke drank
+      'Gin','Wodka','Whisky','Rum','Jenever','Tequila','Likeur',
     ],
     drogist: [
       'Shampoo','Conditioner','Douchegel','Tandpasta','Deodorant',
