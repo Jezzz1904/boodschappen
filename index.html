@@ -699,6 +699,14 @@
       cursor:pointer; box-shadow:0 2px 8px rgba(5,150,105,.3);
     }
     .hist-add:active { transform:scale(.94); }
+    .forgotten-block {
+      background: linear-gradient(135deg, #FEF9C3, #FEF3C7);
+      border:1.5px solid #FDE68A; border-radius:14px;
+      padding:12px 14px; margin-bottom:14px;
+    }
+    .forgotten-title { font-size:13px; font-weight:800; color:#92400E; margin-bottom:8px; }
+    .forgotten-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .forgotten-chip { display:contents; }
     .hist-del {
       background:none; border:none; cursor:pointer;
       color:var(--slate-300); font-size:16px; padding:4px 2px; line-height:1;
@@ -4274,6 +4282,27 @@
       ${rows}`;
   }
 
+  // ── VERGETEN-DETECTIE ──
+  function renderForgottenSection(wrap) {
+    if (!items.length) return '';
+    const onListNorms = new Set(items.map(x => normalize(x.name)));
+    const SIX_WEEKS = 42 * 86400000;
+    const forgotten = Object.values(history)
+      .filter(e => e.count >= 3 && e.lastBought && (Date.now() - e.lastBought) < SIX_WEEKS && !onListNorms.has(normalize(e.name)))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+    if (!forgotten.length) return '';
+    const chips = forgotten.map(e => {
+      const safe = escapeHtml(e.name).replace(/'/g, "\\'");
+      return `<button class="hist-add" style="font-size:12px;padding:6px 10px;" onclick="quickAdd('${safe}'); this.closest('.forgotten-chip').remove(); toast('Toegevoegd');">${escapeHtml(e.name)}</button>`;
+    }).map(btn => `<div class="forgotten-chip">${btn}</div>`).join('');
+    return `
+      <div class="forgotten-block">
+        <div class="forgotten-title">🤔 Ben je dit vergeten?</div>
+        <div class="forgotten-chips">${chips}</div>
+      </div>`;
+  }
+
   // ── HISTORIE TAB ──
   function renderHistory() {
     const wrap = document.getElementById('hist-wrap');
@@ -4313,7 +4342,7 @@
           </div>`;
       });
     });
-    wrap.innerHTML = html;
+    wrap.innerHTML = renderForgottenSection() + html;
   }
   function deleteHistoryItem(name) {
     const key = normalize(name);
