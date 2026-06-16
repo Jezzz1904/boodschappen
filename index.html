@@ -106,6 +106,19 @@
       padding: 2px 7px; border-radius: 10px; font-weight: 700;
     }
 
+    /* Deal-hoeveelheid tip */
+    .deal-qty-tip {
+      margin-top: 6px; padding: 6px 10px; border-radius: 10px;
+      background: #eff6ff; border: 1.5px solid #bfdbfe;
+      font-size: 12px; color: var(--slate-700);
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .deal-qty-tip-btn {
+      margin-left: auto; background: var(--green-500); color: white;
+      border: none; border-radius: 8px; padding: 3px 10px;
+      font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+
     /* Aanbieding-tip onder prijsvergelijking */
     .bonus-tip {
       margin-top: 7px; padding: 7px 10px; border-radius: 10px;
@@ -1086,6 +1099,7 @@
     brood:        { groups: {
                     'Bruin/Volkoren': ['Bruin brood', 'Volkoren brood', 'Meergranen brood', 'Roggebrood', 'Speltbrood', 'Bruin tijgerbrood'],
                     'Wit':            ['Wit brood', 'Wit tijgerbrood', 'Sandwich brood', 'Toast brood'],
+                    'Broodjes':       ['Witte bolletjes', 'Bruine bolletjes', 'Puntjes', 'Pistolets', 'Krentenbollen', 'Rozijnenbolletjes', 'Hamburgerbroodjes', 'Hotdogbroodjes'],
                     'Speciaal':       ['Zuurdesem', 'Krentenbrood', 'Rozijnenbrood', 'Noten-rozijnenbrood'],
                     'Afbak':          ['Afbak stokbrood', 'Afbak pistolets', 'Afbak baguette', 'Afbak ciabatta', 'Stokbrood'],
                     'Diepvries':      ['Diepvries brood', 'Diepvries stokbrood', 'Diepvries pistolets'],
@@ -1884,6 +1898,13 @@
     saveItems(); render();
   }
 
+  function setQty(id, qty) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.qty = qty;
+    saveItems(); render();
+  }
+
   function deleteItem(id) {
     items = items.filter(x => x.id !== id);
     saveItems(); render();
@@ -2099,6 +2120,38 @@
     } else {
       rows = sorted.map(m => makeRow(m, cheapest, sameUnit, key)).join('');
     }
+    // Deal-hoeveelheid tip: als je te weinig hebt voor een combinatiedeal
+    function parseDealMinQty(mechanism) {
+      if (!mechanism) return null;
+      const t = mechanism.toLowerCase();
+      let m = t.match(/^(\d+)\+(\d+)\s*gratis/);
+      if (m) return parseInt(m[1]) + parseInt(m[2]);
+      m = t.match(/^(\d+)\s*(?:voor|x)\s*[\d,]/);
+      if (m) return parseInt(m[1]);
+      m = t.match(/^(\d+)e halve prijs/);
+      if (m) return parseInt(m[1]);
+      return null;
+    }
+    const dealQtyTipHtml = (() => {
+      const activeDeal = matches.find(m => m.activeBonus?.mechanism);
+      if (!activeDeal) return '';
+      const minQty = parseDealMinQty(activeDeal.activeBonus.mechanism);
+      if (!minQty || it.qty >= minQty) return '';
+      const store = STORE_BY_ID[activeDeal.storeId];
+      const need = minQty - it.qty;
+      const safeId = it.id.replace(/'/g, "\\'");
+      const effPerItem = activeDeal.eff;
+      const totalPrice = effPerItem != null ? minQty * effPerItem : null;
+      const priceStr = totalPrice != null
+        ? ` · <strong>${fmtPrice(totalPrice)}</strong> voor ${minQty} stuks <span class="cmp-unit">(gem. ${fmtPrice(effPerItem)}/stuk)</span>`
+        : '';
+      return `<div class="deal-qty-tip">
+        🏷️ <strong>${store.name}</strong>: <em>${escapeHtml(activeDeal.activeBonus.mechanism)}</em>${priceStr}
+        — voeg nog <strong>${need}×</strong> toe om de deal te pakken
+        <button class="deal-qty-tip-btn" onclick="event.stopPropagation();setQty('${safeId}',${minQty})">+${need} toevoegen</button>
+      </div>`;
+    })();
+
     // Aanbieding-tip: zoek vergelijkbaar product dat nu in bonus is en goedkoper
     const bonusTip = findBonusAlternative(it.name, it.category, matches);
     const bonusTipHtml = bonusTip ? `
@@ -2129,7 +2182,7 @@
       </div>`;
     })();
 
-    return `<div class="cmp">${rows}${brandToggle}${bonusTipHtml}${upcomingTipHtml}</div>`;
+    return `<div class="cmp">${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
   }
 
   // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
