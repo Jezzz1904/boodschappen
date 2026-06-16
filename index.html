@@ -1772,8 +1772,26 @@
                   }},
     water:        ['Spa rood', 'Spa blauw', 'Bronwater', 'Spa & fruit'],
     sap:          ['Sinaasappelsap', 'Appelsap', 'Multivit', 'Smoothie'],
-    frisdrank:    ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris'],
-    cola:         ['Coca-Cola', 'Coca-Cola Zero', 'Pepsi', 'Cola light'],
+    frisdrank:    { groups: {
+                    'Soort':      ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris', 'Rivella'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles 0.5L', 'Multipack blik 24'],
+                  }},
+    fanta:        { groups: {
+                    'Smaak':      ['Fanta Orange', 'Fanta Lemon', 'Fanta Watermeloen', 'Fanta Tropical', 'Fanta Cassis', 'Fanta Zero Orange', 'Fanta Zero Lemon'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles'],
+                  }},
+    sprite:       { groups: {
+                    'Type':       ['Sprite Regular', 'Sprite Zero Sugar', 'Sprite Cranberry'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik'],
+                  }},
+    cola:         { groups: {
+                    'Merk':       ['Coca-Cola', 'Coca-Cola Zero', 'Coca-Cola Light', 'Pepsi', 'Pepsi Max', 'Pepsi Light', 'Cola huismerk'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles 0.5L', 'Tray 24 blik'],
+                  }},
+    '7up':        { groups: {
+                    'Type':       ['7Up Regular', '7Up Zero Sugar', '7Up Free'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', '6-pack blik'],
+                  }},
     pizza:        { groups: {
                     'Soort':      ['Diepvries pizza', 'Verse pizza'],
                   }},
@@ -3436,8 +3454,15 @@
           for (const [groupName, items] of Object.entries(val.groups)) {
             for (const v of items) {
               const norm = normalize(v);
-              if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
-                results.push({ label: v, name: v, isVariantKey: false, parentKey: key, groupName, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+              if (!norm.includes(inp) || onList.has(norm)) continue;
+              // Dedupliceer per (naam, parentKey) — niet globaal, zodat "Calvé" voor
+              // zowel mayonaise als pindakaas apart verschijnt.
+              if (results.some(r => normalize(r.name) === norm && r.parentKey === key)) continue;
+              // Als deze naam al bestaat voor een ander parentKey: voeg context toe aan label
+              const dup = results.find(r => normalize(r.name) === norm && r.parentKey !== key);
+              if (dup && !dup.label.includes('(')) dup.label = `${dup.name} (${dup.parentKey})`;
+              const label = dup ? `${v} (${key})` : v;
+              results.push({ label, name: v, isVariantKey: false, parentKey: key, groupName, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
             }
           }
         } else {
@@ -3592,8 +3617,6 @@
   // Verpakking-opties per generieke term. Default: alleen bier.
   const PACKAGINGS = {
     bier:      ['Krat', '6-pack flesjes', 'Flesje', '6-pack blik', 'Tray blik', 'Blik'],
-    cola:      ['Fles', 'Blikje', '6-pack blik', '6-pack fles', 'Multipack'],
-    frisdrank: ['Fles', 'Blikje', '6-pack blik', 'Multipack'],
     water:     ['Fles', '6-pack fles', 'Karton', 'Groot pak'],
     sap:       ['Pak', 'Fles', 'Karton'],
     wijn:      ['Fles', 'Bag-in-box', 'Karton'],
