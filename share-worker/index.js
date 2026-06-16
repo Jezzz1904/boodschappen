@@ -80,6 +80,23 @@ export default {
       return json({ ok: true });
     }
 
+    // POST /report  — sla foutmelding op (voor later inzien)
+    if (request.method === 'POST' && parts[0] === 'report') {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
+      const reports = JSON.parse(await env.SHARES.get('__reports__') || '[]');
+      reports.unshift({ ...body, id: randId(6) });
+      if (reports.length > 200) reports.splice(200);
+      await env.SHARES.put('__reports__', JSON.stringify(reports), { expirationTtl: TTL * 12 });
+      return json({ ok: true });
+    }
+
+    // GET /reports  — haal alle foutmeldingen op
+    if (request.method === 'GET' && parts[0] === 'reports') {
+      const reports = JSON.parse(await env.SHARES.get('__reports__') || '[]');
+      return json(reports);
+    }
+
     return json({ error: 'Not found' }, 404);
   },
 };

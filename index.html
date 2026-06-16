@@ -649,6 +649,34 @@
     }
     .cmp-diff { color: var(--slate-400); font-weight:700; font-size:11px; }
     .cmp-unit-missing { color: var(--slate-400); font-style: italic; }
+    .cmp-flag {
+      background:none; border:none; cursor:pointer; padding:2px 4px;
+      font-size:13px; opacity:.3; flex-shrink:0; line-height:1;
+    }
+    .cmp-flag:active { opacity:1; }
+    .report-menu {
+      position:absolute; right:8px; z-index:200;
+      background:white; border-radius:12px; padding:6px;
+      box-shadow:0 4px 20px rgba(0,0,0,.15); border:1.5px solid var(--slate-100);
+      display:flex; flex-direction:column; gap:4px; min-width:200px;
+    }
+    .report-menu-title { font-size:11px; font-weight:800; color:var(--slate-400); padding:4px 8px 2px; text-transform:uppercase; letter-spacing:.5px; }
+    .report-opt {
+      padding:8px 12px; border-radius:8px; font-size:13px; font-weight:700;
+      cursor:pointer; background:none; border:none; text-align:left; color:var(--slate-700);
+    }
+    .report-opt:hover { background:var(--slate-50); }
+    .report-opt.danger { color:var(--rose-500); }
+    .report-opt.cancel { color:var(--slate-400); font-weight:600; }
+    .blacklist-card {
+      background:white; border-radius:12px; padding:10px 12px;
+      border:1.5px solid #FEE2E2; margin-bottom:6px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .blacklist-info { flex:1; min-width:0; }
+    .blacklist-name { font-size:13px; font-weight:700; color:var(--slate-700); }
+    .blacklist-product { font-size:11px; color:var(--slate-400); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .blacklist-undo { background:var(--green-50); color:var(--green-700); border:none; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:800; cursor:pointer; flex-shrink:0; }
     .cmp-unit { color: var(--slate-400); font-size:10.5px; font-weight:600; flex-shrink:0; }
     .bonus-badge {
       display:inline-block;
@@ -932,6 +960,7 @@
     </div>
     <div id="tips-output"></div>
     <div id="store-pref-section" style="margin-top:16px"></div>
+    <div id="blacklist-section"></div>
     <div id="share-worker-config" style="margin-top:12px"></div>
   </div>
 
@@ -1042,8 +1071,9 @@
   };
 
   const ITEMS_KEY = 'boodschappen.items';
-  const HIST_KEY       = 'boodschappen.history';
+  const HIST_KEY        = 'boodschappen.history';
   const SAVED_LISTS_KEY = 'boodschappen.savedLists';
+  const BLACKLIST_KEY   = 'boodschappen.blacklist'; // { itemNorm: ['productNaam1', ...] }
 
   let items   = loadJson(ITEMS_KEY, []);
   let history = loadJson(HIST_KEY,  {});
@@ -2820,12 +2850,15 @@
 
   // Vergelijk een item over alle winkels. Geeft { matches:[per winkel], cheapest, hasData }.
   function findMatches(itemName, itemCategory) {
+    const itemNorm = normalize(itemName);
+    const bl = loadBlacklist();
+    const blocked = new Set(bl[itemNorm] || []);
     const matches = [];
     let anyData = false;
     for (const store of STORES) {
       if (storeData[store.id] && storeData[store.id].products?.length) anyData = true;
       const m = findStoreMatch(store.id, itemName, itemCategory);
-      if (m) matches.push(m);
+      if (m && !blocked.has(m.p.name)) matches.push(m);
     }
     if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
     // Goedkoopste: op prijs-per-eenheid als ≥2 winkels dezelfde dominante eenheid hebben.
@@ -3278,6 +3311,90 @@
   }
 
   // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
+  // ── FOUT-RAPPORTAGE & BLACKLIST ──
+  function loadBlacklist() { return loadJson(BLACKLIST_KEY, {}); }
+  function saveBlacklist(bl) { try { localStorage.setItem(BLACKLIST_KEY, JSON.stringify(bl)); } catch {} }
+
+  function isBlacklisted(itemNorm, productName) {
+    const bl = loadBlacklist();
+    return (bl[itemNorm] || []).includes(productName);
+  }
+
+  function blacklistMatch(itemNorm, productName, storeName) {
+    const bl = loadBlacklist();
+    bl[itemNorm] = [...new Set([...(bl[itemNorm] || []), productName])];
+    saveBlacklist(bl);
+    matchCache.clear();
+    render();
+    toast(`Gemeld — "${productName}" wordt niet meer getoond`);
+    // Stuur ook naar Worker als geconfigureerd
+    const workerUrl = getShareWorkerUrl();
+    if (workerUrl) {
+      fetch(`${workerUrl}/report`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'wrong-match', item: itemNorm, product: productName, store: storeName, reportedAt: Date.now() }),
+      }).catch(() => {});
+    }
+  }
+
+  function unblacklistMatch(itemNorm, productName) {
+    const bl = loadBlacklist();
+    bl[itemNorm] = (bl[itemNorm] || []).filter(p => p !== productName);
+    if (!bl[itemNorm].length) delete bl[itemNorm];
+    saveBlacklist(bl);
+    matchCache.clear();
+    render();
+    renderBlacklistSection();
+    toast('Blokkering opgeheven');
+  }
+
+  let activeReportMenu = null;
+  function openReportMenu(el, itemName, productName, storeName) {
+    closeReportMenu();
+    const itemNorm = normalize(itemName);
+    const menu = document.createElement('div');
+    menu.className = 'report-menu';
+    menu.innerHTML = `
+      <div class="report-menu-title">Wat klopt er niet?</div>
+      <button class="report-opt danger" onclick="blacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${productName.replace(/'/g,"\\'")}','${storeName.replace(/'/g,"\\'")}');closeReportMenu()">
+        ✗ Verkeerd product — niet meer tonen
+      </button>
+      <button class="report-opt" onclick="closeReportMenu()">
+        Annuleren
+      </button>`;
+    el.closest('.cmp-row').style.position = 'relative';
+    el.closest('.cmp-row').appendChild(menu);
+    activeReportMenu = menu;
+    setTimeout(() => document.addEventListener('click', closeReportMenu, { once: true }), 10);
+  }
+  function closeReportMenu() {
+    if (activeReportMenu) { activeReportMenu.remove(); activeReportMenu = null; }
+  }
+
+  function renderBlacklistSection() {
+    const div = document.getElementById('blacklist-section');
+    if (!div) return;
+    const bl = loadBlacklist();
+    const entries = Object.entries(bl).flatMap(([itemNorm, prods]) =>
+      prods.map(p => ({ itemNorm, product: p }))
+    );
+    if (!entries.length) { div.innerHTML = ''; return; }
+    const rows = entries.map(({ itemNorm, product }) => `
+      <div class="blacklist-card">
+        <div class="blacklist-info">
+          <div class="blacklist-name">${escapeHtml(itemNorm)}</div>
+          <div class="blacklist-product">Geblokkeerd: ${escapeHtml(product)}</div>
+        </div>
+        <button class="blacklist-undo" onclick="unblacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${product.replace(/'/g,"\\'")}')">Herstellen</button>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="store-pref-card" style="margin-top:12px">
+        <div class="store-pref-label">🚩 Gemelde fouten (${entries.length})</div>
+        ${rows}
+      </div>`;
+  }
+
   function applyBrandPref(matches, pref) {
     if (!pref) return matches;
     const filtered = matches.filter(m => pref === 'huismerk' ? isHuismerk(m) : !isHuismerk(m));
@@ -3348,6 +3465,9 @@
     function makeRow(m, cheapest, sameUnit, key) {
       const store = STORE_BY_ID[m.storeId];
       const isCheapest = m === cheapest;
+      const safeItem = escapeHtml(it.name).replace(/'/g,"\\'");
+      const safeProd = escapeHtml(m.p.name).replace(/'/g,"\\'");
+      const safeStore = escapeHtml(store.name).replace(/'/g,"\\'");
       const wasPrice = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
         ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
       const bonusBadge = m.activeBonus
@@ -3374,6 +3494,7 @@
           ${unitTag}
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
+          <button class="cmp-flag" title="Fout melden" onclick="event.stopPropagation();openReportMenu(this,'${safeItem}','${safeProd}','${safeStore}')">🚩</button>
         </div>`;
     }
 
@@ -4451,7 +4572,7 @@
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
-    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderShareWorkerConfig(); }
+    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderBlacklistSection(); renderShareWorkerConfig(); }
   }
 
   // ── AI TIPS ──
