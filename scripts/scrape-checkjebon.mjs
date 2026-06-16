@@ -47,6 +47,23 @@ function classify(name, size) {
   return cat;
 }
 
+// Extraheer eenheid uit productnaam als fallback (voor winkels die s-veld niet altijd vullen)
+function extractUnitFromName(name) {
+  if (!name) return null;
+  const s = name.replace(',', '.');
+  let m;
+  // multipack: "6 x 330 ml", "3x1l"
+  if ((m = s.match(/(\d+)\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(ml|cl|l|liter|g|gr|gram|kg)\b/i))) {
+    const count = parseInt(m[1]), qty = parseFloat(m[2]), u = m[3].toLowerCase();
+    return `${count} x ${qty} ${u}`;
+  }
+  // Gewicht/volume achteraan de naam: "500 g", "1.5 l", "33cl"
+  if ((m = s.match(/\b(\d+(?:\.\d+)?)\s*(kg|kilo|g|gr|gram|liter|l|ml|cl)\b/i))) return `${m[1]} ${m[2].toLowerCase()}`;
+  // Stuks: "4 stuks", "12 st"
+  if ((m = s.match(/\b(\d+)\s*(stuks?|stk|st)\b/i))) return `${m[1]} stuks`;
+  return null;
+}
+
 async function main() {
   const stores = process.argv.slice(2).map(s => s.toLowerCase());
   if (!stores.length) {
@@ -80,8 +97,10 @@ async function main() {
       .filter(p => p && p.n && typeof p.p === 'number')
       .map(p => {
         const o = { id: `${storeName.slice(0, 2)}_${p.l}`, name: p.n, price: p.p };
-        if (p.s) o.unit = p.s;
-        o.cat = classify(p.n, p.s);  // user-categorie-id voor categorie-boost in de PWA
+        // Gebruik formaat-veld; als dat ontbreekt, extraheer eenheid uit productnaam
+        const unit = p.s || extractUnitFromName(p.n);
+        if (unit) o.unit = unit;
+        o.cat = classify(p.n, unit);  // user-categorie-id voor categorie-boost in de PWA
         return o;
       });
 
