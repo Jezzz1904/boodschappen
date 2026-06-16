@@ -586,11 +586,27 @@
     .cmp { margin-top:5px; display:flex; flex-direction:column; gap:3px; }
     .cmp-row {
       display:flex; align-items:center; gap:6px; font-size:12px;
-      min-width:0;
+      min-width:0; padding-left:6px;
+      border-left: 3px solid transparent;
     }
     .cmp-row.best .cmp-price { color: var(--green-700); font-weight:900; }
     .cmp-row:not(.best) { opacity:.7; }
     .cmp-row:not(.best) .cmp-price { color: var(--slate-600); font-weight:700; }
+    .cmp-row.in-bonus { border-left-color: #F59E0B; opacity:1; }
+    .cmp-row.in-bonus .cmp-price { color: #B45309; }
+    .item-bonus-banner {
+      display:flex; align-items:center; gap:6px;
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+      border: 1px solid #FCD34D;
+      border-radius:8px; padding:5px 10px;
+      font-size:12px; font-weight:700; color:#92400E;
+      margin-bottom:6px;
+    }
+    .item-bonus-banner .banner-mech {
+      background:#F59E0B; color:white;
+      font-size:10px; font-weight:900; padding:1px 7px;
+      border-radius:99px; text-transform:uppercase; letter-spacing:.3px;
+    }
     .store-chip {
       font-size:9.5px; font-weight:900; color:white;
       background: var(--sc, #888); padding:2px 6px; border-radius:6px;
@@ -3198,15 +3214,16 @@
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
+      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : ''].filter(Boolean).join(' ');
       return `
-        <div class="cmp-row ${isCheapest ? 'best' : ''}">
+        <div class="${rowClass}">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
+          ${bonusBadge}
           ${unitTag}
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
-          ${bonusBadge}
         </div>`;
     }
 
@@ -3293,7 +3310,16 @@
       </div>`;
     })();
 
-    return `<div class="cmp">${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
+    // Banner bovenaan voor elke winkel die actieve bonus heeft (gesorteerd: goedkoopst eerst)
+    const bonusMatches = sorted.filter(m => m.activeBonus);
+    const bonusBanner = bonusMatches.length ? bonusMatches.map(m => {
+      const store = STORE_BY_ID[m.storeId];
+      const mech = m.activeBonus.mechanism ? `<span class="banner-mech">${escapeHtml(m.activeBonus.mechanism)}</span>` : '';
+      const end = m.activeBonus.end ? ` t/m ${m.activeBonus.end.slice(5).replace('-','/')}` : '';
+      return `<div class="item-bonus-banner">🔥 In bonus bij ${escapeHtml(store.name)}${end} ${mech}</div>`;
+    }).join('') : '';
+
+    return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
   }
 
   // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
