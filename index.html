@@ -3264,6 +3264,8 @@
       return;
     }
     // groeperen per categorie, in vaste volgorde, afgevinkten onderaan binnen elke groep
+    // Items zonder geldige categorie vallen terug op 'houdbaar'
+    items.forEach(it => { if (!CAT_BY_ID[it.category]) it.category = 'houdbaar'; });
     const byCat = {};
     items.forEach(it => { (byCat[it.category] = byCat[it.category] || []).push(it); });
     const order = CATEGORIES.map(c => c.id).filter(id => byCat[id]);
