@@ -1276,6 +1276,8 @@
     [/\bjumbo kaas\b/gi, 'kaas'],
     // Eieren/ei synonym
     [/\beier(?:en)?\b/gi, 'ei'],
+    // Saucijzenbrood = worstenbroodje (AH/Jumbo/Plus noemen het worstenbroodje)
+    [/\bsaucijzenbrood(jes?)?\b/gi, 'worstenbroodje'],
     // Boter: naturel = ongezouten (AH/Lidl gebruiken 'ongezouten', Jumbo/Plus 'naturel')
     [/\bnaturel\b/gi, 'ongezouten'],
     // Roomboter compound splitsen
@@ -2537,6 +2539,14 @@
     baguette:     { groups: {
                     'Soort':   ['Baguette', 'Demi baguette', 'Petit stokbrood', 'Frans stokbrood', 'Biologisch stokbrood'],
                     'Merk':    ['AH', 'Schnitzer', 'Schär (glutenvrij)', 'Huismerk'],
+                  }},
+    saucijzenbrood: { groups: {
+                    'Soort':  ['Saucijzenbrood', 'Mini saucijzenbrood', 'Worstenbroodje'],
+                    'Merk':   ['AH', 'Jumbo', 'Plus', 'Lidl', 'Mora', 'Huismerk'],
+                  }},
+    worstenbroodje: { groups: {
+                    'Soort':  ['Worstenbroodje', 'Saucijzenbrood', 'Mini worstenbroodje'],
+                    'Merk':   ['AH', 'Jumbo', 'Plus', 'Lidl', 'Mora', 'Huismerk'],
                   }},
     bollen:       { groups: {
                     'Soort':   ['Witte bollen', 'Bruine bollen', 'Volkoren bollen', 'Meergranen bollen', 'Zachte witte bollen', 'Pistolets', 'Puntjes'],
@@ -4463,7 +4473,7 @@
     bakkerij: { subgroups: [
       { name: 'Brood', emo: '🍞', items: [
         'Brood','Stokbrood','Baguette','Ciabatta','Focaccia',
-        'Bollen','Witte bollen','Bruine bollen','Pistolet','Broodje','Hamburgerbroodje','Bagel','Pita','Naan','Wrap','Flatbread',
+        'Bollen','Witte bollen','Bruine bollen','Pistolet','Broodje','Saucijzenbrood','Worstenbroodje','Hamburgerbroodje','Bagel','Pita','Naan','Wrap','Flatbread',
       ]},
       { name: 'Viennoiserie', emo: '🥐', items: [
         'Croissant','Viennoiserie','Pain au chocolat','Rozijnenbol','Krentenbol','Appelflap',
