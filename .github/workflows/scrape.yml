@@ -45,6 +45,9 @@ jobs:
       - name: Scrape Plus weekaanbiedingen (Playwright, met bonus-data)
         run: node scripts/scrape-plus-bonus.mjs
 
+      - name: Prijsgeschiedenis bijwerken
+        run: node scripts/update-price-history.mjs
+
       - name: Commit data if changed
         run: |
           git config user.name  "boodschappen-bot"

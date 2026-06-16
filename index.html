@@ -649,6 +649,12 @@
     }
     .cmp-diff { color: var(--slate-400); font-weight:700; font-size:11px; }
     .cmp-unit-missing { color: var(--slate-400); font-style: italic; }
+    .price-trend {
+      font-size:11px; font-weight:900; flex-shrink:0;
+    }
+    .price-trend.down   { color:#16A34A; }
+    .price-trend.up     { color:var(--rose-500); }
+    .price-trend.lowest { font-size:13px; }
     .cmp-flag {
       background:none; border:none; cursor:pointer; padding:2px 4px;
       font-size:13px; opacity:.3; flex-shrink:0; line-height:1;
@@ -2687,6 +2693,7 @@
 
   // Laad server-correcties parallel met winkeldata
   loadServerCorrections().then(() => { matchCache.clear(); render(); });
+  loadPriceHistory();
 
   // Eenheid-tokens die uit productnamen gestript worden vóór het matchen
   // (anders verdunnen "1", "l", "500ml" de woord-dichtheid).
@@ -3336,6 +3343,39 @@
 
   // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
   // ── FOUT-RAPPORTAGE & BLACKLIST ──
+  // ── PRIJSGESCHIEDENIS ──
+  let priceHistory = {};
+
+  async function loadPriceHistory() {
+    try {
+      const res = await fetch('./data/price-history.json?v=' + Date.now());
+      if (res.ok) { priceHistory = await res.json(); render(); }
+    } catch {}
+  }
+
+  function getPriceKey(storeId, p) {
+    return `${storeId}:${p.id || p.name}`;
+  }
+
+  function getPriceTrend(storeId, p) {
+    const key = getPriceKey(storeId, p);
+    const rec = priceHistory[key];
+    if (!rec || rec.entries.length < 2) return null;
+    const entries = rec.entries;
+    const current = entries.at(-1)[1];
+    // Vergelijk met prijs van 7 dagen geleden (of vroegste beschikbare)
+    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const old = entries.find(([ts]) => ts <= week) || entries[0];
+    const oldPrice = old[1];
+    const diff = current - oldPrice;
+    const pct  = oldPrice > 0 ? diff / oldPrice : 0;
+    // Laagste prijs in 30 dagen?
+    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
+    const isLowest = recent.length >= 3 && current <= Math.min(...recent);
+    return { diff, pct, isLowest, oldPrice, current };
+  }
+
   let serverCorrections = { blacklist: {} }; // geladen vanuit data/corrections.json
 
   async function loadServerCorrections() {
@@ -3524,7 +3564,17 @@
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
-      const isFav = m.storeId === prefStore;
+      const isFav  = m.storeId === prefStore;
+      const trend  = getPriceTrend(m.storeId, m.p);
+      const trendTag = trend
+        ? trend.isLowest
+          ? `<span class="price-trend lowest" title="Laagste prijs in 30 dagen">🏷️</span>`
+          : trend.pct <= -0.05
+            ? `<span class="price-trend down" title="${Math.round(-trend.pct*100)}% goedkoper dan vorige week">↓</span>`
+            : trend.pct >= 0.05
+              ? `<span class="price-trend up" title="${Math.round(trend.pct*100)}% duurder dan vorige week">↑</span>`
+              : ''
+        : '';
       const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : ''].filter(Boolean).join(' ');
       return `
         <div class="${rowClass}">
@@ -3535,6 +3585,7 @@
           ${unitTag}
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
+          ${trendTag}
           <button class="cmp-flag" title="Fout melden" onclick="event.stopPropagation();openReportMenu(this,'${safeItem}','${safeProd}','${safeStore}')">🚩</button>
         </div>`;
     }
