@@ -706,10 +706,53 @@
       border:1.5px solid var(--slate-200);
     }
     .ab-clear.has-checked { color: var(--rose-500); border-color: #FECACA; }
+    .ab-save {
+      flex:0 0 auto; padding: 14px 16px;
+      background: white; color: var(--green-600);
+      border:1.5px solid var(--green-200);
+      font-size:18px;
+    }
     .ab-done {
       background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
       color:white; box-shadow:0 4px 14px rgba(251,191,36,.4);
     }
+    /* Opgeslagen lijsten */
+    .saved-lists-section { padding: 0 16px; }
+    .saved-lists-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin: 16px 0 8px;
+    }
+    .saved-lists-title { font-size:13px; font-weight:800; color:var(--slate-500); text-transform:uppercase; letter-spacing:.5px; }
+    .saved-list-card {
+      background:white; border-radius:14px; padding:12px 14px;
+      margin-bottom:8px; border:1.5px solid var(--slate-100);
+      display:flex; align-items:center; gap:10px;
+    }
+    .saved-list-info { flex:1; min-width:0; }
+    .saved-list-name { font-size:15px; font-weight:700; color:var(--slate-800); }
+    .saved-list-meta { font-size:12px; color:var(--slate-400); margin-top:1px; }
+    .saved-list-actions { display:flex; gap:6px; flex-shrink:0; }
+    .saved-list-btn {
+      font-size:12px; font-weight:700; padding:6px 11px;
+      border-radius:8px; border:none; cursor:pointer;
+    }
+    .saved-list-btn.load { background:var(--green-100); color:var(--green-700); }
+    .saved-list-btn.load:hover { background:var(--green-200); }
+    .saved-list-btn.del { background:var(--slate-100); color:var(--slate-500); }
+    /* Opslaan modal */
+    .modal-save-input {
+      width:100%; padding:12px 14px; border-radius:10px;
+      border:1.5px solid var(--slate-200); font-size:15px;
+      margin: 12px 0; font-family:inherit;
+    }
+    .modal-save-input:focus { outline:none; border-color:var(--green-400); }
+    .modal-save-actions { display:flex; gap:8px; margin-top:4px; }
+    .modal-save-btn {
+      flex:1; padding:12px; border-radius:12px; border:none;
+      font-size:14px; font-weight:800; cursor:pointer;
+    }
+    .modal-save-btn.primary { background:var(--green-500); color:white; }
+    .modal-save-btn.secondary { background:var(--slate-100); color:var(--slate-600); }
 
     /* CATEGORIE-KIEZER MODAL */
     .modal-bg {
@@ -840,6 +883,7 @@
 
   <!-- TAB: HISTORIE -->
   <div id="view-hist" style="display:none">
+    <div class="saved-lists-section" id="saved-lists-section"></div>
     <input class="hist-search" id="hist-search" type="text"
            placeholder="🔍 Zoeken in jouw producten..."
            autocomplete="off" oninput="renderHistory()">
@@ -849,7 +893,21 @@
   <!-- ACTIE-BALK -->
   <div class="actionbar" id="actionbar" style="display:none">
     <button class="ab-btn ab-clear" id="ab-clear" onclick="clearChecked()">Wis afgevinkt</button>
+    <button class="ab-btn ab-save" onclick="openSaveListModal()" title="Lijst opslaan">💾</button>
     <button class="ab-btn ab-done" onclick="finishShopping()">✓ Klaar</button>
+  </div>
+
+  <!-- MODAL LIJST OPSLAAN -->
+  <div class="modal-bg" id="modal-save-list" onclick="if(event.target===this) closeSaveListModal()">
+    <div class="modal">
+      <div class="modal-title">Lijst opslaan</div>
+      <div class="modal-sub">Geef je lijst een naam om hem later terug te halen</div>
+      <input class="modal-save-input" id="save-list-name" type="text" placeholder="Bijv. Weekboodschappen, BBQ, Feestje…" maxlength="40" onkeydown="if(event.key==='Enter') saveCurrentList()">
+      <div class="modal-save-actions">
+        <button class="modal-save-btn secondary" onclick="closeSaveListModal()">Annuleren</button>
+        <button class="modal-save-btn primary" onclick="saveCurrentList()">💾 Opslaan</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL CATEGORIE -->
@@ -928,7 +986,8 @@
   };
 
   const ITEMS_KEY = 'boodschappen.items';
-  const HIST_KEY  = 'boodschappen.history';
+  const HIST_KEY       = 'boodschappen.history';
+  const SAVED_LISTS_KEY = 'boodschappen.savedLists';
 
   let items   = loadJson(ITEMS_KEY, []);
   let history = loadJson(HIST_KEY,  {});
@@ -4117,6 +4176,63 @@
     clr.classList.toggle('has-checked', hasChecked);
   }
 
+  // ── OPGESLAGEN LIJSTEN ──
+  function loadSavedLists() { return loadJson(SAVED_LISTS_KEY, []); }
+  function saveSavedLists(lists) { try { localStorage.setItem(SAVED_LISTS_KEY, JSON.stringify(lists)); } catch(e){} }
+
+  function openSaveListModal() {
+    const inp = document.getElementById('save-list-name');
+    inp.value = '';
+    document.getElementById('modal-save-list').style.display = 'flex';
+    setTimeout(() => inp.focus(), 80);
+  }
+  function closeSaveListModal() {
+    document.getElementById('modal-save-list').style.display = 'none';
+  }
+  function saveCurrentList() {
+    const name = document.getElementById('save-list-name').value.trim();
+    if (!name) { document.getElementById('save-list-name').focus(); return; }
+    const lists = loadSavedLists();
+    lists.unshift({ name, items: items.map(i => ({ name: i.name, qty: i.qty, category: i.category })), savedAt: Date.now() });
+    saveSavedLists(lists);
+    closeSaveListModal();
+    toast('Lijst opgeslagen!');
+  }
+  function loadSavedList(idx) {
+    const lists = loadSavedLists();
+    const saved = lists[idx];
+    if (!saved) return;
+    items = saved.items.map(i => ({ ...i, checked: false, id: Date.now() + Math.random() }));
+    saveItems();
+    renderList();
+    updateActionBar();
+    showTab('lijst');
+    toast(`'${saved.name}' geladen`);
+  }
+  function deleteSavedList(idx) {
+    const lists = loadSavedLists();
+    lists.splice(idx, 1);
+    saveSavedLists(lists);
+    renderSavedLists();
+  }
+  function renderSavedLists() {
+    const sec = document.getElementById('saved-lists-section');
+    const lists = loadSavedLists();
+    if (!lists.length) { sec.innerHTML = ''; return; }
+    const rows = lists.map((l, i) => `
+      <div class="saved-list-card">
+        <div style="flex:1;min-width:0">
+          <div class="saved-list-name">${escapeHtml(l.name)}</div>
+          <div style="font-size:11px;color:var(--slate-400);margin-top:2px">${l.items.length} items · ${timeAgo(l.savedAt)}</div>
+        </div>
+        <button class="saved-list-btn load" onclick="loadSavedList(${i})">Laden</button>
+        <button class="saved-list-btn del" onclick="deleteSavedList(${i})">✕</button>
+      </div>`).join('');
+    sec.innerHTML = `
+      <div class="saved-lists-header"><span class="saved-lists-title">📋 Opgeslagen lijsten</span></div>
+      ${rows}`;
+  }
+
   // ── HISTORIE TAB ──
   function renderHistory() {
     const wrap = document.getElementById('hist-wrap');
@@ -4176,7 +4292,7 @@
     document.getElementById('view-tips').style.display  = tab==='tips'  ? 'block' : 'none';
     document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
-    if (tab === 'hist')  renderHistory();
+    if (tab === 'hist')  { renderSavedLists(); renderHistory(); }
     if (tab === 'route') renderRoute();
     if (tab === 'tips')  renderTipsConfig();
   }
