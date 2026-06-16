@@ -1276,8 +1276,6 @@
     [/\bjumbo kaas\b/gi, 'kaas'],
     // Eieren/ei synonym
     [/\beier(?:en)?\b/gi, 'ei'],
-    // Saucijzenbrood = worstenbroodje (AH/Jumbo/Plus noemen het worstenbroodje)
-    [/\bsaucijzenbrood(jes?)?\b/gi, 'worstenbroodje'],
     // Boter: naturel = ongezouten (AH/Lidl gebruiken 'ongezouten', Jumbo/Plus 'naturel')
     [/\bnaturel\b/gi, 'ongezouten'],
     // Roomboter compound splitsen
@@ -2541,11 +2539,11 @@
                     'Merk':    ['AH', 'Schnitzer', 'Schär (glutenvrij)', 'Huismerk'],
                   }},
     saucijzenbrood: { groups: {
-                    'Soort':  ['Saucijzenbrood', 'Mini saucijzenbrood', 'Worstenbroodje'],
+                    'Soort':  ['Saucijzenbrood', 'Mini saucijzenbrood'],
                     'Merk':   ['AH', 'Jumbo', 'Plus', 'Lidl', 'Mora', 'Huismerk'],
                   }},
     worstenbroodje: { groups: {
-                    'Soort':  ['Worstenbroodje', 'Saucijzenbrood', 'Mini worstenbroodje'],
+                    'Soort':  ['Worstenbroodje', 'Mini worstenbroodje'],
                     'Merk':   ['AH', 'Jumbo', 'Plus', 'Lidl', 'Mora', 'Huismerk'],
                   }},
     bollen:       { groups: {
