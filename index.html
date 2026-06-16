@@ -665,6 +665,10 @@
     }
     .hist-search:focus { border-color: var(--green-500); }
 
+    /* Ruimte onderaan zodat laatste item niet achter de vaste actionbar valt */
+    #view-lijst { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    #view-route { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+
     /* FOOTER ACTIE-BALK */
     .actionbar {
       position: fixed; left:0; right:0; bottom:0;
@@ -875,7 +879,7 @@
   const AUTO_CAT = {
     groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
     zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
-    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek'],
+    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
     vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol'],
     diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
@@ -1017,6 +1021,10 @@
     [/\bjumbo kaas\b/gi, 'kaas'],
     // Eieren/ei synonym
     [/\beier(?:en)?\b/gi, 'ei'],
+    // Bloem/meel synoniemen — compound-woorden omzetten zodat tarwebloem matcht op bloem-zoekopdracht
+    [/\btarwebloem\b/gi, 'bloem'],
+    [/\bbakmeel\b/gi, 'bloem'],
+    [/\bzelfrijzend\s+bakmeel\b/gi, 'bloem'],
     // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
@@ -1062,6 +1070,18 @@
     'soesjes','vlaai','vlaaitje','rucola','sint','gegrilde','gegrild','snoepgroente',
     // Ei-varianten (noedels met ei ≠ eieren)
     'noedels',
+    // Melk-varianten (opschuimmelk, melkbrioche, melkbiscuit ≠ melk)
+    'opschuim','brioche','biscuit',
+    // Boter-varianten (ghee is geklaarde boter, niet gewone boter; cupjes = portieverpakking)
+    'ghee','cupjes',
+    // Non-food producten die soms op food-woorden matchen
+    'allesreiniger','reiniger','schoonmaakmiddel','douche','mousse','douchegel',
+    // Bloemen/non-food (bloemen ≠ bloem/meel)
+    'bloemen','lego','cadeautas','boeket','snijbloem','vaas','luchtvrij',
+    // Honing (bloemen honing matcht anders op bloem-zoekopdracht)
+    'honing',
+    // Ketjap-varianten (asin = zoute Aziatische sojasaus, niet de typische Dutch ketjap manis)
+    'asin',
   ]);
   // Voorberekend array voor compound-suffix check (alleen woorden >3 tekens)
   const NOISE_WORDS_ARR = [...NOISE_WORDS].filter(nw => nw.length > 3);
@@ -2500,7 +2520,9 @@
       for (const pw of productWords) {
         const isNoise = NOISE_WORDS.has(pw) ||
           NOISE_WORDS_ARR.some(nw => pw.length > nw.length && pw.endsWith(nw));
-        if (isNoise && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
+        // Exemptie alleen bij exacte match: niet vrijstellen als de gebruiker 'bloem' zocht
+        // maar het product 'bloemen' bevat (anders ontsnapt het aan de noise-penalty).
+        if (isNoise && !effectiveWords.some(iw => iw === pw)) noise++;
       }
       // "in [term]"-penalty: zoekterm staat als bestanddeel achter "in" (bijv. "Bonen in Tomatensaus"
       // als de gebruiker zoekt op "tomatensaus"). Dit zijn andere producten, zwaar afstraffen.
@@ -2554,13 +2576,17 @@
   // Multipack-detectie: voordelpakken, "X stuks", "12x1l", "6-pack" etc.
   // We hebben liefst de standaard enkele verpakking als match, niet de bulk-aanbieding.
   function isMultipack(name, unit) {
-    const u = normalize(unit);
+    const u = normalize(unit || '');
     const n = normalize(name);
     if (/\d\s*x\s*\d/.test(u)) return true;            // "12 x 1 l"
     if (/\b\d+\s*stuks?\b/.test(u)) return true;       // "3 stuks"
     if (/\b\d+\s*[- ]?pack\b/.test(n)) return true;    // "3-pack", "6 pack"
     if (/voordeel(verpakking|pak)?\b/.test(n)) return true;
     if (/familie(verpakking|pak)?\b/.test(n)) return true;
+    if (/\bxxl\b/.test(n)) return true;                // XXL-verpakking
+    // Grote bulkverpakkingen (≥ 3 kg of ≥ 3 l): niet standaard formaat
+    const parsed = parseUnit(unit);
+    if (parsed && parsed.qty >= 3 && (parsed.unit === 'kg' || parsed.unit === 'l')) return true;
     return false;
   }
 
