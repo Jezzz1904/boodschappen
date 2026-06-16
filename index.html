@@ -658,8 +658,9 @@
     .cmp-row.best .cmp-price { color: var(--green-700); font-weight:900; }
     .cmp-row:not(.best) { opacity:.7; }
     .cmp-row:not(.best) .cmp-price { color: var(--slate-600); font-weight:700; }
-    .cmp-row.in-bonus { border-left-color: #F59E0B; opacity:1; }
-    .cmp-row.in-bonus .cmp-price { color: #B45309; }
+    .cmp-row.in-bonus { border-left-color: #F59E0B; border-left-width:4px; opacity:1; background:linear-gradient(90deg,#FFFBEB,white); }
+    .cmp-row.in-bonus .cmp-price { color: #B45309; font-size:15px; }
+    .bonus-saving { font-size:10px; font-weight:800; color:#15803D; background:#DCFCE7; padding:1px 6px; border-radius:99px; white-space:nowrap; }
     .item-bonus-banner {
       display:flex; align-items:center; gap:6px;
       background: linear-gradient(135deg, #FEF3C7, #FDE68A);
@@ -3936,10 +3937,12 @@
       const safeItem = escapeHtml(it.name).replace(/'/g,"\\'");
       const safeProd = escapeHtml(m.p.name).replace(/'/g,"\\'");
       const safeStore = escapeHtml(store.name).replace(/'/g,"\\'");
-      const wasPrice = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
-        ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
+      const saving = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
+        ? m.p.price - m.eff : 0;
+      const wasPrice = saving > 0 ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
+      const savingBadge = saving > 0.01 ? `<span class="bonus-saving">-${fmtPrice(saving)}</span>` : '';
       const bonusBadge = m.activeBonus
-        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>`
+        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>${savingBadge}`
         : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
       const unitTag = m.unitPrice
         ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>`
