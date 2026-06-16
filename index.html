@@ -1359,8 +1359,12 @@
     ketchup:      ['Heinz ketchup', 'Calvé ketchup', 'Remia ketchup', 'AH ketchup'],
     mosterd:      ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd'],
     chips:        { groups: {
-                    'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream', 'Cheese', 'Tortilla naturel', 'Tortilla paprika'],
-                    'Merk':  ['Lays', 'Croky', 'Pringles', 'Doritos', 'AH', 'Lidl', 'Huismerk'],
+                    'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream & onion', 'Cheese & onion', 'BBQ', 'Zout & azijn', 'Bacon', 'Jalapeño'],
+                    'Merk':  ['Lays', 'Croky', 'Pringles', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    tortilla:     { groups: {
+                    'Smaak': ['Naturel', 'Paprika', 'Nacho cheese', 'Cool ranch', 'Sweet chili', 'Guacamole'],
+                    'Merk':  ['Doritos', 'Old El Paso', 'AH', 'Lidl', 'Huismerk'],
                   }},
   };
 
@@ -2446,10 +2450,20 @@
     wrap.innerHTML = buildRestHTML(inp, onList);
   }
   function quickAdd(name) {
+    const norm = normalize(name);
+    const existing = items.find(it => normalize(it.name) === norm && !it.checked);
+    if (existing) {
+      items = items.filter(it => it !== existing);
+      saveItems(); render();
+      document.getElementById('add-input').value = '';
+      document.getElementById('qty-input').value = '';
+      activePackaging = null;
+      renderSuggestions();
+      return;
+    }
     addItem(name, 1);
     document.getElementById('add-input').value = '';
     document.getElementById('qty-input').value = '';
-    activeVariantGroup = null;
     activePackaging = null;
     renderSuggestions();
   }
@@ -2467,16 +2481,11 @@
   }
   function onInputChange() {
     const inp = document.getElementById('add-input').value.trim().toLowerCase();
-    if (activeVariantGroup && inp !== activeVariantGroup.term) activeVariantGroup = null;
     if (variantPicks && inp !== variantPicks.term) variantPicks = null;
     renderSuggestions();
   }
-  let activeVariantGroup = null;  // legacy (niet-groep varianten)
-  let variantPicks = null;        // { term, picks: { Groep: 'Waarde' } }
+  let variantPicks = null;  // { term, picks: { Groep: 'Waarde' } }
   let activePackaging = null;
-
-  function setVariantGroup(term, name) { activeVariantGroup = { term, name }; renderSuggestions(); }
-  function clearVariantGroup() { activeVariantGroup = null; activePackaging = null; renderSuggestions(); }
 
   function selectVariantItem(term, group, value) {
     document.getElementById('add-input').value = term;
@@ -2559,7 +2568,7 @@
       'Muesli','Cornflakes','Havermout','Rijstwafels','Olijven','Augurken',
     ],
     snacks: [
-      'Chips','Chocolade',
+      'Chips','Tortilla','Chocolade',
       'Borrelnootjes','Popcorn','Cashewnoten','Pinda\'s',
       'Drop','Wine gums','Stroopwafel','Speculaas','Liga','Sultana',
       'Snickers','Mars','Twix','Bounty','Kitkat','Oreo','Pringles','Tuc',
