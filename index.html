@@ -699,6 +699,19 @@
       cursor:pointer; box-shadow:0 2px 8px rgba(5,150,105,.3);
     }
     .hist-add:active { transform:scale(.94); }
+    .seasonal-block {
+      background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+      border:1.5px solid var(--green-100); border-radius:14px;
+      padding:12px 14px; margin-bottom:14px;
+    }
+    .seasonal-title { font-size:13px; font-weight:800; color:var(--green-700); margin-bottom:8px; }
+    .seasonal-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .seasonal-chip {
+      padding:6px 12px; border-radius:99px;
+      background:white; border:1.5px solid var(--green-200);
+      font-size:12px; font-weight:700; color:var(--green-700); cursor:pointer;
+    }
+    .seasonal-chip:active { background:var(--green-100); }
     .forgotten-block {
       background: linear-gradient(135deg, #FEF9C3, #FEF3C7);
       border:1.5px solid #FDE68A; border-radius:14px;
@@ -924,6 +937,7 @@
   <!-- TAB: HISTORIE -->
   <div id="view-hist" style="display:none">
     <div class="saved-lists-section" id="saved-lists-section"></div>
+    <div id="seasonal-wrap"></div>
     <input class="hist-search" id="hist-search" type="text"
            placeholder="🔍 Zoeken in jouw producten..."
            autocomplete="off" oninput="renderHistory()">
@@ -4282,6 +4296,42 @@
       ${rows}`;
   }
 
+  // ── SEIZOENSGEBONDEN SUGGESTIES ──
+  const SEASONAL = {
+    // maand 0-11
+    0:  { label: '❄️ Winterkost', items: ['Stamppot', 'Erwtensoep', 'Zuurkool', 'Boerenkool', 'Spruitjes', 'Knolselderij', 'Chocolademelk', 'Mandarijnen'] },
+    1:  { label: '❄️ Winterkost', items: ['Stamppot', 'Erwtensoep', 'Zuurkool', 'Boerenkool', 'Spruitjes', 'Mandarijnen', 'Pannenkoeken', 'Poffertjes'] },
+    2:  { label: '🌱 Lente-aanloop', items: ['Asperges', 'Radijs', 'Spinazie', 'Rucola', 'Aardbeien', 'Rabarber', 'Eieren', 'Zalm'] },
+    3:  { label: '🌷 Lentegroenten', items: ['Asperges', 'Aardbeien', 'Rabarber', 'Spinazie', 'Radijs', 'Lente-uitjes', 'Rucola', 'Eieren'] },
+    4:  { label: '🌞 Vroege zomer', items: ['Aardbeien', 'Asperges', 'Courgette', 'Paprika', 'BBQ-worst', 'Hamburgers', 'Brood voor BBQ', 'Salade'] },
+    5:  { label: '☀️ Zomer & BBQ', items: ['Aardbeien', 'Watermeloen', 'Ijs', 'BBQ-worst', 'Hamburgers', 'Maïskolf', 'Coleslaw', 'Frisdrank'] },
+    6:  { label: '☀️ Zomer & BBQ', items: ['Watermeloen', 'Ijs', 'BBQ-spareribs', 'Hamburgers', 'Mais', 'Frisdrank', 'Slagroom', 'Frambozen'] },
+    7:  { label: '🌻 Nazomer', items: ['Pruimen', 'Perziken', 'Frambozen', 'Paprika', 'Courgette', 'Ijs', 'Limonade', 'Bramen'] },
+    8:  { label: '🍂 Vroeg najaar', items: ['Pruimen', 'Appels', 'Peren', 'Pompoen', 'Wilde paddenstoelen', 'Walnoten', 'Rode kool', 'Soep'] },
+    9:  { label: '🎃 Herfst', items: ['Pompoen', 'Appels', 'Peren', 'Wilde paddenstoelen', 'Kastanjes', 'Rode kool', 'Soep', 'Stamppot'] },
+    10: { label: '🍂 Late herfst', items: ['Stamppot', 'Boerenkool', 'Spruitjes', 'Appels', 'Mandarijnen', 'Speculaas', 'Soep', 'Paddenstoelen'] },
+    11: { label: '🎄 December', items: ['Mandarijnen', 'Speculaas', 'Oliebollen', 'Kerstkrans', 'Chocoladeletter', 'Stamppot', 'Oesters', 'Champagne'] },
+  };
+  function renderSeasonal() {
+    const div = document.getElementById('seasonal-wrap');
+    if (!div) return;
+    const month = new Date().getMonth();
+    const season = SEASONAL[month];
+    if (!season) { div.innerHTML = ''; return; }
+    const onList = new Set(items.map(x => normalize(x.name)));
+    const chips = season.items
+      .filter(n => !onList.has(normalize(n)))
+      .map(n => {
+        const safe = escapeHtml(n).replace(/'/g, "\\'");
+        return `<button class="seasonal-chip" onclick="quickAdd('${safe}'); toast('${safe} toegevoegd'); this.remove();">${escapeHtml(n)}</button>`;
+      }).join('');
+    div.innerHTML = chips ? `
+      <div class="seasonal-block">
+        <div class="seasonal-title">${season.label} — seizoenstips</div>
+        <div class="seasonal-chips">${chips}</div>
+      </div>` : '';
+  }
+
   // ── VERGETEN-DETECTIE ──
   function renderForgottenSection(wrap) {
     if (!items.length) return '';
@@ -4371,7 +4421,7 @@
     document.getElementById('view-tips').style.display  = tab==='tips'  ? 'block' : 'none';
     document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
-    if (tab === 'hist')  { renderSavedLists(); renderHistory(); }
+    if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
     if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); }
   }
