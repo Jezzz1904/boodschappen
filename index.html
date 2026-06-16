@@ -246,6 +246,19 @@
       font-size:13px; font-weight:700;
     }
     .route-rec-totals strong { font-weight:900; font-size:16px; display:block; }
+    .route-compare-table {
+      margin-top:12px; border-top:1px solid rgba(255,255,255,.25); padding-top:10px;
+    }
+    .route-compare-row {
+      display:flex; align-items:center; gap:8px; padding:5px 0;
+      font-size:13px; font-weight:700; border-radius:8px;
+    }
+    .route-compare-row.best { background:rgba(255,255,255,.2); padding:5px 8px; margin:0 -8px; }
+    .route-compare-store { flex:1; font-weight:800; }
+    .route-compare-items { font-size:11px; opacity:.8; min-width:52px; text-align:center; }
+    .route-compare-price { min-width:60px; text-align:right; font-weight:900; }
+    .route-compare-diff { font-size:11px; opacity:.75; min-width:52px; text-align:right; }
+    .route-item-unitprice { font-size:10px; color:var(--slate-400); margin-left:4px; }
 
     .route-store {
       background:white; border:1.5px solid var(--slate-200); border-radius:16px;
@@ -5344,33 +5357,59 @@
     }
     const { found, missing, advice, byStore } = route;
 
+    // Vergelijkingstabel: alle winkels gesorteerd op totaalprijs
+    const { singles } = route;
+    const sortedSingles = [...singles].filter(s => s.hit > 0).sort((a, b) => a.total - b.total);
+    const bestSingleTotal = sortedSingles[0]?.total || 0;
+    const compareTableHtml = sortedSingles.length >= 2 ? `
+      <div class="route-compare-table">
+        ${sortedSingles.map((s, i) => {
+          const diff = s.total - bestSingleTotal;
+          const isBest = i === 0 && s.missingInStore === 0;
+          const missingNote = s.missingInStore > 0 ? ` · ${s.missingInStore} niet gevonden` : '';
+          return `<div class="route-compare-row${isBest ? ' best' : ''}">
+            <span class="route-compare-store">${isBest ? '✓ ' : ''}${s.store.name}</span>
+            <span class="route-compare-items">${s.hit}/${found.length}${missingNote}</span>
+            <span class="route-compare-price">${fmtPrice(s.total)}</span>
+            <span class="route-compare-diff">${diff > 0.005 ? `+${fmtPrice(diff)}` : ''}</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+
     // Advies-kaart bovenaan
     let recHtml = '';
     if (advice.type === 'single') {
       const store = STORE_BY_ID[advice.storeId];
+      const second = sortedSingles.find(s => s.store.id !== advice.storeId && s.missingInStore === 0);
+      const savingVsSecond = second ? second.total - advice.total : 0;
+      const savingText = savingVsSecond > 0.05
+        ? `${fmtPrice(savingVsSecond)} goedkoper dan ${second.store.name}`
+        : advice.almostSame ? 'Bijna dezelfde prijs als splitsen — scheelt rondrijden.' : 'Eén winkel doet het.';
       recHtml = `
         <div class="route-rec single">
           <div class="route-rec-label">Aanbeveling</div>
           <div class="route-rec-title">Ga naar ${store ? store.name : '?'}</div>
-          <div class="route-rec-sub">${advice.almostSame ? 'Bijna dezelfde prijs als splitsen — scheelt rondrijden.' : 'Eén winkel doet het.'}</div>
+          <div class="route-rec-sub">${savingText}</div>
           <div class="route-rec-totals">
-            <div><strong>${fmtPrice(advice.total)}</strong>totaal</div>
-            ${advice.almostSame ? `<div>scheelt €${Math.abs(advice.savedVsSplit).toFixed(2).replace('.', ',')} extra t.o.v. splitsen</div>` : ''}
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
           </div>
+          ${compareTableHtml}
         </div>`;
     } else {
       const storeCount = Object.keys(byStore).length;
+      const vsStore = STORE_BY_ID[advice.vsStoreId];
+      const savingText = advice.savedVsSingle > 0.05
+        ? `${fmtPrice(advice.savedVsSingle)} goedkoper dan alles bij ${vsStore?.name || '?'} (${fmtPrice(advice.vsStoreTotal)} vs ${fmtPrice(advice.total)})`
+        : 'Niet alles is bij één winkel beschikbaar.';
       recHtml = `
         <div class="route-rec">
           <div class="route-rec-label">Aanbeveling</div>
           <div class="route-rec-title">Splits over ${storeCount} winkel${storeCount === 1 ? '' : 's'}</div>
-          <div class="route-rec-sub">${advice.savedVsSingle > 0
-            ? `Bespaart ${fmtPrice(advice.savedVsSingle)} vs alles bij ${STORE_BY_ID[advice.vsStoreId]?.name || '?'}.`
-            : 'Niet alles is bij één winkel beschikbaar.'}</div>
+          <div class="route-rec-sub">${savingText}</div>
           <div class="route-rec-totals">
-            <div><strong>${fmtPrice(advice.total)}</strong>totaal</div>
-            ${advice.vsStoreTotal ? `<div><strong>${fmtPrice(advice.vsStoreTotal)}</strong>bij ${STORE_BY_ID[advice.vsStoreId]?.name || '?'}</div>` : ''}
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
           </div>
+          ${compareTableHtml}
         </div>`;
     }
 
@@ -5419,15 +5458,19 @@
           const lineTotal = match.eff * qty;
           const bonus = match.activeBonus
             ? `<span class="route-item-bonus">${escapeHtml(match.activeBonus.mechanism || 'bonus')}</span>` : '';
+          const unitP = match.unitPrice
+            ? `<span class="route-item-unitprice">${fmtPrice(match.unitPrice.value)}${UNIT_LABEL[match.unitPrice.unit] || ''}</span>` : '';
+          const wasPrice = match.activeBonus && match.p.price && match.eff < match.p.price
+            ? `<span class="cmp-was" style="font-size:10px">${fmtPrice(match.p.price)}</span> ` : '';
           return `
             <div class="route-item">
               ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : '<span class="route-item-qty">•</span>'}
               <div style="flex:1; min-width:0;">
                 <div class="route-item-name">${escapeHtml(item.name)}</div>
-                <div class="route-item-detail">${escapeHtml(match.p.name)}${match.p.unit ? ' · ' + escapeHtml(match.p.unit) : ''}</div>
+                <div class="route-item-detail">${escapeHtml(match.p.name)}${match.p.unit ? ' · ' + escapeHtml(match.p.unit) : ''}${unitP}</div>
               </div>
               ${bonus}
-              <span class="route-item-price">${fmtPrice(lineTotal)}</span>
+              <span class="route-item-price">${wasPrice}${fmtPrice(lineTotal)}</span>
             </div>`;
         }).join('')}
       </div>`;
