@@ -1841,6 +1841,22 @@
                     'Soort': ['Champignonpaté', 'Leverpaté', 'Wildpaté', 'Truffelpaté', 'Kippenleverpastei'],
                     'Merk':  ['Unilever', 'AH', 'Huismerk'],
                   }},
+    wokkip:       { groups: {
+                    'Bereiding': ['Naturel', 'Gekruid', 'Gemarineerd', 'Roerbak'],
+                    'Merk':      ['AH', 'Jumbo', 'Plus', 'Lidl', 'Huismerk'],
+                  }},
+    wokrundvlees: { groups: {
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Zeezout-peper', 'Teriyaki'],
+                    'Merk':      ['AH', 'Jumbo', 'Plus', 'Lidl', 'Huismerk'],
+                  }},
+    kattenvoer:   { groups: {
+                    'Type':  ['Natvoer', 'Droogvoer', 'Snacks'],
+                    'Merk':  ['Felix', 'Whiskas', 'Purina', 'AH', 'Lidl', 'Huismerk'],
+                  }},
+    hondenvoer:   { groups: {
+                    'Type':  ['Natvoer', 'Droogvoer', 'Snacks', 'Brokken'],
+                    'Merk':  ['Pedigree', 'Cesar', 'Purina', 'AH', 'Lidl', 'Huismerk'],
+                  }},
     knakworst:    { groups: {
                     'Soort': ['Kipknakworst', 'Varkensknakworst', 'Runderknakworst', 'Magere knakworst', 'Duitse knakworst', 'Pittige knakworst', 'Vegetarische knakworst', 'Party knaks', 'Mini knaks'],
                     'Merk':  ['Unox', 'Wikinger', 'AH', 'Huismerk'],
@@ -4516,7 +4532,7 @@
     vlees: { subgroups: [
       { name: 'Vers vlees', emo: '🥩', items: [
         'Kip','Kipfilet','Kippendij','Varkensvlees','Rundvlees','Gehakt','Lamsvlees','Kalkoen',
-        'Eend','Hert',
+        'Eend','Hert','Wokkip','Wokrundvlees',
       ]},
       { name: 'Worst & spek', emo: '🌭', items: [
         'Bacon','Spek','Spekjes','Worst','Rookworst','Knakworst','Braadworst','Hotdog','Cocktailworstjes',
@@ -4718,6 +4734,9 @@
       ]},
       { name: 'Schoonmaakgerei', emo: '🧽', items: [
         'Sponzen','Schuursponsje','Stofdoek','Mopvulling',
+      ]},
+      { name: 'Huisdier', emo: '🐾', items: [
+        'Kattenvoer','Hondenvoer','Kattensnacks','Hondensnacks','Kattenbakkorrels',
       ]},
       { name: 'Overig', emo: '🔋', items: [
         'Batterijen','Kaarsen','Lucifers','Luchtverfrisser',
