@@ -2697,22 +2697,24 @@
       if (m) matches.push(m);
     }
     if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
-    // Goedkoopste: op prijs-per-eenheid als alle matches dezelfde eenheid hebben (eerlijke vergelijking,
-    // lost pak-grootte op: tray cola vs blikje). Anders op absolute prijs.
-    let cheapest;
-    // Eerlijke vergelijking als ≥2 winkels hetzelfde unit hebben (l/kg/st). Lidl
-    // die unit mist krijgt 'm gewoon op absolute prijs ernaast getoond.
+    // Goedkoopste: op prijs-per-eenheid als ≥2 winkels dezelfde dominante eenheid hebben.
+    // Zelfs als één winkel (bijv. Lidl via checkjebon) geen eenheiddata heeft, vergelijken
+    // we de rest toch op €/kg of €/l — de winkel zonder unit valt buiten de 'beste' selectie.
     const withUnit = matches.filter(m => m.unitPrice);
-    const unitsList = withUnit.map(m => m.unitPrice.unit);
-    const sameUnit = unitsList.length >= 2 && unitsList.every(u => u === unitsList[0]);
+    const unitCounts = {};
+    for (const m of withUnit) unitCounts[m.unitPrice.unit] = (unitCounts[m.unitPrice.unit] || 0) + 1;
+    const dominantUnit = Object.keys(unitCounts).sort((a, b) => unitCounts[b] - unitCounts[a])[0];
+    const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
+    let cheapest;
     if (sameUnit) {
-      // Goedkoopste op €/eenheid binnen de winkels die unit hebben
-      const cheapestByUnit = withUnit.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
-      cheapest = cheapestByUnit;
+      // Goedkoopste op €/dominante eenheid — winkels zonder unit blijven buiten vergelijking
+      cheapest = withUnit
+        .filter(m => m.unitPrice.unit === dominantUnit)
+        .reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
     } else {
       cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
     }
-    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit };
+    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit, dominantUnit };
   }
 
   function fmtPrice(n) {
@@ -3140,11 +3142,16 @@
 
     const matches = applyBrandPref(res.matches, it.brandPref);
 
-    // Herbereken cheapest na filter
+    // Herbereken cheapest na filter — gebruik dominante eenheid zodat één winkel
+    // zonder unit-data de per-kg/l vergelijking niet verstoort
     const withUnit = matches.filter(m => m.unitPrice);
-    const unitsList = withUnit.map(m => m.unitPrice.unit);
-    const sameUnit = unitsList.length >= 2 && unitsList.every(u => u === unitsList[0]);
-    const key = sameUnit ? (m => m.unitPrice ? m.unitPrice.value : Infinity) : (m => m.eff);
+    const unitCounts2 = {};
+    for (const m of withUnit) unitCounts2[m.unitPrice.unit] = (unitCounts2[m.unitPrice.unit] || 0) + 1;
+    const dominantUnit = Object.keys(unitCounts2).sort((a, b) => unitCounts2[b] - unitCounts2[a])[0];
+    const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
+    const key = sameUnit
+      ? (m => (m.unitPrice?.unit === dominantUnit) ? m.unitPrice.value : Infinity)
+      : (m => m.eff);
     const cheapest = matches.reduce((a, b) => key(b) < key(a) ? b : a);
 
     const sorted = [...matches].sort((a, b) => key(a) - key(b));
@@ -3184,10 +3191,11 @@
       const unitTag = m.unitPrice
         ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>`
         : (sameUnit ? `<span class="cmp-unit cmp-unit-missing">?/${cheapest.unitPrice?.unit || 'l'}</span>` : '');
-      const canDiff = sameUnit ? !!m.unitPrice : true;
+      const hasCompUnit = sameUnit ? (m.unitPrice?.unit === dominantUnit) : true;
+      const canDiff = hasCompUnit;
       const diff = canDiff ? key(m) - key(cheapest) : 0;
-      const diffTag = (!isCheapest && canDiff && diff > 0)
-        ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[cheapest.unitPrice.unit] || '') : ''}</span>` : '';
+      const diffTag = (!isCheapest && canDiff && diff > 0 && diff < Infinity)
+        ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
       const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       return `
