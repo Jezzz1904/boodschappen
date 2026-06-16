@@ -1031,7 +1031,22 @@
   // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
   // "pasta" en "saus" zijn hier bewust weggelaten: ze zitten in samengestelde productnamen
   // zoals "pastasaus" en "pestosaus" en veroorzaken anders onterechte noise-penalty.
-  const NOISE_WORDS = new Set(['drink','sap','sapje','wafels','wafel','koek','koekjes','snack','snacks','mix','ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak','toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep','pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade','puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread']);
+  const NOISE_WORDS = new Set([
+    // Bewerkt/verwerkt product
+    'drink','sap','sapje','wafels','wafel','koek','koekjes','snack','snacks','mix',
+    'ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak',
+    'toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep',
+    'pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade',
+    'puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread',
+    // Dieet-/bereidingsvariant (alleen penalty als NIET gezocht)
+    'glutenvrij','lactosevrij','suikervrij','vetvrij','zoutvrij',
+    // Graanvariant (alleen penalty als NIET gezocht)
+    'volkoren','meergranen','spelt','zeezout',
+    // Specifieke kaassoorten (alleen penalty als NIET gezocht)
+    'cheddar','emmentaler','parmezaan','ovengratin','gruyere',
+    // Gebruik-context descriptors op kaas/saus labels (bijv. "AH Pasta geraspte kaas")
+    'pasta',
+  ]);
 
   // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
   const VARIANTS = {
@@ -2463,12 +2478,32 @@
       for (const pw of productWords) {
         if (NOISE_WORDS.has(pw) && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
       }
+      // "in [term]"-penalty: zoekterm staat als bestanddeel achter "in" (bijv. "Bonen in Tomatensaus"
+      // als de gebruiker zoekt op "tomatensaus"). Dit zijn andere producten, zwaar afstraffen.
+      let inComponentPenalty = 0;
+      const pNameLower = p.name.toLowerCase();
+      for (const iw of effectiveWords) {
+        if (new RegExp('\\bin\\s+(?:\\w+\\s+){0,2}' + iw).test(pNameLower)) {
+          inComponentPenalty = 3;
+          break;
+        }
+      }
+      // Secundaire-rol penalty: zoekterm staat als LAATSTE content-woord met ≥1 andere woorden ervoor
+      // → zoekterm is bijrol (bijv. "Kikkererwten Tomatensaus", "Tomato Frito (tomatensaus)")
+      let secondaryRolePenalty = 0;
+      for (const iw of effectiveWords) {
+        const matchIdx = content.findIndex(w => wordMatches(iw, w));
+        if (matchIdx === content.length - 1 && matchIdx >= 1) {
+          secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 1.2);
+          break;
+        }
+      }
       let catBoost = 0;
       if (itemCategory) {
         if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
         else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
       }
-      const score = coverage * 10 + posBonus + catBoost - noise * 4 - eff * 0.02;
+      const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
     if (!candidates.length) return null;
