@@ -71,6 +71,25 @@
 
     /* Totaalprijs-balk op lijst-tab */
     #price-summary { margin: 0 0 12px; }
+    .budget-bar {
+      background:white; border-radius:14px; padding:12px 14px;
+      box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:10px;
+    }
+    .budget-bar-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .budget-bar-label { font-size:11px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--slate-500); }
+    .budget-bar-amount { font-size:13px; font-weight:800; }
+    .budget-bar-amount.ok   { color:var(--green-600); }
+    .budget-bar-amount.warn { color:#D97706; }
+    .budget-bar-amount.over { color:var(--rose-500); }
+    .budget-track {
+      height:6px; background:var(--slate-100); border-radius:99px; overflow:hidden;
+    }
+    .budget-fill {
+      height:100%; border-radius:99px; transition:width .4s ease;
+      background: linear-gradient(90deg, var(--green-500), var(--green-600));
+    }
+    .budget-fill.warn { background: linear-gradient(90deg, #F59E0B, #D97706); }
+    .budget-fill.over { background: linear-gradient(90deg, #EF4444, #DC2626); }
     .price-bar {
       background: white;
       border-radius: 14px;
@@ -436,6 +455,15 @@
       line-height:1;
     }
     .add-btn:active { transform:scale(.94); }
+    .scan-btn { background: linear-gradient(135deg, #6366F1, #4F46E5); box-shadow:0 4px 14px rgba(99,102,241,.35); font-size:18px; }
+    .item-note { font-size:11px; color:var(--slate-500); font-style:italic; margin-bottom:2px; }
+    .item-note-btn { background:none; border:none; cursor:pointer; font-size:14px; opacity:.25; padding:4px; flex-shrink:0; }
+    .item-note-btn:active { opacity:1; }
+    .item.checked .item-note-btn { opacity:.1; }
+    .barcode-match-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--slate-100); }
+    .barcode-match-row:last-child { border-bottom:none; }
+    .barcode-match-name { flex:1; font-size:13px; font-weight:700; color:var(--slate-800); }
+    .barcode-add-btn { background:var(--green-500); color:white; border:none; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; }
 
     /* SUGGESTIES */
     .suggestions { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
@@ -746,6 +774,20 @@
       font-size:12px; font-weight:700; color:var(--green-700); cursor:pointer;
     }
     .seasonal-chip:active { background:var(--green-100); }
+    .hamster-block {
+      background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+      border:1.5px solid #FED7AA; border-radius:14px; padding:12px 14px; margin-bottom:10px;
+    }
+    .hamster-title { font-size:13px; font-weight:800; color:#C2410C; margin-bottom:8px; }
+    .hamster-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .hamster-row:last-child { margin-bottom:0; }
+    .hamster-info { flex:1; min-width:0; }
+    .hamster-name { font-size:13px; font-weight:700; color:var(--slate-800); }
+    .hamster-detail { font-size:11px; color:var(--slate-500); }
+    .hamster-badge {
+      background:#EA580C; color:white; font-size:10px; font-weight:900;
+      padding:2px 8px; border-radius:99px; flex-shrink:0;
+    }
     .forgotten-block {
       background: linear-gradient(135deg, #FEF9C3, #FEF3C7);
       border:1.5px solid #FDE68A; border-radius:14px;
@@ -916,13 +958,16 @@
                placeholder="1" value="" maxlength="3"
                onkeydown="if(event.key==='Enter') addCurrent()">
         <button class="add-btn" onclick="addCurrent()" aria-label="Toevoegen">+</button>
+        <button class="add-btn scan-btn" onclick="openBarcodeScanner()" aria-label="Barcode scannen" title="Barcode scannen">📷</button>
       </div>
       <div id="suggestions-wrap"></div>
       <button class="browse-link" onclick="openBrowse()">📋 Bladeren door categorieën</button>
     </div>
 
     <div id="share-bar"></div>
+    <div id="budget-bar"></div>
     <div id="price-summary"></div>
+    <div id="hamster-tips"></div>
     <div id="list-wrap"></div>
   </div>
 
@@ -966,6 +1011,7 @@
     </div>
     <div id="tips-output"></div>
     <div id="store-pref-section" style="margin-top:16px"></div>
+    <div id="budget-config"></div>
     <div id="blacklist-section"></div>
     <div id="share-worker-config" style="margin-top:12px"></div>
   </div>
@@ -998,6 +1044,34 @@
         <button class="modal-save-btn secondary" onclick="closeSaveListModal()">Annuleren</button>
         <button class="modal-save-btn primary" onclick="saveCurrentList()">💾 Opslaan</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL NOTITIE -->
+  <div class="modal-bg" id="modal-note" onclick="if(event.target===this) closeNoteEditor()">
+    <div class="modal">
+      <div class="modal-title">✏️ Notitie</div>
+      <div class="modal-sub" id="note-modal-sub"></div>
+      <input class="modal-save-input" id="note-input" type="text" placeholder="bijv. groot pak, huismerk is ok, etc." maxlength="80"
+             onkeydown="if(event.key==='Enter') saveNote()">
+      <div class="modal-save-actions">
+        <button class="modal-save-btn secondary" onclick="saveNote('')">Wissen</button>
+        <button class="modal-save-btn secondary" onclick="closeNoteEditor()">Annuleren</button>
+        <button class="modal-save-btn primary" onclick="saveNote()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BARCODE SCANNER -->
+  <div class="modal-bg" id="modal-barcode" onclick="if(event.target===this) closeBarcodeScanner()">
+    <div class="modal">
+      <div class="modal-title">📷 Barcode scannen</div>
+      <div class="modal-sub">Richt de camera op een barcode</div>
+      <div id="barcode-reader" style="width:100%;border-radius:12px;overflow:hidden;margin:12px 0;min-height:200px;background:var(--slate-100);display:flex;align-items:center;justify-content:center">
+        <span style="color:var(--slate-400);font-size:13px">Camera wordt gestart…</span>
+      </div>
+      <div id="barcode-result" style="margin-bottom:8px"></div>
+      <button class="modal-close" onclick="closeBarcodeScanner()">Sluiten</button>
     </div>
   </div>
 
@@ -3297,6 +3371,8 @@
     renderSuggestions();
     renderActionbar();
     renderHeaderSub();
+    renderHamsterTips();
+    renderBudgetBar();
   }
 
   function renderHeaderSub() {
@@ -3374,6 +3450,232 @@
     const recent = entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
     const isLowest = recent.length >= 3 && current <= Math.min(...recent);
     return { diff, pct, isLowest, oldPrice, current };
+  }
+
+  // ── NOTITIE PER ITEM ──
+  let noteItemId = null;
+  function openNoteEditor(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    noteItemId = id;
+    document.getElementById('note-modal-sub').textContent = it.name;
+    document.getElementById('note-input').value = it.note || '';
+    document.getElementById('modal-note').style.display = 'flex';
+    setTimeout(() => document.getElementById('note-input').focus(), 80);
+  }
+  function closeNoteEditor() {
+    document.getElementById('modal-note').style.display = 'none';
+    noteItemId = null;
+  }
+  function saveNote(val) {
+    const it = items.find(x => x.id === noteItemId);
+    if (!it) return;
+    it.note = val !== undefined ? val : (document.getElementById('note-input').value.trim());
+    saveItems();
+    render();
+    closeNoteEditor();
+  }
+
+  // ── BARCODE SCANNER ──
+  let barcodeStream = null;
+  let barcodeAnimFrame = null;
+
+  async function openBarcodeScanner() {
+    document.getElementById('modal-barcode').style.display = 'flex';
+    document.getElementById('barcode-result').innerHTML = '';
+    const readerDiv = document.getElementById('barcode-reader');
+
+    if (!('BarcodeDetector' in window)) {
+      readerDiv.innerHTML = `<div style="padding:16px;text-align:center;color:var(--slate-600);font-size:13px">
+        📱 Barcode scannen werkt alleen in Chrome/Edge op Android.<br><br>
+        Op iPhone: typ de naam van het product in het zoekvak.
+      </div>`;
+      return;
+    }
+
+    try {
+      barcodeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.createElement('video');
+      video.srcObject = barcodeStream;
+      video.setAttribute('playsinline', true);
+      video.play();
+      readerDiv.innerHTML = '';
+      readerDiv.appendChild(video);
+
+      const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128'] });
+
+      async function scanFrame() {
+        if (!barcodeStream) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            const barcode = codes[0].rawValue;
+            handleBarcodeDetected(barcode);
+            return;
+          }
+        } catch {}
+        barcodeAnimFrame = requestAnimationFrame(scanFrame);
+      }
+      video.addEventListener('playing', () => { barcodeAnimFrame = requestAnimationFrame(scanFrame); });
+    } catch (e) {
+      readerDiv.innerHTML = `<div style="padding:16px;text-align:center;color:var(--slate-600);font-size:13px">
+        Camera toegang geweigerd. Sta camera-toegang toe in je browser-instellingen.
+      </div>`;
+    }
+  }
+
+  function handleBarcodeDetected(barcode) {
+    closeBarcodeStream();
+    const readerDiv = document.getElementById('barcode-reader');
+    readerDiv.innerHTML = `<div style="padding:16px;text-align:center;font-size:24px">✓</div>`;
+
+    // Zoek barcode in alle winkeldata
+    const matches = [];
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data) continue;
+      const hit = data.products.find(p => p.id == barcode || p.ean == barcode);
+      if (hit) matches.push({ store, p: hit });
+    }
+
+    const resultDiv = document.getElementById('barcode-result');
+    if (!matches.length) {
+      resultDiv.innerHTML = `<div style="text-align:center;color:var(--slate-500);font-size:13px;padding:8px 0">
+        Barcode <strong>${escapeHtml(barcode)}</strong> niet gevonden in winkeldata.
+      </div>`;
+      return;
+    }
+
+    const name = matches[0].p.name;
+    const rows = matches.map(({ store, p }) => `
+      <div class="barcode-match-row">
+        <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+        <span class="barcode-match-name">${escapeHtml(p.name)}</span>
+        <span style="font-size:13px;font-weight:800">${fmtPrice(p.price)}</span>
+      </div>`).join('');
+    resultDiv.innerHTML = `
+      <div style="margin-bottom:10px">${rows}</div>
+      <button class="tips-config-btn" style="width:100%" onclick="quickAdd('${escapeHtml(name).replace(/'/g,"\\'")}');closeBarcodeScanner();toast('Toegevoegd')">
+        + Voeg toe aan lijst
+      </button>`;
+  }
+
+  function closeBarcodeStream() {
+    if (barcodeAnimFrame) { cancelAnimationFrame(barcodeAnimFrame); barcodeAnimFrame = null; }
+    if (barcodeStream) { barcodeStream.getTracks().forEach(t => t.stop()); barcodeStream = null; }
+  }
+
+  function closeBarcodeScanner() {
+    closeBarcodeStream();
+    document.getElementById('modal-barcode').style.display = 'none';
+  }
+
+  // ── BUDGET-TRACKER ──
+  const BUDGET_KEY = 'boodschappen.budget';
+  function getBudget() { try { return parseFloat(localStorage.getItem(BUDGET_KEY)) || 0; } catch { return 0; } }
+  function setBudget(v) { try { localStorage.setItem(BUDGET_KEY, v); } catch {} }
+
+  function getEstimatedTotal() {
+    let total = 0;
+    for (const it of items.filter(x => !x.checked)) {
+      const res = findMatches(it.name, it.category);
+      if (res.cheapest) total += res.cheapest.eff * (it.qty || 1);
+    }
+    return total;
+  }
+
+  function renderBudgetBar() {
+    const div = document.getElementById('budget-bar');
+    if (!div) return;
+    const budget = getBudget();
+    if (!budget || !items.length) { div.innerHTML = ''; return; }
+    const spent = getEstimatedTotal();
+    const pct   = Math.min(spent / budget, 1);
+    const cls   = pct >= 1 ? 'over' : pct >= 0.8 ? 'warn' : 'ok';
+    const label = pct >= 1 ? `€${(spent - budget).toFixed(2).replace('.',',')} over budget`
+                           : `nog €${(budget - spent).toFixed(2).replace('.',',')} over`;
+    div.innerHTML = `
+      <div class="budget-bar">
+        <div class="budget-bar-top">
+          <span class="budget-bar-label">Budget</span>
+          <span class="budget-bar-amount ${cls}">${fmtPrice(spent)} / ${fmtPrice(budget)} · ${label}</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill ${cls}" style="width:${Math.round(pct*100)}%"></div>
+        </div>
+      </div>`;
+  }
+
+  function renderBudgetConfig() {
+    const div = document.getElementById('budget-config');
+    if (!div) return;
+    const budget = getBudget();
+    div.innerHTML = `
+      <div class="store-pref-card" style="margin-top:12px">
+        <div class="store-pref-label">💰 Weekbudget</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <span style="font-size:14px;font-weight:700;color:var(--slate-600)">€</span>
+          <input type="number" id="budget-input" min="0" step="5"
+            value="${budget || ''}" placeholder="bijv. 150"
+            style="flex:1;padding:8px 12px;border:1.5px solid var(--slate-200);border-radius:10px;font-size:15px;font-weight:700">
+          <button class="tips-config-btn" style="margin:0" onclick="saveBudget()">Opslaan</button>
+          ${budget ? `<button class="tips-config-btn" style="margin:0;background:var(--slate-400)" onclick="setBudget(0);renderBudgetConfig();renderBudgetBar();">Wissen</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function saveBudget() {
+    const v = parseFloat(document.getElementById('budget-input')?.value) || 0;
+    setBudget(v);
+    renderBudgetConfig();
+    renderBudgetBar();
+    toast(v ? `Budget ingesteld op ${fmtPrice(v)}` : 'Budget gewist');
+  }
+
+  // ── HAMSTEREN-RADAR ──
+  function getHamsterAdvice(storeId, p) {
+    const key = getPriceKey(storeId, p);
+    const rec = priceHistory[key];
+    if (!rec || rec.entries.length < 5) return null;
+    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = rec.entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
+    if (recent.length < 5) return null;
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const current = p.price;
+    const discount = (avg - current) / avg;
+    if (discount >= 0.15) return { avg, discount, saving: avg - current };
+    return null;
+  }
+
+  function renderHamsterTips() {
+    const div = document.getElementById('hamster-tips');
+    if (!div) return;
+    if (!Object.keys(priceHistory).length) { div.innerHTML = ''; return; }
+    // Zoek alle items op de lijst met een goede hamster-deal
+    const tips = [];
+    for (const it of items.filter(x => !x.checked)) {
+      for (const store of STORES) {
+        const m = findStoreMatch(store.id, it.name, it.category);
+        if (!m) continue;
+        const advice = getHamsterAdvice(store.id, m.p);
+        if (advice) tips.push({ item: it, match: m, store, advice });
+      }
+    }
+    if (!tips.length) { div.innerHTML = ''; return; }
+    const rows = tips.map(({ item, match, store, advice }) => `
+      <div class="hamster-row">
+        <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+        <div class="hamster-info">
+          <div class="hamster-name">${escapeHtml(item.name)}</div>
+          <div class="hamster-detail">${Math.round(advice.discount * 100)}% onder gemiddeld · normaal ${fmtPrice(advice.avg)}</div>
+        </div>
+        <span class="hamster-badge">Sla in!</span>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="hamster-block">
+        <div class="hamster-title">🐹 Goede moment om in te slaan</div>
+        ${rows}
+      </div>`;
   }
 
   let serverCorrections = { blacklist: {} }; // geladen vanuit data/corrections.json
@@ -3825,9 +4127,11 @@
               <div class="check" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${it.checked}"></div>
               <div class="item-body" onclick="openCategoryPicker('${it.id}')">
                 <div class="item-name">${escapeHtml(it.name)}</div>
+                ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
                 ${renderPriceComparison(it)}
               </div>
               ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
+              <button class="item-note-btn" onclick="event.stopPropagation();openNoteEditor('${it.id}')" title="Notitie toevoegen">✏️</button>
               <button class="item-del" onclick="deleteItem('${it.id}')" aria-label="Verwijder">✕</button>
             </div>`).join('')}
         </div>`;
@@ -4669,7 +4973,7 @@
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
-    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderBlacklistSection(); renderShareWorkerConfig(); }
+    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderBudgetConfig(); renderBlacklistSection(); renderShareWorkerConfig(); }
   }
 
   // ── AI TIPS ──
