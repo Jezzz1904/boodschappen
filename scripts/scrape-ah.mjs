@@ -49,6 +49,7 @@ const SEARCH_TERMS = [
   'azijn','sojasaus','ketchup','mayonaise','calvé mayonaise','calvé','remia mayonaise','mosterd','sambal','curry','bouillon','tomatenblok','tomatenpuree',
   'pesto','kikkererwten','bonen in blik','linzen','soep','bloem','suiker','honing','jam','hagelslag','pindakaas',
   'choco','nutella','noten','rozijnen','muesli','cornflakes','havermout','rijstwafels','olijven','augurken',
+  'honey loops','hoops','frosties','coco pops','cheerios','granola','fruit loops',
   'quinoa','bulgur','couscous','lijnzaad','chiazaad','glutenvrij brood','glutenvrij pasta',
   // Snacks & dranken
   'chips','lays','croky','doritos','pringles','cheetos','bugles','tortilla chips','nachos',
