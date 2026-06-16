@@ -1,0 +1,7 @@
+name = "boodschappen-share"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SHARES"
+id = "VERVANG_MET_JE_KV_NAMESPACE_ID"

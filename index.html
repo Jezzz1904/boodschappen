@@ -757,7 +757,7 @@
       border:1.5px solid var(--slate-200);
     }
     .ab-clear.has-checked { color: var(--rose-500); border-color: #FECACA; }
-    .ab-save {
+    .ab-save, .ab-share {
       flex:0 0 auto; padding: 14px 16px;
       background: white; color: var(--green-600);
       border:1.5px solid var(--green-200);
@@ -932,6 +932,7 @@
     </div>
     <div id="tips-output"></div>
     <div id="store-pref-section" style="margin-top:16px"></div>
+    <div id="share-worker-config" style="margin-top:12px"></div>
   </div>
 
   <!-- TAB: HISTORIE -->
@@ -948,6 +949,7 @@
   <div class="actionbar" id="actionbar" style="display:none">
     <button class="ab-btn ab-clear" id="ab-clear" onclick="clearChecked()">Wis afgevinkt</button>
     <button class="ab-btn ab-save" onclick="openSaveListModal()" title="Lijst opslaan">💾</button>
+    <button class="ab-btn ab-share" id="ab-share" onclick="handleShareBtn()" title="Lijst delen">📤</button>
     <button class="ab-btn ab-done" onclick="finishShopping()">✓ Klaar</button>
   </div>
 
@@ -2862,47 +2864,53 @@
   function saveHistory() { try { localStorage.setItem(HIST_KEY,  JSON.stringify(history)); } catch(e){} }
 
   // ── LIJST DELEN ─────────────────────────────────────────────────────────────
-  const SHARE_KEY = 'boodschappen.shareCode';
+  const SHARE_KEY         = 'boodschappen.shareCode';
+  const SHARE_WORKER_KEY  = 'boodschappen.shareWorkerUrl';
   let shareCode = null;
   let sharePollTimer = null;
-  let shareLastUpdatedAt = 0;  // updatedAt van de laatste succesvolle pull
+  let shareLastUpdatedAt = 0;
   let shareWritePending = false;
+
+  function getShareWorkerUrl() { try { return localStorage.getItem(SHARE_WORKER_KEY) || ''; } catch { return ''; } }
+  function setShareWorkerUrl(url) { try { localStorage.setItem(SHARE_WORKER_KEY, url.replace(/\/$/, '')); } catch {} }
 
   function getShareCode() { try { return localStorage.getItem(SHARE_KEY) || null; } catch { return null; } }
   function setShareCode(c) { try { if (c) localStorage.setItem(SHARE_KEY, c); else localStorage.removeItem(SHARE_KEY); } catch {} }
 
   async function shareCreate() {
-    const res = await fetch(getAIUrl(), {
+    const base = getShareWorkerUrl();
+    if (!base) throw new Error('Stel eerst de deellijst-Worker URL in bij Instellingen (Tips-tab).');
+    const res = await fetch(`${base}/share`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mode: 'share-create', items }),
+      body: JSON.stringify({ items }),
     });
     const data = await res.json();
-    if (!res.ok || !data.code) throw new Error(data.error || 'Aanmaken mislukt');
-    return data.code;
+    if (!res.ok || !data.id) throw new Error(data.error || 'Aanmaken mislukt');
+    return data.id; // Worker geeft { id, items, updatedAt }
   }
 
   async function shareReadRemote(code) {
-    const res = await fetch(getAIUrl(), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mode: 'share-read', code }),
-    });
+    const base = getShareWorkerUrl();
+    if (!base) throw new Error('Geen share-worker geconfigureerd');
+    const res = await fetch(`${base}/share/${code}`);
     if (res.status === 404) throw new Error('Onbekende code');
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Lezen mislukt');
-    return data; // { items, updatedAt }
+    return data; // { id, items, updatedAt }
   }
 
   async function shareWrite() {
     if (!shareCode) return;
     if (shareWritePending) return;
+    const base = getShareWorkerUrl();
+    if (!base) return;
     shareWritePending = true;
     try {
-      await fetch(getAIUrl(), {
-        method: 'POST',
+      await fetch(`${base}/share/${shareCode}`, {
+        method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ mode: 'share-write', code: shareCode, items }),
+        body: JSON.stringify({ items }),
       });
     } catch {}
     shareWritePending = false;
@@ -2961,7 +2969,7 @@
           <button class="share-btn" style="width:100%;padding:10px;font-size:14px" onclick="startShare()">📤 Deel lijst met iemand</button>
           <div class="share-join">
             <input id="share-code-input" placeholder="Code van iemand anders invoeren" maxlength="80"
-              oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+              oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"
               onkeydown="if(event.key==='Enter')joinShare()">
             <button class="share-btn secondary" onclick="joinShare()">Verbinden</button>
           </div>
@@ -2981,9 +2989,9 @@
   async function joinShare() {
     let input = (document.getElementById('share-code-input')?.value || '').trim().toUpperCase();
     // Link geplakt? Haal code eruit
-    const m = input.match(/[?&]deel=([A-Z0-9]{6})/);
-    if (m) input = m[1];
-    if (input.length !== 6) { toast('Voer een 6-tekens code in'); return; }
+    const m = input.match(/[?&]deel=([a-zA-Z0-9]+)/);
+    if (m) input = m[1].toLowerCase();
+    if (input.length < 6) { toast('Voer een geldige deelcode in'); return; }
     try {
       const data = await shareReadRemote(input);
       items = data.items || [];
@@ -3006,13 +3014,33 @@
     } catch { toast('Kopieer deze link: ' + url); }
   }
 
+  function handleShareBtn() {
+    if (!getShareWorkerUrl()) {
+      showTab('tips');
+      setTimeout(() => document.getElementById('share-worker-config')?.scrollIntoView({ behavior: 'smooth' }), 100);
+      toast('Stel eerst de Deellijst Worker URL in');
+      return;
+    }
+    if (shareCode) {
+      // Al actief — kopieer link
+      const url = `${location.origin}${location.pathname}?deel=${shareCode}`;
+      copyShareLink(url);
+    } else {
+      startShare();
+    }
+  }
+
+  // Sluit share modal (placeholder, niet meer nodig maar wacht op aanroepen)
+  function openShareModal() { handleShareBtn(); }
+  function closeShareModal() {}
+
   // Bij opstarten: hervat actieve sessie of verwerk ?deel= in URL
   (function initShare() {
     const params = new URLSearchParams(location.search);
-    const urlCode = (params.get('deel') || '').toUpperCase();
+    const urlCode = (params.get('deel') || '').toLowerCase();
     const savedCode = getShareCode();
     const code = urlCode || savedCode;
-    if (code && code.length === 6) {
+    if (code && code.length >= 6) {
       shareCode = code;
       setShareCode(code);
       shareReadRemote(code).then(data => {
@@ -4423,7 +4451,7 @@
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
-    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); }
+    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderShareWorkerConfig(); }
   }
 
   // ── AI TIPS ──
@@ -4463,6 +4491,35 @@
           ${chips}
         </div>
       </div>`;
+  }
+
+  function renderShareWorkerConfig() {
+    const div = document.getElementById('share-worker-config');
+    if (!div) return;
+    const url = getShareWorkerUrl();
+    div.innerHTML = `
+      <div class="tips-config" style="margin-top:0">
+        <strong>📤 Deellijst Worker${url ? ' ✓' : ''}</strong><br>
+        ${url
+          ? `Worker actief: <code style="font-size:11px;word-break:break-all">${escapeHtml(url)}</code><br><br>`
+          : 'Zet de Deellijst Worker in om lijsten live te delen met anderen. Volg de instructies in <code>share-worker/</code> in de repo.<br><br>'}
+        <input class="tips-config-input" id="share-worker-url-input" type="url"
+               placeholder="https://boodschappen-share.xxx.workers.dev"
+               value="${escapeHtml(url)}">
+        <button class="tips-config-btn" onclick="saveShareWorkerUrl()">Opslaan</button>
+        ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="clearShareWorkerUrl()">Wissen</button>` : ''}
+      </div>`;
+  }
+  function saveShareWorkerUrl() {
+    const v = (document.getElementById('share-worker-url-input')?.value || '').trim();
+    setShareWorkerUrl(v);
+    renderShareWorkerConfig();
+    toast(v ? 'Deellijst Worker opgeslagen!' : 'URL gewist');
+  }
+  function clearShareWorkerUrl() {
+    setShareWorkerUrl('');
+    renderShareWorkerConfig();
+    toast('Deellijst Worker URL gewist');
   }
 
   function renderTipsConfig() {
