@@ -674,6 +674,11 @@
       cursor:pointer; box-shadow:0 2px 8px rgba(5,150,105,.3);
     }
     .hist-add:active { transform:scale(.94); }
+    .hist-del {
+      background:none; border:none; cursor:pointer;
+      color:var(--slate-300); font-size:16px; padding:4px 2px; line-height:1;
+    }
+    .hist-del:active { color:var(--rose-500); }
     .hist-search {
       width:100%; padding:12px 14px; font-size:15px; font-weight:600;
       border:2px solid var(--slate-200); border-radius:12px;
@@ -4260,18 +4265,27 @@
       html += `<div class="category-header" style="margin-top:14px"><span>${cat.emo}</span> ${cat.name}<span class="category-count">${arr.length}</span></div>`;
       arr.forEach(e => {
         const last = e.lastBought ? timeAgo(e.lastBought) : '';
+        const safeName = escapeHtml(e.name).replace(/'/g, "\\'");
         html += `
           <div class="hist-item">
             <div class="hist-info">
               <div class="hist-name">${escapeHtml(e.name)}</div>
               <div class="hist-meta">${e.count}× gekocht${last ? ' · laatst ' + last : ''}</div>
             </div>
-            <button class="hist-add" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}'); toast('Toegevoegd');">+ Op lijst</button>
+            <button class="hist-add" onclick="quickAdd('${safeName}'); toast('Toegevoegd');">+ Op lijst</button>
+            <button class="hist-del" title="Verwijder uit historie" onclick="deleteHistoryItem('${safeName}')">✕</button>
           </div>`;
       });
     });
     wrap.innerHTML = html;
   }
+  function deleteHistoryItem(name) {
+    const key = normalize(name);
+    delete history[key];
+    saveHistory();
+    renderHistory();
+  }
+
   function timeAgo(ts) {
     const d = (Date.now() - ts) / 86400000;
     if (d < 1)  return 'vandaag';
