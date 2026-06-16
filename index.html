@@ -923,6 +923,16 @@
   ];
   const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
   let storeData = {};  // id -> { products:[], scraped_at }
+  const matchCache = new Map(); // `${storeId}:${itemNorm}:${cat}` → result
+  function setStoreData(id, data) {
+    storeData[id] = data;
+    // Precompute genormaliseerde woorden per product (eenmalig, niet bij elke match)
+    for (const p of data.products) {
+      if (!p._w) p._w = normWords(p.name);
+      if (!p._nl) p._nl = p.name.toLowerCase();
+    }
+    matchCache.clear();
+  }
 
   // Stop-woorden die nooit op product-naam mogen forceren (anders matcht "yoghurt" op "yoghurtdrink")
   const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch']);
@@ -1053,6 +1063,8 @@
     // Ei-varianten (noedels met ei ≠ eieren)
     'noedels',
   ]);
+  // Voorberekend array voor compound-suffix check (alleen woorden >3 tekens)
+  const NOISE_WORDS_ARR = [...NOISE_WORDS].filter(nw => nw.length > 3);
 
   // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
   const VARIANTS = {
@@ -2366,7 +2378,7 @@
       try {
         const cached = JSON.parse(localStorage.getItem(key));
         if (cached && Array.isArray(cached.products)) {
-          storeData[store.id] = cached;
+          setStoreData(store.id, cached);
         }
       } catch (e) {}
     }
@@ -2379,7 +2391,7 @@
         const data = await res.json();
         if (Array.isArray(data.products)) {
           const slim = { scraped_at: data.scraped_at, products: data.products };
-          storeData[store.id] = slim;
+          setStoreData(store.id, slim);
           try { localStorage.setItem('boodschappen.data.' + store.id, JSON.stringify(slim)); } catch (e) {}
         }
       } catch (e) {}
@@ -2439,19 +2451,23 @@
   function findStoreMatch(storeId, itemName, itemCategory) {
     const data = storeData[storeId];
     if (!data || !data.products || !data.products.length) return null;
+    // Cache: dezelfde naam+categorie geeft altijd hetzelfde resultaat zolang storeData niet wijzigt
+    const cacheKey = storeId + ':' + itemName + ':' + (itemCategory || '');
+    if (matchCache.has(cacheKey)) return matchCache.get(cacheKey);
+
     const store = STORE_BY_ID[storeId];
     // Strip woorden die de categorie zelf benoemen (bijv. "diepvries" in "Diepvries pizza"),
     // zodat alleen het inhoudelijke deel matcht en de catBoost de rest doet.
     const catIdWords = itemCategory ? [itemCategory] : [];
     const itemWords = normWords(itemName).filter(w => !catIdWords.some(c => stemMatch(w, c)));
     const effectiveWords = itemWords.length ? itemWords : normWords(itemName);
-    if (!effectiveWords.length) return null;
+    if (!effectiveWords.length) { matchCache.set(cacheKey, null); return null; }
     const today = new Date().toISOString().slice(0, 10);
     const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
     const candidates = [];
     for (const p of data.products) {
-      const productWords = normWords(p.name);
+      const productWords = p._w || normWords(p.name);  // gebruik precomputed woorden indien beschikbaar
       const allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
       if (!allMatch) continue;
 
@@ -2483,13 +2499,13 @@
       let noise = 0;
       for (const pw of productWords) {
         const isNoise = NOISE_WORDS.has(pw) ||
-          [...NOISE_WORDS].some(nw => nw.length > 3 && pw.length > nw.length && pw.endsWith(nw));
+          NOISE_WORDS_ARR.some(nw => pw.length > nw.length && pw.endsWith(nw));
         if (isNoise && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
       }
       // "in [term]"-penalty: zoekterm staat als bestanddeel achter "in" (bijv. "Bonen in Tomatensaus"
       // als de gebruiker zoekt op "tomatensaus"). Dit zijn andere producten, zwaar afstraffen.
       let inComponentPenalty = 0;
-      const pNameLower = p.name.toLowerCase();
+      const pNameLower = p._nl || p.name.toLowerCase();
       for (const iw of effectiveWords) {
         if (new RegExp('\\b(?:in|met)\\s+(?:\\w+\\s+){0,2}' + iw).test(pNameLower)) {
           inComponentPenalty = 3;
@@ -2514,7 +2530,7 @@
       const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
-    if (!candidates.length) return null;
+    if (!candidates.length) { matchCache.set(cacheKey, null); return null; }
     candidates.sort((a, b) => b.score - a.score);
     const top = candidates[0];
     // Tier = matches die qua naam-relevantie nagenoeg gelijk staan. Binnen de tier
@@ -2531,6 +2547,7 @@
       ? singles.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a)
       : top;
     if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit);
+    matchCache.set(cacheKey, best);
     return best;
   }
 
