@@ -31,32 +31,49 @@ const SEARCH_TERMS = [
   // Vlees vis
   'kipfilet','kipdij','kippenpoot','kalkoen','rundergehakt','gehakt','biefstuk','varkenshaas','speklap',
   'spek','bacon','ham','salami','worst','rookworst','knakworst','zalm','tonijn','kabeljauw','garnalen','vis',
+  'wokkip','wokrundvlees','saté','saté kip','saté varken','kipschnitzel','varkensschnitzel',
+  // Vleeswaren & beleg
+  'vleeswaren','rookvlees','pastrami','cervelaat','leverworst','boterhamworst','filet americain',
+  'chorizo beleg','rosbief','kipfilet beleg','kalkoenfilet','smeerleversworst',
   // Diepvries
   'pizza','friet','ijs','ijsje','vissticks','loempia','doperwten','spinaziepuree','aardappelpartjes','aardappelschijfjes',
+  'diepvries groente','kroket','bitterballen','frikandel','diepvries maaltijd',
   // Verse pasta & pastasauzen
   'verse pasta','tortelloni','cappelletti','ravioli','gnocchi','tortellini','verse gnocchi',
   'pastasaus','pestosaus','pastasaus carbonara','pastasaus bolognese',
+  // Zuivel uitgebreid
+  'skyr','griekse yoghurt','drinkyoghurt','kwarkdessert','hüttenkäse','cottage cheese',
+  'hummus','tzatziki','guacamole','tapenade',
   // Houdbaar
   'pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','noedels','mie','olijfolie','zonnebloemolie',
   'azijn','sojasaus','ketchup','mayonaise','calvé mayonaise','calvé','remia mayonaise','mosterd','sambal','curry','bouillon','tomatenblok','tomatenpuree',
   'pesto','kikkererwten','bonen in blik','linzen','soep','bloem','suiker','honing','jam','hagelslag','pindakaas',
   'choco','nutella','noten','rozijnen','muesli','cornflakes','havermout','rijstwafels','olijven','augurken',
-  // Snacks dranken
-  'chips','lays','croky','doritos','pringles','cheetos','bugles',
-  'popcorn','chocolade','reep','snoep','drop','koekjes','stroopwafel','speculaas','liga',
+  'quinoa','bulgur','couscous','lijnzaad','chiazaad','glutenvrij brood','glutenvrij pasta',
+  // Snacks & dranken
+  'chips','lays','croky','doritos','pringles','cheetos','bugles','tortilla chips','nachos',
+  'popcorn','chocolade','reep','snoep','drop','koekjes','stroopwafel','speculaas','liga','ontbijtkoek',
   'water','spa','vruchtensap','sinaasappelsap','appelsap','cola','fanta','sprite','ice tea','aquarius',
   'dubbelfris','red bull','bier','heineken','wijn','rode wijn','witte wijn','koffie','koffiepads','thee',
-  'tonic','royal club tonic','ginger beer','bitter lemon',
+  'tonic','royal club tonic','ginger beer','bitter lemon','radler','kombucha','kokoswater',
   'coca cola zero','coca cola light','fanta orange','sprite zero',
+  'jenever','wodka','rum','port','sherry','advocaat','prosecco','cava','champagne',
+  // Sport & gezondheid
+  'proteïnereep','eiwitreep','eiwitshake','proteïne shake','creatine','havermoutrepen',
   // Drogist
   'shampoo','douchegel','tandpasta','tandenborstel','deodorant','bodylotion','zonnebrand','paracetamol',
-  'ibuprofen','pleisters','luiers','babydoekjes','maandverband',
+  'ibuprofen','pleisters','luiers','babydoekjes','maandverband','scheerschuim','condoom',
+  // Baby
+  'babyvoeding','babymelk','babygraan','babygroente','babyfruit','pap baby',
+  // Dier
+  'kattenvoer','hondenvoer','kattenbakkorrels','hondensnacks',
   // Wereldkeuken
   'conimex','kroepoek','kokosmelk','nasigoreng','bamigoreng','ketjap','seroendeng',
-  'heinz ketchup','heinz','worcestersaus',
+  'heinz ketchup','heinz','worcestersaus','go-tan','roti','papadum','naan brood',
   // Huishouden
   'wc papier','keukenpapier','tissues','vuilniszakken','vaatwastabletten','afwasmiddel','allesreiniger',
   'wasmiddel','wasverzachter','aluminiumfolie','vershoudfolie','bakpapier','sponzen','batterijen',
+  'wc reiniger','badkamerreiniger','vloerreinger','keukenreiniger',
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
