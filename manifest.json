@@ -1,6 +1,6 @@
 {
-  "name": "Boodschappen",
-  "short_name": "Boodschappen",
+  "name": "de Held van boodschappen",
+  "short_name": "Held Boodschappen",
   "description": "Slim boodschappenlijstje met geheugen",
   "start_url": ".",
   "scope": ".",
