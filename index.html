@@ -2371,8 +2371,9 @@
                     'Merk':   ['Iglo','AH','Lidl','Huismerk'],
                   }},
     'diepvries snacks': { groups: {
-                    'Soort':  ['Frikandel','Kroket','Loempia','Bitterballen','Kaassoufflé','Samosa','Naan brood','Bladerdeeg'],
-                    'Merk':   ['Mora','AH','Lidl','Huismerk'],
+                    'Soort':     ['Frikandel','Kroket','Loempia','Bitterballen','Kaassoufflé','Samosa','Naan brood','Bladerdeeg'],
+                    'Bereiding': ['Oven / airfryer','Frituur','Beide'],
+                    'Merk':      ['Mora','AH','Lidl','Huismerk'],
                   }},
     'diepvries maaltijd': { groups: {
                     'Keuken': ['Pasta','Rijst','Aziatisch','Indiaas','Mexicaans','Hollands'],
@@ -2380,12 +2381,14 @@
                     'Merk':   ['AH','Iglo','Lidl','La Famiglia','Huismerk'],
                   }},
     friet:          { groups: {
-                    'Type':   ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes','Rösti','Hasselback','Zoete aardappelfriet'],
-                    'Merk':   ['McCain','Aviko','AH','Lidl','Huismerk'],
+                    'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes','Rösti','Hasselback','Zoete aardappelfriet'],
+                    'Bereiding':  ['Oven / airfryer','Frituur','Beide'],
+                    'Merk':       ['McCain','Aviko','AH','Lidl','Huismerk'],
                   }},
     patat:          { groups: {
-                    'Type':   ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes'],
-                    'Merk':   ['McCain','Aviko','AH','Lidl','Huismerk'],
+                    'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes'],
+                    'Bereiding':  ['Oven / airfryer','Frituur','Beide'],
+                    'Merk':       ['McCain','Aviko','AH','Lidl','Huismerk'],
                   }},
     // Sauzen & condimenten
     mayonaise:    { groups: {
@@ -4508,8 +4511,11 @@
       { name: 'Pizza & maaltijden', emo: '🍕', items: [
         'Diepvries pizza','Verse pizza','Diepvries maaltijd','Diepvries snacks',
       ]},
-      { name: 'Frites & snacks', emo: '🍟', items: [
-        'Friet','Kroket','Bitterballen','Loempia','Nasibal',
+      { name: 'Frites & snacks (oven/airfryer)', emo: '🌡️', items: [
+        'Friet oven','Kroket oven','Bitterballen oven','Loempia oven','Nasibal oven','Aardappelpartjes oven','Zoete aardappelfriet oven',
+      ]},
+      { name: 'Frites & snacks (frituur)', emo: '🍟', items: [
+        'Friet frituur','Kroket','Bitterballen','Loempia','Nasibal','Frikandel',
       ]},
       { name: 'IJs', emo: '🍦', items: [
         'Ijs','IJslolly','IJsblokjes',
