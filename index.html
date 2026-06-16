@@ -3624,28 +3624,36 @@
   // Catalogus voor het Bladeren-menu — per categorie de meest gangbare NL boodschappen.
   // Title-case zodat het direct als productnaam de lijst in kan.
   const BROWSE_CATALOG = {
-    groente: [
-      // Fruit
-      'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Kiwi',
-      'Aardbeien','Framboos','Blauwe bes','Bramen','Rode bessen','Cranberries',
-      'Meloen','Watermeloen','Ananas','Perzik','Nectarine','Pruim','Kersen',
-      'Avocado','Mango','Druiven','Passievrucht','Grapefruit','Vijgen','Abrikozen',
-      'Dadels','Kokos','Granaatappel','Jackfruit',
-      'Gedroogde vruchten','Fruit op sap','Appelmoes',
-      'Verse sappen','Smoothie','Groentesap','Groentesmoothie','Vitamineshot','Gembershot','Knijpfruit',
-      // Groente
-      'Tomaat','Komkommer','Paprika','Wortel','Ui','Knoflook','Sla',
-      'Andijvie','Witlof','Kool','Spinazie','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
-      'Pompoen','Venkel','Snijbonen','Sperziebonen','Asperges','Mais','Bosui',
-      'Aardappel','Zoete aardappel','Champignons','Radijs','Bieten','Spruitjes',
-      'Snoepgroente','Slamelange','Rauwkost','Taugé','Kiemgroenten',
-      'Gember','Peper','Groentepasta',
-      // Mixen & bereide groente
-      'Wokgroenten','Roerbakgroenten','Soepgroenten',
-      'Nasi groente','Bami groente','Oven groente','Broccoli mix','Groentenmix',
-      // Kruiden
-      'Peterselie','Basilicum','Gember','Munt','Koriander','Tijm','Rozemarijn',
-    ],
+    groente: { subgroups: [
+      { name: 'Groente', emo: '🥦', items: [
+        'Tomaat','Komkommer','Paprika','Wortel','Ui','Knoflook','Sla',
+        'Andijvie','Witlof','Kool','Spinazie','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
+        'Pompoen','Venkel','Snijbonen','Sperziebonen','Asperges','Mais','Bosui',
+        'Aardappel','Zoete aardappel','Champignons','Radijs','Bieten','Spruitjes',
+        'Snoepgroente','Slamelange','Rauwkost','Taugé','Kiemgroenten',
+        'Gember','Peper',
+      ]},
+      { name: 'Fruit', emo: '🍎', items: [
+        'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Kiwi',
+        'Aardbeien','Framboos','Blauwe bes','Bramen','Rode bessen','Cranberries',
+        'Meloen','Watermeloen','Ananas','Perzik','Nectarine','Pruim','Kersen',
+        'Avocado','Mango','Druiven','Passievrucht','Grapefruit','Vijgen','Abrikozen',
+        'Dadels','Kokos','Granaatappel','Jackfruit',
+        'Gedroogde vruchten','Fruit op sap','Appelmoes',
+      ]},
+      { name: 'Verpakte groente & mixen', emo: '🥘', items: [
+        'Wokgroenten','Roerbakgroenten','Soepgroenten',
+        'Nasi groente','Bami groente','Oven groente','Broccoli mix','Groentenmix',
+        'Groentepasta',
+      ]},
+      { name: 'Sappen & smoothies', emo: '🥤', items: [
+        'Verse sappen','Smoothie','Groentesap','Groentesmoothie','Vitamineshot','Gembershot','Knijpfruit',
+      ]},
+      { name: 'Verse kruiden', emo: '🌿', items: [
+        'Peterselie','Basilicum','Munt','Koriander','Tijm','Rozemarijn','Bieslook',
+        'Dragon','Salie','Oregano','Dille','Laurier',
+      ]},
+    ]},
     zuivel: [
       'Melk','Plantaardige melk','Yoghurt','Drinkyoghurt','Chocolademelk','Koffiemelk',
       'Kwark','Vla','Karnemelk','Slagroom','Room','Boter','Kaas','Eieren',
@@ -3768,7 +3776,8 @@
     ],
   };
 
-  let browseCat = null; // huidige geopende categorie in modal
+  let browseCat = null;    // huidige geopende categorie in modal
+  let browseSubCat = null; // huidige sub-categorie (naam) binnen browseCat
 
   function openBrowse() {
     browseCat = null;
@@ -3779,8 +3788,10 @@
     document.getElementById('modal-browse').classList.remove('open');
     browseCat = null;
   }
-  function openBrowseCat(catId) { browseCat = catId; renderBrowse(); }
-  function backToBrowseHome() { browseCat = null; renderBrowse(); }
+  function openBrowseCat(catId) { browseCat = catId; browseSubCat = null; renderBrowse(); }
+  function openBrowseSubCat(sub) { browseSubCat = sub; renderBrowse(); }
+  function backToBrowseHome() { browseCat = null; browseSubCat = null; renderBrowse(); }
+  function backToBrowseCat() { browseSubCat = null; renderBrowse(); }
 
   function renderBrowse() {
     const head = document.getElementById('browse-head');
@@ -3788,21 +3799,53 @@
     if (!browseCat) {
       head.innerHTML = `<span class="browse-title">📋 Door categorieën bladeren</span>`;
       body.innerHTML = `<div class="browse-grid">${
-        CATEGORIES.filter(c => BROWSE_CATALOG[c.id]?.length).map(c => `
+        CATEGORIES.filter(c => {
+          const e = BROWSE_CATALOG[c.id];
+          return e && (e.length || e.subgroups?.length);
+        }).map(c => {
+          const e = BROWSE_CATALOG[c.id];
+          const count = e.subgroups
+            ? e.subgroups.reduce((s, sg) => s + sg.items.length, 0)
+            : e.length;
+          return `
           <button class="browse-cat" onclick="openBrowseCat('${c.id}')">
             <span class="b-emo">${c.emo}</span> ${escapeHtml(c.name)}
-            <span class="b-count">${BROWSE_CATALOG[c.id].length}</span>
-          </button>`).join('')
+            <span class="b-count">${count}</span>
+          </button>`;
+        }).join('')
       }</div>`;
       return;
     }
     const cat = CAT_BY_ID[browseCat];
-    const products = BROWSE_CATALOG[browseCat] || [];
+    const catalogEntry = BROWSE_CATALOG[browseCat];
+    // Sub-groepen niveau
+    if (catalogEntry && catalogEntry.subgroups && !browseSubCat) {
+      head.innerHTML = `
+        <button class="browse-back" onclick="backToBrowseHome()">← Categorieën</button>
+        <span class="browse-emo">${cat.emo}</span>
+        <span class="browse-title">${escapeHtml(cat.name)}</span>`;
+      body.innerHTML = `<div class="browse-grid">${
+        catalogEntry.subgroups.map(sg => `
+          <button class="browse-cat" onclick="openBrowseSubCat('${escapeHtml(sg.name).replace(/'/g,"\\'")}')">
+            <span class="b-emo">${sg.emo}</span> ${escapeHtml(sg.name)}
+            <span class="b-count">${sg.items.length}</span>
+          </button>`).join('')
+      }</div>`;
+      return;
+    }
+    // Product-lijst (flat of via subgroep)
+    let products = [];
+    if (catalogEntry && catalogEntry.subgroups && browseSubCat) {
+      const sg = catalogEntry.subgroups.find(s => s.name === browseSubCat);
+      products = sg ? sg.items : [];
+    } else {
+      products = catalogEntry || [];
+    }
     const onListNorms = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
     head.innerHTML = `
-      <button class="browse-back" onclick="backToBrowseHome()">← Categorieën</button>
+      <button class="browse-back" onclick="${browseSubCat ? 'backToBrowseCat()' : 'backToBrowseHome()'}">&larr; ${browseSubCat ? escapeHtml(cat.name) : 'Categorieën'}</button>
       <span class="browse-emo">${cat.emo}</span>
-      <span class="browse-title">${escapeHtml(cat.name)}</span>`;
+      <span class="browse-title">${escapeHtml(browseSubCat || cat.name)}</span>`;
     body.innerHTML = `<div class="browse-products">${
       products.map(name => {
         const added = onListNorms.has(normalize(name));
