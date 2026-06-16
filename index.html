@@ -1005,6 +1005,8 @@
     [/\bjumbo koffie\b/gi, 'koffie'],
     [/\bjumbo thee\b/gi, 'thee'],
     [/\bjumbo kaas\b/gi, 'kaas'],
+    // Eieren/ei synonym
+    [/\beier(?:en)?\b/gi, 'ei'],
     // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
@@ -1046,6 +1048,10 @@
     'cheddar','emmentaler','parmezaan','ovengratin','gruyere',
     // Gebruik-context descriptors op kaas/saus labels (bijv. "AH Pasta geraspte kaas")
     'pasta',
+    // Bereiding/context die niet het product zelf is
+    'soesjes','vlaai','vlaaitje','rucola','sint','gegrilde','gegrild','snoepgroente',
+    // Ei-varianten (noedels met ei ≠ eieren)
+    'noedels',
   ]);
 
   // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
@@ -2476,14 +2482,16 @@
       // Ruis-penalty: bewerkte-product-woorden die het item niet noemt
       let noise = 0;
       for (const pw of productWords) {
-        if (NOISE_WORDS.has(pw) && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
+        const isNoise = NOISE_WORDS.has(pw) ||
+          [...NOISE_WORDS].some(nw => nw.length > 3 && pw.length > nw.length && pw.endsWith(nw));
+        if (isNoise && !effectiveWords.some(iw => wordMatches(iw, pw))) noise++;
       }
       // "in [term]"-penalty: zoekterm staat als bestanddeel achter "in" (bijv. "Bonen in Tomatensaus"
       // als de gebruiker zoekt op "tomatensaus"). Dit zijn andere producten, zwaar afstraffen.
       let inComponentPenalty = 0;
       const pNameLower = p.name.toLowerCase();
       for (const iw of effectiveWords) {
-        if (new RegExp('\\bin\\s+(?:\\w+\\s+){0,2}' + iw).test(pNameLower)) {
+        if (new RegExp('\\b(?:in|met)\\s+(?:\\w+\\s+){0,2}' + iw).test(pNameLower)) {
           inComponentPenalty = 3;
           break;
         }
@@ -2494,7 +2502,7 @@
       for (const iw of effectiveWords) {
         const matchIdx = content.findIndex(w => wordMatches(iw, w));
         if (matchIdx === content.length - 1 && matchIdx >= 1) {
-          secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 1.2);
+          secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 2.0);
           break;
         }
       }
