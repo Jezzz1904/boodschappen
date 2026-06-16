@@ -1040,7 +1040,7 @@
     groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
     zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
     bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
-    vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol'],
+    vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol','vleesvervanger','vegetarische burger','hamburger','tofu','tempeh','seitan','falafel','quorn','jackfruit','vegan gehakt','vegetarisch gehakt','plantaardige spekjes','vegetarische worst'],
     diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
     snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
@@ -1316,7 +1316,7 @@
                     'Type':  ['Kant-en-klaar pot', 'Verse maaltijd', 'Currypasta + kokos zelf maken'],
                   }},
     shoarma:      { groups: {
-                    'Soort': ['Kip shoarma', 'Vlees shoarma', 'Döner', 'Gyros', 'Kebab'],
+                    'Soort': ['Kip shoarma', 'Vlees shoarma', 'Döner', 'Gyros', 'Kebab', 'Vegan shoarma', 'Vegetarische shoarma'],
                     'Verpakking': ['Kant-en-klaar wrap', 'Vlees los', 'Broodjes shoarma'],
                   }},
     rijst:        { groups: {
@@ -1712,8 +1712,11 @@
                     'Lam':    ['Lamskotelet', 'Lamsgehakt', 'Lamsbout'],
                     'Gemengd':['Half-om-half gehakt', 'Gekruid gehakt', 'Slavink'],
                   }},
+    spekjes:      { groups: {
+                    'Soort': ['Spekjes', 'Spekblokjes', 'Spekreepjes', 'Bacon reepjes', 'Plantaardige spekjes', 'Vegetarische spekjes'],
+                  }},
     gehakt:       { groups: {
-                    'Soort':  ['Rundergehakt', 'Half-om-half gehakt', 'Kipgehakt', 'Lamsgehakt', 'Varkensgehakt'],
+                    'Soort':  ['Rundergehakt', 'Half-om-half gehakt', 'Kipgehakt', 'Lamsgehakt', 'Varkensgehakt', 'Vegetarisch gehakt', 'Vegan gehakt'],
                     'Smaak':  ['Naturel', 'Gekruid', 'Italiaans gekruid'],
                   }},
     beleg:        { groups: {
@@ -1767,6 +1770,18 @@
     'kip spread': { groups: {
                     'Soort': ['Kip spread', 'Kip pikant spread', 'Kip halal spread', 'Salmon spread', 'Meatless chicken spread'],
                     'Merk':  ['Argeta', 'AH', 'Huismerk'],
+                  }},
+    hamburger:    { groups: {
+                    'Soort': ['Rundvlees hamburger', 'Kipburger', 'Lamsburger', 'Vegetarische burger', 'Vegan burger', 'Black bean burger', 'Bietenburger'],
+                    'Merk':  ['AH', 'Jumbo', 'Lidl', 'Huismerk', 'Beyond Meat', 'Vivera', 'Garden Gourmet'],
+                  }},
+    worst:        { groups: {
+                    'Soort': ['Braadworst', 'Rookworst', 'Chorizo', 'Merguez', 'Vegetarische worst', 'Vegan worst', 'Vegetarische rookworst'],
+                    'Merk':  ['AH', 'Huismerk', 'Vivera', 'Garden Gourmet'],
+                  }},
+    'vleesvervanger': { groups: {
+                    'Soort': ['Vegan gehakt', 'Vegetarische burger', 'Vegan worst', 'Kipstukjes plantaardig', 'Falafel', 'Quorn gehakt', 'Tempeh', 'Tofu', 'Seitan', 'Jackfruit'],
+                    'Merk':  ['Vivera', 'Garden Gourmet', 'Beyond Meat', 'Quorn', 'Valess', 'AH', 'Huismerk'],
                   }},
     'vegetarisch beleg': { groups: {
                     'Soort': ['Hummus', 'Vegetarische salami', 'Vegetarische ham', 'Falafel beleg', 'Notenpasta'],
@@ -2788,6 +2803,12 @@
           break;
         }
       }
+      // Vegan/plantaardig penalty: als het product plantaardig/vegan/vegetarisch is maar de zoekterm niet
+      const VEGAN_WORDS = ['plantaardig','plantaardige','vegan','vegetarisch','vegetarische','veggie','vleesvervanger'];
+      const searchHasVegan = effectiveWords.some(w => VEGAN_WORDS.includes(w));
+      const productHasVegan = productWords.some(w => VEGAN_WORDS.includes(w));
+      const veganPenalty = (!searchHasVegan && productHasVegan) ? 6 : 0;
+
       // Secundaire-rol penalty: zoekterm staat als LAATSTE content-woord met ≥1 andere woorden ervoor
       // → zoekterm is bijrol (bijv. "Kikkererwten Tomatensaus", "Tomato Frito (tomatensaus)")
       let secondaryRolePenalty = 0;
@@ -2803,7 +2824,7 @@
         if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
         else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
       }
-      const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - eff * 0.02;
+      const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
     if (!candidates.length) { matchCache.set(cacheKey, null); return null; }
@@ -4093,8 +4114,13 @@
         'Eend','Hert',
       ]},
       { name: 'Worst & spek', emo: '🌭', items: [
-        'Bacon','Spek','Worst','Rookworst','Knakworst','Braadworst','Hotdog','Cocktailworstjes',
+        'Bacon','Spek','Spekjes','Worst','Rookworst','Knakworst','Braadworst','Hotdog','Cocktailworstjes',
         'Sucuk',
+      ]},
+      { name: 'Vegan & vegetarisch', emo: '🌱', items: [
+        'Vleesvervanger','Vegetarische burger','Hamburger','Vegan gehakt','Vegetarisch gehakt',
+        'Tofu','Tempeh','Seitan','Falafel','Quorn','Jackfruit',
+        'Plantaardige spekjes','Vegetarische worst','Vegan worst',
       ]},
       { name: 'Vleeswaren & beleg', emo: '🥪', items: [
         'Ham','Salami','Rookvlees','Filet Americain','Paté','Leverpastei','Kip spread',
