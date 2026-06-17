@@ -3192,7 +3192,8 @@
     const el = document.getElementById('share-bar');
     if (!el) return;
     if (shareCode) {
-      const url = `${location.origin}${location.pathname}?deel=${shareCode}`;
+      const workerForUrl = getShareWorkerUrl();
+      const url = `${location.origin}${location.pathname}?deel=${shareCode}${workerForUrl ? '&w=' + encodeURIComponent(workerForUrl) : ''}`;
       el.innerHTML = `
         <div class="share-bar active">
           <span class="share-indicator${online ? '' : ' offline'}">
@@ -3263,7 +3264,8 @@
     }
     if (shareCode) {
       // Al actief — kopieer link
-      const url = `${location.origin}${location.pathname}?deel=${shareCode}`;
+      const workerForUrl = getShareWorkerUrl();
+      const url = `${location.origin}${location.pathname}?deel=${shareCode}${workerForUrl ? '&w=' + encodeURIComponent(workerForUrl) : ''}`;
       copyShareLink(url);
     } else {
       startShare();
@@ -3278,6 +3280,9 @@
   (function initShare() {
     const params = new URLSearchParams(location.search);
     const urlCode = (params.get('deel') || '').toLowerCase();
+    // Worker-URL automatisch opslaan als die meegegeven is in de deel-link
+    const urlWorker = params.get('w');
+    if (urlWorker && !getShareWorkerUrl()) setShareWorkerUrl(urlWorker);
     const savedCode = getShareCode();
     const code = urlCode || savedCode;
     if (code && code.length >= 6) {
