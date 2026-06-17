@@ -2529,7 +2529,11 @@
                     'Merk':   ['Duyvis', 'Huismerk'],
                   }},
     borrelnootjes:{ groups: {
-                    'Soort':   ['Borrelnoten naturel', 'Borrelnoten gekruid', 'Pinda\'s gezouten', 'Borrelmix'],
+                    'Soort':   ['Borrelnoten naturel', 'Borrelnoten gekruid', 'Pinda\'s gezouten', 'Pinda\'s ongezouten', 'Cashewnoten', 'Pistaches', 'Amandelen', 'Macadamia', 'Borrelmix'],
+                    'Merk':   ['Duyvis', 'Huismerk'],
+                  }},
+    'pinda\'s':   { groups: {
+                    'Bereiding':['Gezouten', 'Ongezouten', 'Gekruid', 'Naturel'],
                     'Merk':   ['Duyvis', 'Huismerk'],
                   }},
     olijven:      { groups: {
@@ -2732,6 +2736,23 @@
                     'Maat':    ['Maat 1', 'Maat 2', 'Maat 3', 'Maat 4', 'Maat 5', 'Maat 6'],
                     'Type':    ['Normaal', 'Pants', 'Nacht'],
                     'Merk':   ['Pampers', 'Huggies', 'Libero', 'Huismerk'],
+                  }},
+    strepsils:    { groups: {
+                    'Smaak':   ['Citroen honing', 'Mentol eucalyptus', 'Sinaasappel vitamine C', 'Blackcurrant', 'Aardbei', 'Original'],
+                    'Type':    ['Zuigtablet', 'Suikervrij'],
+                    'Merk':   ['Strepsils', 'Huismerk'],
+                  }},
+    trachitol:    { groups: {
+                    'Soort':   ['Trachitol 20 tabletten', 'Trachitol forte'],
+                    'Merk':   ['Trachitol', 'Huismerk'],
+                  }},
+    zuigtabletten:{ groups: {
+                    'Smaak':   ['Menthol', 'Citroen', 'Honing', 'Eucalyptus', 'Bosvruchten'],
+                    'Merk':   ['Strepsils', 'Halls', 'Ricola', 'Jakobijner', 'Huismerk'],
+                  }},
+    keelspray:    { groups: {
+                    'Type':    ['Keelspray', 'Neusdruppels', 'Neusspray'],
+                    'Merk':   ['Otrivine', 'Sterimar', 'Rhinospray', 'Huismerk'],
                   }},
     paracetamol:  { groups: {
                     'Sterkte': ['500mg', '1000mg', 'Kind 120mg', 'Kind 250mg'],
@@ -4742,6 +4763,7 @@
       ]},
       { name: 'Gezondheid', emo: '💊', items: [
         'Paracetamol','Ibuprofen','Pleisters','Vitaminen','Neusspray','Hoestdrank',
+        'Strepsils','Trachitol','Zuigtabletten','Keelspray',
       ]},
     ]},
     maaltijden: { subgroups: [
