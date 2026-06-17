@@ -3078,10 +3078,13 @@
     const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
     let cheapest;
     if (sameUnit) {
-      // Goedkoopste op €/dominante eenheid — winkels zonder unit blijven buiten vergelijking
-      cheapest = withUnit
+      // Goedkoopste op €/dominante eenheid
+      const unitWinner = withUnit
         .filter(m => m.unitPrice.unit === dominantUnit)
         .reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+      // Controleer ook absolute prijs: als een andere winkel goedkoper is in absolute prijs, gebruik die
+      const absWinner = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+      cheapest = absWinner.eff < unitWinner.eff ? absWinner : unitWinner;
     } else {
       cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
     }
@@ -3913,10 +3916,16 @@
     for (const m of withUnit) unitCounts2[m.unitPrice.unit] = (unitCounts2[m.unitPrice.unit] || 0) + 1;
     const dominantUnit = Object.keys(unitCounts2).sort((a, b) => unitCounts2[b] - unitCounts2[a])[0];
     const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
-    const key = sameUnit
-      ? (m => (m.unitPrice?.unit === dominantUnit) ? m.unitPrice.value : Infinity)
-      : (m => m.eff);
-    const cheapest = matches.reduce((a, b) => key(b) < key(a) ? b : a);
+    let cheapest;
+    if (sameUnit) {
+      const unitWinner = withUnit
+        .filter(m => m.unitPrice.unit === dominantUnit)
+        .reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+      const absWinner = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+      cheapest = absWinner.eff < unitWinner.eff ? absWinner : unitWinner;
+    } else {
+      cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+    }
 
     const prefStore = getPrefStore();
     const sorted = [...matches].sort((a, b) => {
