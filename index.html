@@ -1133,7 +1133,7 @@
   const AUTO_CAT = {
     groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
     zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
-    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
+    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','bollen','bolletjes','witte bollen','bruine bollen','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
     vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol','vleesvervanger','vegetarische burger','hamburger','tofu','tempeh','seitan','falafel','quorn','jackfruit','vegan gehakt','vegetarisch gehakt','plantaardige spekjes','vegetarische worst'],
     diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
     houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
@@ -1317,6 +1317,10 @@
     [/\b(coca[- ])?cola\b/g, 'coca cola'],
     [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
     [/\bsprite\b/g, 'sprite'],
+    // Bolletjes/bollen zijn synoniemen — AH zegt 'bollen', Jumbo 'bolletjes'
+    [/\bbolletjes\b/gi, 'bollen'],
+    // Kinderparacetamol compound splitsen
+    [/\bkinderparacetamol\b/gi, 'paracetamol kind'],
   ];
   function applySynonyms(s) {
     let out = s;
@@ -4513,7 +4517,13 @@
     const groupNames = Object.keys(variants.groups);
     const picks = variantPicks.picks;
     const order = ['Merk', ...groupNames.filter(g => g !== 'Merk')];
-    const name = order.filter(g => picks[g]).map(g => picks[g]).join(' ');
+    const merk = picks['Merk'];
+    // Als geen Merk gekozen of Merk is 'Huismerk', voeg baseTerm als prefix toe zodat
+    // matching "Kind 120mg" vindt als "Paracetamol Kind 120mg" etc.
+    const merkIsUseful = merk && merk !== 'Huismerk';
+    const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful)).map(g => picks[g]);
+    if (!merkIsUseful) parts.unshift(titleCase(baseTerm));
+    const name = parts.join(' ');
     if (!name) return;
     const finalName = activePackaging ? `${name} ${activePackaging}` : name;
     variantPicks = null;
