@@ -454,7 +454,7 @@
     .add-input:focus { border-color: var(--green-500); background:white; }
     .add-input::placeholder { color: var(--slate-400); font-weight:500; }
     .qty-input {
-      width:64px; padding:14px 8px; font-size:16px; font-weight:700; text-align:center;
+      width:56px; padding:14px 6px; font-size:16px; font-weight:700; text-align:center;
       border:2px solid var(--slate-200); border-radius:12px;
       background: var(--slate-50); color: var(--slate-900); outline:none;
     }
@@ -469,6 +469,16 @@
     }
     .add-btn:active { transform:scale(.94); }
     .scan-btn { background: linear-gradient(135deg, #6366F1, #4F46E5); box-shadow:0 4px 14px rgba(99,102,241,.35); font-size:18px; }
+    .add-submit-btn {
+      display:none; width:100%; margin-top:8px; padding:14px;
+      border:none; border-radius:12px; cursor:pointer;
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; font-size:16px; font-weight:700;
+      box-shadow:0 4px 14px rgba(5,150,105,.4);
+      transition: transform .12s, box-shadow .12s;
+    }
+    .add-submit-btn:active { transform:scale(.97); box-shadow:0 2px 8px rgba(5,150,105,.3); }
+    .add-submit-btn.visible { display:block; }
     .item-note { font-size:11px; color:var(--slate-500); font-style:italic; margin-bottom:2px; }
     .item-note-btn { background:none; border:none; cursor:pointer; font-size:14px; opacity:.25; padding:4px; flex-shrink:0; }
     .item-note-btn:active { opacity:1; }
@@ -971,9 +981,9 @@
         <input class="qty-input" id="qty-input" type="text" inputmode="numeric"
                placeholder="1" value="" maxlength="3"
                onkeydown="if(event.key==='Enter') addCurrent()">
-        <button class="add-btn" onclick="addCurrent()" aria-label="Toevoegen">+</button>
         <button class="add-btn scan-btn" onclick="openBarcodeScanner()" aria-label="Barcode scannen" title="Barcode scannen">📷</button>
       </div>
+      <button class="add-submit-btn" id="add-submit-btn" onclick="addCurrent()">+ Voeg toe aan lijst</button>
       <div id="suggestions-wrap"></div>
       <button class="browse-link" onclick="openBrowse()">📋 Bladeren door categorieën</button>
     </div>
@@ -3411,6 +3421,7 @@
     addItem(name, qty);
     input.value = '';
     qtyInput.value = '';
+    syncSubmitBtn();
     input.focus();
     renderSuggestions();
   }
@@ -4482,6 +4493,7 @@
       document.getElementById('add-input').value = '';
       document.getElementById('qty-input').value = '';
       activePackaging = null;
+      syncSubmitBtn();
       renderSuggestions();
       return;
     }
@@ -4489,6 +4501,7 @@
     document.getElementById('add-input').value = '';
     document.getElementById('qty-input').value = '';
     activePackaging = null;
+    syncSubmitBtn();
     renderSuggestions();
   }
   function quickAddWithPack(name) {
@@ -4500,12 +4513,19 @@
     recipe.ingredients.forEach(ing => addItem(ing, 1));
     document.getElementById('add-input').value = '';
     document.getElementById('qty-input').value = '';
+    syncSubmitBtn();
     renderSuggestions();
     toast(`${recipe.emo} ${titleCase(recipeKey)} toegevoegd (${recipe.ingredients.length} ingrediënten)`);
+  }
+  function syncSubmitBtn() {
+    const inp = document.getElementById('add-input')?.value.trim() || '';
+    const btn = document.getElementById('add-submit-btn');
+    if (btn) btn.classList.toggle('visible', inp.length > 0);
   }
   function onInputChange() {
     const inp = document.getElementById('add-input').value.trim().toLowerCase();
     if (variantPicks && inp !== variantPicks.term) variantPicks = null;
+    syncSubmitBtn();
     renderSuggestions();
   }
   let variantPicks = null;  // { term, picks: { Groep: 'Waarde' } }
