@@ -1299,6 +1299,10 @@
     // Ontbijtgranen synoniemen
     [/\bloops\b/gi, 'honey loops'],
     [/\bhoops\b/gi, 'honey loops'],
+    // Bon Maman → Bonne Maman (officiële merknaam)
+    [/\bbon maman\b/gi, 'bonne maman'],
+    // confiture = jam
+    [/\bconfiture\b/gi, 'jam'],
     // Boter: naturel = ongezouten (AH/Lidl gebruiken 'ongezouten', Jumbo/Plus 'naturel')
     [/\bnaturel\b/gi, 'ongezouten'],
     // Roomboter compound splitsen
@@ -1931,8 +1935,11 @@
                     'Bio':   ['Bio groene druiven', 'Bio rode druiven'],
                   }},
     aardbeien:    { groups: {
-                    'Soort': ['Aardbeien', 'Mini aardbeien', 'Zoete aardbeien', 'Nederlandse aardbeien', 'Aardbeien diepvries'],
+                    'Soort': ['Aardbeien', 'Mini aardbeien', 'Zoete aardbeien', 'Nederlandse aardbeien', 'Aardbeien diepvries', 'Aardbeienjam', 'Aardbeienconfiture'],
                     'Bio':   ['Bio aardbeien'],
+                  }},
+    aardbei:      { groups: {
+                    'Soort': ['Aardbeien', 'Aardbeienjam', 'Aardbeienconfiture', 'Aardbeien diepvries', 'Aardbeien yoghurt'],
                   }},
     granaatappel: { groups: {
                     'Soort': ['Granaatappel heel', 'Verse granaatappelpitjes', 'Granaatappelpitjes (bak)'],
@@ -2190,9 +2197,13 @@
                     'Merk':   ['Calvé', 'Déef', 'Skippy', 'Sun Pat', 'Huismerk'],
                   }},
     jam:          { groups: {
-                    'Smaak': ['Aardbeienjam', 'Frambozenijam', 'Abrikozenjam', 'Bosbessenjam', 'Kersenjam', 'Sinaasappelmarmelade'],
+                    'Smaak': ['Aardbeienjam', 'Frambozenijam', 'Abrikozenjam', 'Bosbessenjam', 'Kersenjam', 'Sinaasappelmarmelade', 'Viervruchten'],
                     'Type':  ['Jam', 'Extra jam', 'Confiture', 'Suikervrije jam'],
-                    'Merk':   ['Zwan', 'Hero', 'Smuckers', 'Huismerk'],
+                    'Merk':   ['Bonne Maman', 'Zwan', 'Hero', 'Smuckers', 'Huismerk'],
+                  }},
+    aardbeienjam: { groups: {
+                    'Type':  ['Jam', 'Extra jam', 'Confiture', 'Suikervrije jam'],
+                    'Merk':  ['Bonne Maman', 'Zwan', 'Hero', 'Huismerk'],
                   }},
     honing:       { groups: {
                     'Type':  ['Vloeibare honing', 'Gecremeerde honing', 'Honingraat', 'Manuka honing'],
