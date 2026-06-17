@@ -74,7 +74,7 @@ const SEARCH_TERMS = [
   // Huishouden
   'wc papier','keukenpapier','tissues','vuilniszakken','vaatwastabletten','afwasmiddel','allesreiniger',
   'wasmiddel','wasverzachter','aluminiumfolie','vershoudfolie','bakpapier','sponzen','batterijen',
-  'wc reiniger','badkamerreiniger','vloerreinger','keukenreiniger',
+  'wc reiniger','badkamerreiniger','vloerreinger','keukenreiniger','ontkalker','stofdoek','microvezeldoek','schuursponsje',
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
