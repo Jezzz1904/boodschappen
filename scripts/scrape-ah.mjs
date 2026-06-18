@@ -12,8 +12,9 @@ const OUT = resolve(ROOT, 'data/ah.json');
 const UA = 'Appie/8.22.3';
 const APP = 'AHWEBSHOP';
 const PAGE_SIZE = 30;
-const DELAY_MS = 200;
+const DELAY_MS = 400;      // iets meer rust tussen verzoeken
 const MAX_RETRIES = 2;
+const TOKEN_REFRESH_DELAY = 3000;  // wacht 3s voor nieuw token na 403
 
 // Brede dekking — staples + boodschappenlijst-thema's. Dedup gebeurt op productId.
 const SEARCH_TERMS = [
@@ -112,7 +113,7 @@ async function getToken() {
 
 async function search(token, query, page = 0) {
   const url = `https://api.ah.nl/mobile-services/product/search/v2?query=${encodeURIComponent(query)}&size=${PAGE_SIZE}&page=${page}`;
-  const res = await fetchWithRetry(url, {
+  const res = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'User-Agent': UA,
@@ -122,7 +123,7 @@ async function search(token, query, page = 0) {
   });
   if (!res.ok) {
     console.warn(`  ! search "${query}" page ${page}: HTTP ${res.status}`);
-    return { products: [], page: { totalPages: 0 } };
+    return { products: [], page: { totalPages: 0 }, _status: res.status };
   }
   return res.json();
 }
@@ -233,7 +234,7 @@ function normalize(p) {
 
 async function main() {
   console.log(`AH scraper — ${SEARCH_TERMS.length} zoektermen`);
-  const token = await getToken();
+  let token = await getToken();
   console.log('Token OK');
 
   const byId = new Map();
@@ -242,8 +243,19 @@ async function main() {
 
   for (const term of SEARCH_TERMS) {
     let added = 0;
-    const first = await search(token, term, 0);
+    let first = await search(token, term, 0);
     totalCalls++;
+
+    // Bij 403: nieuw token ophalen en opnieuw proberen (max 2x)
+    let refreshes = 0;
+    while (first._status === 403 && refreshes < 2) {
+      console.warn(`  ! 403 op "${term}" — nieuw token ophalen (poging ${refreshes + 1})`);
+      await sleep(TOKEN_REFRESH_DELAY);
+      token = await getToken();
+      first = await search(token, term, 0);
+      refreshes++;
+    }
+
     for (const p of (first.products || [])) {
       const n = normalize(p);
       if (n.id && !byId.has(n.id)) { byId.set(n.id, n); added++; }
