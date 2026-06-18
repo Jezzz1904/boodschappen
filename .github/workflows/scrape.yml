@@ -28,6 +28,8 @@ jobs:
         run: npm ci
 
       - name: Installeer Playwright Chromium
+        # continue-on-error zodat kerndata-stappen niet blokkeren bij install-fout
+        continue-on-error: true
         run: npx playwright install --with-deps chromium
 
       - name: Scrape AH (mobile API, met bonus-data)
@@ -37,12 +39,15 @@ jobs:
         run: node scripts/scrape-checkjebon.mjs jumbo plus lidl
 
       - name: Scrape Lidl weekaanbiedingen (Playwright, met bonus-data)
+        continue-on-error: true
         run: node scripts/scrape-lidl-bonus.mjs
 
       - name: Scrape Jumbo weekaanbiedingen (Playwright, met bonus-data)
+        continue-on-error: true
         run: node scripts/scrape-jumbo-bonus.mjs
 
       - name: Scrape Plus weekaanbiedingen (Playwright, met bonus-data)
+        continue-on-error: true
         run: node scripts/scrape-plus-bonus.mjs
 
       - name: Prijsgeschiedenis bijwerken
