@@ -2886,30 +2886,38 @@
 
   async function loadStores() {
     // Per winkel: eerst cache uit localStorage (snel), dan vers ophalen op achtergrond.
+    let anyCache = false;
     for (const store of STORES) {
       const key = 'boodschappen.data.' + store.id;
       try {
         const cached = JSON.parse(localStorage.getItem(key));
         if (cached && Array.isArray(cached.products)) {
           setStoreData(store.id, cached);
+          anyCache = true;
         }
       } catch (e) {}
     }
     render();
     // Vers ophalen (parallel)
-    await Promise.all(STORES.map(async store => {
+    const results = await Promise.all(STORES.map(async store => {
       try {
         const res = await fetch(store.file, { cache: 'no-cache' });
-        if (!res.ok) return;
+        if (!res.ok) { console.error(`[data] ${store.id}: HTTP ${res.status}`); return false; }
         const data = await res.json();
         if (Array.isArray(data.products)) {
           const slim = { scraped_at: data.scraped_at, products: data.products };
           setStoreData(store.id, slim);
           try { localStorage.setItem('boodschappen.data.' + store.id, JSON.stringify(slim)); } catch (e) {}
+          return true;
         }
-      } catch (e) {}
+      } catch (e) { console.error(`[data] ${store.id}: ${e.message}`); }
+      return false;
     }));
     render();
+    // Toon melding als helemaal niets geladen kon worden
+    if (!results.some(Boolean) && !anyCache) {
+      toast('⚠️ Prijsdata kon niet worden geladen. Controleer je verbinding.');
+    }
   }
 
   // Laad server-correcties parallel met winkeldata
