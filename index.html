@@ -172,11 +172,14 @@
       flex: 1; font-size: 13px; font-weight: 600; color: var(--green-800);
     }
     .variant-compose-add {
-      background: var(--green-600); color: white; border: none;
-      border-radius: 8px; padding: 4px 10px; font-size: 12px;
-      font-weight: 700; cursor: pointer;
+      display: block; width: 100%; margin-top: 8px;
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color: white; border: none; border-radius: 12px;
+      padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(5,150,105,.4);
+      transition: transform .12s, box-shadow .12s;
     }
-    .variant-compose-add:active { background: var(--green-700); }
+    .variant-compose-add:active { transform: scale(.97); box-shadow: 0 2px 8px rgba(5,150,105,.3); }
 
     /* Volgende-week-advisor */
     .upcoming-tip {
@@ -4329,8 +4332,8 @@
         if (hasPick) {
           html += `<div class="variant-compose-bar">
             <span class="variant-compose-name">${escapeHtml(composed)}</span>
-            <button class="variant-compose-add" onclick="quickAddComposed('${escapeHtml(inp)}')">+ Voeg toe</button>
-          </div>`;
+          </div>
+          <button class="variant-compose-add" onclick="quickAddComposed('${escapeHtml(inp)}')">+ Voeg toe aan lijst</button>`;
         }
 
         if (packs.length) {
