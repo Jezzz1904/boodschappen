@@ -4558,7 +4558,12 @@
     // matching "Kind 120mg" vindt als "Paracetamol Kind 120mg" etc.
     const merkIsUseful = merk && merk !== 'Huismerk';
     const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful)).map(g => picks[g]);
-    if (!merkIsUseful) parts.unshift(titleCase(baseTerm));
+    // Voeg baseTerm toe als prefix, maar alleen als geen van de gekozen waarden
+    // de baseTerm al bevat (voorkomt "Pannenkoeken Verse pannenkoeken naturel")
+    const picksText = parts.join(' ').toLowerCase();
+    if (!merkIsUseful && !picksText.includes(baseTerm.toLowerCase())) {
+      parts.unshift(titleCase(baseTerm));
+    }
     const name = parts.join(' ');
     if (!name) return;
     const finalName = activePackaging ? `${name} ${activePackaging}` : name;
