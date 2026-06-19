@@ -146,16 +146,27 @@ for (const [key, val] of Object.entries(VARIANTS)) {
   // Test 1: baseTerm zonder variant (zonder soort)
   testItems.push({ key, name: titleCase(key), source: `${key} (zonder soort)` });
 
-  // Test 2: elke non-Merk optie apart (met Huismerk of geen merk)
+  // Test 2: elke non-Merk optie apart — simuleer slimme baseTerm logica
   for (const g of nonMerkGroups) {
     for (const opt of val.groups[g]) {
-      // Simuleer quickAddComposed: baseTerm + optie (als optie niet al baseTerm bevat)
       const picksText = opt.toLowerCase();
       let name;
       if (picksText.includes(key.toLowerCase())) {
+        // Optie bevat al de baseTerm
         name = opt;
       } else {
-        name = `${titleCase(key)} ${opt}`;
+        // Check of optie alleen al producten matcht (zoals in quickAddComposed)
+        const testWords = normWords(opt);
+        let anyMatch = false;
+        if (testWords.length) {
+          for (const products of Object.values(storeData)) {
+            for (const p of products) {
+              if (testWords.every(iw => p._w.some(pw => wordMatches(iw, pw)))) { anyMatch = true; break; }
+            }
+            if (anyMatch) break;
+          }
+        }
+        name = anyMatch ? opt : `${titleCase(key)} ${opt}`;
       }
       testItems.push({ key, name, source: `${key} → ${g}: ${opt}` });
     }
