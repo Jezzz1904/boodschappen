@@ -4569,11 +4569,29 @@
     // matching "Kind 120mg" vindt als "Paracetamol Kind 120mg" etc.
     const merkIsUseful = merk && merk !== 'Huismerk';
     const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful)).map(g => picks[g]);
-    // Voeg baseTerm toe als prefix, maar alleen als geen van de gekozen waarden
-    // de baseTerm al bevat (voorkomt "Pannenkoeken Verse pannenkoeken naturel")
+    // Voeg baseTerm alleen toe als prefix wanneer:
+    // 1. Geen merk gekozen (of Huismerk)
+    // 2. De gekozen waarden bevatten de baseTerm nog niet
+    // 3. De gekozen waarden ZONDER baseTerm vinden geen enkel product
+    //    (bijv. "Spaghetti" vindt zelf producten → geen "Pasta" prefix nodig;
+    //     maar "Kind 120mg" vindt niets → "Paracetamol" prefix wél nodig)
     const picksText = parts.join(' ').toLowerCase();
     if (!merkIsUseful && !picksText.includes(baseTerm.toLowerCase())) {
-      parts.unshift(titleCase(baseTerm));
+      const testName = parts.join(' ');
+      const testWords = normWords(testName);
+      let anyMatch = false;
+      if (testWords.length) {
+        for (const store of STORES) {
+          const data = storeData[store.id];
+          if (!data || !data.products) continue;
+          for (const p of data.products) {
+            const pw = p._w || normWords(p.name);
+            if (testWords.every(iw => pw.some(w => wordMatches(iw, w)))) { anyMatch = true; break; }
+          }
+          if (anyMatch) break;
+        }
+      }
+      if (!anyMatch) parts.unshift(titleCase(baseTerm));
     }
     const name = parts.join(' ');
     if (!name) return;
