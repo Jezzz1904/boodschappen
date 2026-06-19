@@ -1332,6 +1332,9 @@
     [/\bsprite\b/g, 'sprite'],
     // Bolletjes/bollen zijn synoniemen — AH zegt 'bollen', Jumbo 'bolletjes'
     [/\bbolletjes\b/gi, 'bollen'],
+    // Shampoo: "dagelijks" = "iedere dag" = "elke dag"
+    [/\biedere dag\b/gi, 'dagelijks'],
+    [/\belke dag\b/gi, 'dagelijks'],
     // Kinderparacetamol compound splitsen
     [/\bkinderparacetamol\b/gi, 'paracetamol kind'],
   ];
@@ -2344,10 +2347,7 @@
                     'Verpakking': ['Vers', 'Blik', 'Diepvries'],
                     'Merk':   ['Hak', 'Bonduelle', 'Huismerk'],
                   }},
-    shampoo:      { groups: {
-                    'Type':   ['Shampoo normaal', 'Shampoo droog haar', 'Shampoo vet haar', '2-in-1 shampoo', 'Anti-roos shampoo', 'Shampoo gekleurd haar'],
-                    'Merk':   ['Head & Shoulders', 'Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Herbal Essences', 'Huismerk'],
-                  }},
+    // shampoo: duplicate verwijderd, tweede entry (drogist-sectie) is actief
     conditioner:  { groups: {
                     'Type':   ['Conditioner normaal', 'Conditioner droog haar', 'Leave-in conditioner', 'Haarmasker'],
                     'Merk':   ['Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Huismerk'],
@@ -2711,7 +2711,7 @@
 
     // Drogist — persoonlijke verzorging
     shampoo:      { groups: {
-                    'Type':    ['Normaal haar', 'Vet haar', 'Droog haar', 'Anti-roos', 'Gekleurd haar', 'Beschadigd haar', 'Volume', '2-in-1'],
+                    'Type':    ['Dagelijks', 'Anti-roos', 'Volume', 'Repair', '2-in-1', 'Color', 'Krullen'],
                     'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Head & Shoulders', 'Pantene', 'Elvive', 'Andrelon', 'Dove', 'Herbal Essences', 'Huismerk'],
                   }},
     conditioner:  { groups: {
