@@ -1534,7 +1534,7 @@
     kaas:         { groups: {
                     'Soort':      ['Goudse kaas', 'Edammer', 'Geitenkaas', 'Mozzarella', 'Feta', 'Brie', 'Camembert', 'Parmezaan', 'Cheddar'],
                     'Rijping':    ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud', 'Extra oud'],
-                    'Vorm':       ['Plakken', 'Stuk', 'Geraspt', 'Smeerkaas'],
+                    'Vorm':       ['Plakken', 'Geraspt', 'Smeerkaas'],
                     'Merk':   ['Beemster', 'Old Amsterdam', 'Leerdammer', 'Milner', 'Huismerk'],
                   }},
     boter:        { groups: {
@@ -2665,7 +2665,7 @@
     'goudse kaas':{ groups: {
                     'Rijping':  ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud'],
                     'Vetgehalte':['48+', '30+', '20+'],
-                    'Vorm':     ['Plakken', 'Stuk', 'Geraspt'],
+                    'Vorm':     ['Plakken', 'Geraspt'],
                     'Merk':   ['AH Zaanlander', 'De Zaanse Hoeve', 'Beemster', 'Milner', 'Huismerk'],
                   }},
     mozzarella:   { groups: {
@@ -4531,7 +4531,9 @@
   function syncSubmitBtn() {
     const inp = document.getElementById('add-input')?.value.trim() || '';
     const btn = document.getElementById('add-submit-btn');
-    if (btn) btn.classList.toggle('visible', inp.length > 0);
+    // Verberg hoofd-knop als variant-picker zijn eigen "Voeg toe" toont
+    const hasVariantBtn = variantPicks && Object.keys(variantPicks.picks || {}).length > 0;
+    if (btn) btn.classList.toggle('visible', inp.length > 0 && !hasVariantBtn);
   }
   function onInputChange() {
     const inp = document.getElementById('add-input').value.trim().toLowerCase();
@@ -4552,6 +4554,7 @@
     if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
     if (variantPicks.picks[group] === value) delete variantPicks.picks[group];
     else variantPicks.picks[group] = value;
+    syncSubmitBtn();
     renderSuggestions();
   }
   function clearVariantPicks() { variantPicks = null; renderSuggestions(); }
