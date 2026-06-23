@@ -1281,10 +1281,12 @@
         if (pw.every(w => bw.includes(w))) { p.cat = bp.cat; break; }
       }
     }
-    // Precompute genormaliseerde woorden per product (eenmalig, niet bij elke match)
+    // Precompute genormaliseerde woorden + trigram-set per product
     for (const p of data.products) {
       if (!p._w) p._w = normWords(p.name);
       if (!p._nl) p._nl = p.name.toLowerCase();
+      if (!p._tj) p._tj = p._w.join(' ');
+      if (!p._tg) p._tg = trigrams(p._tj);
     }
     matchCache.clear();
   }
@@ -1469,6 +1471,15 @@
     'honing',
     // Ketjap-varianten (asin = zoute Aziatische sojasaus, niet de typische Dutch ketjap manis)
     'asin',
+    // Bereidingen/maaltijden (risotto tomaat ≠ tomaat, champignon ragout ≠ champignons)
+    'risotto','ragout','stamppot','ovenschotel','wok','roerbak','stoofpot',
+    'verspakket','pakket','maaltijd','schotel','stoof','bouillon','fond',
+    // Meer verwerkte-product indicators
+    'babyvoeding','sjalot','sjalotten','banaansjalotten','banaansjalotjes',
+    'display','navulling','navulverpakking','hervulling',
+    // Bakkerij-producten (kaascroissant ≠ kaas, koffiebroodje ≠ koffie)
+    'croissant','broodje','broodjes','souffles','stengel','stengels','sticks',
+    'pannenkoek','pannenkoeken','pancake','pancakes',
   ]);
   // Voorberekend array voor compound-suffix check (alleen woorden >3 tekens)
   const NOISE_WORDS_ARR = [...NOISE_WORDS].filter(nw => nw.length > 3);
@@ -2947,6 +2958,7 @@
   // Mijn categorie → AH-categorieen (boost score als de match daarin valt)
   const USER_CAT_TO_AH = {
     groente:   ['Groente, aardappelen', 'Fruit, verse sappen'],
+    fruit:     ['Fruit, verse sappen'],
     zuivel:    ['Zuivel, eieren', 'Kaas'],
     bakkerij:  ['Bakkerij'],
     vlees:     ['Vlees', 'Vis', 'Vleeswaren'],
@@ -2958,7 +2970,14 @@
     alcoholisch: ['Bier, wijn, aperitieven', 'Sterke drank'],
     maaltijden:['Maaltijden, salades', 'Pasta, rijst, wereldkeuken', 'Bakkerij'],
     drogist:   ['Drogisterij', 'Gezondheid en sport', 'Baby en kind'],
+    verzorging:['Drogisterij', 'Gezondheid en sport'],
+    baby:      ['Baby en kind'],
+    huisdier:  ['Dierenvoeding'],
     huishouden:['Huishouden'],
+    dranken:   ['Frisdrank, sappen, water', 'Koffie, thee', 'Bier, wijn, aperitieven'],
+    vis:       ['Vis'],
+    kaas:      ['Kaas'],
+    brood:     ['Bakkerij'],
   };
 
   async function loadStores() {
@@ -3045,16 +3064,55 @@
     return null;
   }
 
+  const SHORT_EN_OK = new Set(['ui','ei','bi','do','la','ra']);
   // Woord-grens match met simpele NL-meervouden, GEEN substring.
-  // "appel" matcht "appel", "appels", "appeltje" niet, "sinaasappel" NIET.
   function wordMatches(itemWord, productWord) {
     if (productWord === itemWord) return true;
     if (productWord === itemWord + 's') return true;
-    if (productWord === itemWord + 'en') return true;
-    if (productWord === itemWord + 'es') return true; // tomaat→tomaten (via en) of citrus→citruses
-    // andersom: "appels" op shoppinglijst, AH product is "Elstar appel"
-    if (itemWord === productWord + 's' || itemWord === productWord + 'en') return true;
+    if (productWord === itemWord + 'es') return true;
+    // -en suffix alleen als stam ≥4 tekens OF bekende korte stam (voorkomt "bon"→"bonen")
+    if ((itemWord.length >= 4 || SHORT_EN_OK.has(itemWord)) && productWord === itemWord + 'en') return true;
+    // andersom
+    if (itemWord === productWord + 's') return true;
+    if ((productWord.length >= 4 || SHORT_EN_OK.has(productWord)) && itemWord === productWord + 'en') return true;
+    // NL diminutieven: -je, -tje, -pje, -jes, -tjes
+    if (itemWord.length >= 4) {
+      for (const suf of ['je','tje','pje','jes','tjes','pjes']) {
+        if (productWord === itemWord + suf) return true;
+        if (itemWord === productWord + suf) return true;
+      }
+    }
     return false;
+  }
+
+  // Compound-aware matching: "kipdrumsticks" bevat "kip" als prefix of "drumstick" als suffix
+  // Retourneert false als het restdeel een NOISE_WORD is (koffiekoeken → koffie+koeken → false)
+  function compoundContains(productWord, itemWord) {
+    if (itemWord.length < 4 || productWord.length < itemWord.length + 3) return false;
+    let rest = '';
+    if (productWord.startsWith(itemWord)) rest = productWord.slice(itemWord.length);
+    else if (productWord.endsWith(itemWord)) rest = productWord.slice(0, -itemWord.length);
+    else if (productWord.endsWith(itemWord + 's')) rest = productWord.slice(0, -(itemWord.length + 1));
+    else if (productWord.endsWith(itemWord + 'en')) rest = productWord.slice(0, -(itemWord.length + 2));
+    else return false;
+    if (!rest) return true;
+    if (NOISE_WORDS.has(rest)) return false;
+    for (const nw of NOISE_WORDS_ARR) { if (rest.startsWith(nw)) return false; }
+    return true;
+  }
+
+  // Trigram-similarity (Sørensen-Dice) voor fuzzy matching
+  function trigrams(s) {
+    const t = new Set();
+    for (let i = 0; i < s.length - 2; i++) t.add(s.slice(i, i + 3));
+    return t;
+  }
+  function trigramSim(a, b) {
+    const ta = trigrams(a), tb = trigrams(b);
+    if (!ta.size || !tb.size) return 0;
+    let overlap = 0;
+    for (const t of ta) if (tb.has(t)) overlap++;
+    return (2 * overlap) / (ta.size + tb.size);
   }
 
   // Zoek de beste product-match binnen één winkel.
@@ -3077,8 +3135,15 @@
 
     const candidates = [];
     for (const p of data.products) {
-      const productWords = p._w || normWords(p.name);  // gebruik precomputed woorden indien beschikbaar
-      const allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
+      const productWords = p._w || normWords(p.name);
+      // Strict match: alle zoekwoorden moeten voorkomen (exact of meervoud)
+      let allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
+      // Fallback: compound-matching (bijv. "kip" in "kipdrumsticks", "drum" in "kipdrumsticks")
+      if (!allMatch) {
+        allMatch = effectiveWords.every(iw =>
+          productWords.some(pw => wordMatches(iw, pw) || compoundContains(pw, iw))
+        );
+      }
       if (!allMatch) continue;
 
       let eff = (typeof p.price === 'number') ? p.price : null;
@@ -3093,11 +3158,12 @@
       }
       if (eff == null) continue;
       // Coverage: welk deel van de inhoudswoorden (merk/eenheid weggehaald) is het gevraagde item?
-      // Hoog = product gáát over dit item. "Appel" → "Appel"=1.0, "1fruit appel"=0.5.
       const content = productWords.filter(w => !BRAND_NOISE.has(w));
       const denom = Math.max(content.length, 1);
       const matchedContent = content.filter(pw => effectiveWords.some(iw => wordMatches(iw, pw))).length;
-      const coverage = matchedContent / denom;
+      // Compound-only matches tellen als halve coverage
+      const compoundOnly = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && effectiveWords.some(iw => compoundContains(pw, iw))).length;
+      const coverage = (matchedContent + compoundOnly * 0.5) / denom;
       // Positie-bonus: item-woord vroeg in de naam
       let posBonus = 0;
       for (const iw of effectiveWords) {
@@ -3147,6 +3213,37 @@
       }
       const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
+    }
+    // Fuzzy fallback: als geen exacte/compound match, probeer trigram-similarity
+    if (!candidates.length) {
+      const searchJoined = effectiveWords.join(' ');
+      const searchTg = trigrams(searchJoined);
+      const fuzzyThreshold = 0.45;
+      if (!searchTg.size) { matchCache.set(cacheKey, null); return null; }
+      for (const p of data.products) {
+        let eff = (typeof p.price === 'number') ? p.price : null;
+        if (eff == null) continue;
+        const ptg = p._tg || trigrams((p._w || normWords(p.name)).join(' '));
+        if (!ptg.size) continue;
+        let overlap = 0;
+        for (const t of searchTg) if (ptg.has(t)) overlap++;
+        const sim = (2 * overlap) / (searchTg.size + ptg.size);
+        if (sim < fuzzyThreshold) continue;
+        let activeBonus = null, upcomingBonus = null;
+        if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+          if (p.bonus.start <= today && today <= p.bonus.end) {
+            activeBonus = p.bonus;
+            if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+          } else if (today < p.bonus.start) upcomingBonus = p.bonus;
+        }
+        let catBoost = 0;
+        if (itemCategory) {
+          if (p.cat && p.cat === itemCategory) catBoost = 4;
+          else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4;
+        }
+        const score = sim * 8 + catBoost - eff * 0.02;
+        candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score, fuzzy: true });
+      }
     }
     if (!candidates.length) { matchCache.set(cacheKey, null); return null; }
     candidates.sort((a, b) => b.score - a.score);
