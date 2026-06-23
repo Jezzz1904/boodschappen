@@ -1275,6 +1275,8 @@
     [/\bgehakt half om half\b/g, 'gehakt'],
     [/\bspa rood\b/g, 'spa rood'],
     [/\bcoca\s*cola\b/g, 'coca cola'],
+    // Laags-compound behouden (anders splitst "3-laags" in "3" + "laags" en wordt "3" gestript)
+    [/\b(\d)[\s-]?laags\b/g, '$1laags'],
     // Friet: compound-splitting + adjectief-normalisatie
     [/\bovenfriet\b/g, 'oven friet'],
     [/\bairfryerfriet\b/g, 'airfryer friet'],
@@ -2439,8 +2441,9 @@
                     'Merk':   ['Dettol', 'Mr. Proper', 'Flash', 'Ajax', 'Cif', 'Glorix', 'Huismerk'],
                   }},
     toiletpapier: { groups: {
-                    'Type':   ['2-laags toiletpapier', '3-laags toiletpapier', 'Bamboe toiletpapier', 'Gerecycled toiletpapier'],
-                    'Merk':   ['Lotus', 'Zewa', 'Hakle', 'Kleenex', 'Huismerk'],
+                    'Laag':   ['2-laags toiletpapier', '3-laags toiletpapier', '4-laags toiletpapier'],
+                    'Type':   ['Normaal', 'Extra zacht', 'Recycled', 'Bamboe'],
+                    'Merk':   ['Edet', 'Lotus', 'Zewa', 'Hakle', 'Page', 'Huismerk'],
                   }},
     'vochtig toiletpapier': ['Andrex vochtig', 'Cottonelle vochtig', 'Huismerk vochtig toiletpapier'],
     zonnebrand:   { groups: {
@@ -2846,11 +2849,6 @@
                   }},
 
     // Huishouden
-    toiletpapier: { groups: {
-                    'Laag':    ['2-laags', '3-laags', '4-laags'],
-                    'Type':    ['Normaal', 'Extra zacht', 'Vochtig', 'Recycled'],
-                    'Merk':   ['Zewa', 'Plenty', 'Lotus', 'Huismerk'],
-                  }},
     wasmiddel:    { groups: {
                     'Type':    ['Poeder', 'Vloeibaar', 'Capsules', 'Pods', 'Color', 'Wol & fijn', 'Zwart'],
                     'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Ariel', 'Persil', 'Omo', 'Robijn', 'Huismerk'],
