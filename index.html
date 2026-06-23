@@ -1257,6 +1257,17 @@
   const matchCache = new Map(); // `${storeId}:${itemNorm}:${cat}` → result
   function setStoreData(id, data) {
     storeData[id] = data;
+    // Bonus-producten zonder categorie: erf van basis-product wiens normWords een subset zijn
+    const withCat = data.products.filter(p => p.cat);
+    for (const p of data.products) {
+      if (p.cat) continue;
+      const pw = normWords(p.name);
+      if (!pw.length) continue;
+      for (const bp of withCat) {
+        const bw = bp._w || normWords(bp.name);
+        if (pw.every(w => bw.includes(w))) { p.cat = bp.cat; break; }
+      }
+    }
     // Precompute genormaliseerde woorden per product (eenmalig, niet bij elke match)
     for (const p of data.products) {
       if (!p._w) p._w = normWords(p.name);
@@ -1266,7 +1277,7 @@
   }
 
   // Stop-woorden die nooit op product-naam mogen forceren (anders matcht "yoghurt" op "yoghurtdrink")
-  const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch','normaal','beide']);
+  const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch','normaal','beide','verse','vers','gewone','grote','kleine']);
 
   // Synoniemen: jouw term → wat AH gebruikt. Toegepast op frasen vóór woord-splitsing.
   const SYNONYMS = [

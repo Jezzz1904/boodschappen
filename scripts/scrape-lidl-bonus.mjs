@@ -151,13 +151,21 @@ async function main() {
   const baseProducts = (lidlData.products || []).filter(p => !p.lidl_bonus);
 
   const year = new Date().getFullYear();
+  // Probeer categorie over te nemen van matchend base-product
+  const catLookup = {};
+  for (const o of offers) {
+    for (const p of baseProducts) {
+      if (nameOverlap(p.name, o.name) && p.cat) { catLookup[o.lidlId] = p.cat; break; }
+    }
+  }
+
   const bonusProducts = offers.map(o => ({
     id:          o.lidlId,
     name:        o.name,
     unit:        o.unit,
     price:       o.regularPrice,
     bonus_price: o.salePrice,
-    category:    null,
+    cat:         catLookup[o.lidlId] || null,
     lidl_bonus:  true,   // marker zodat we ze volgende run kunnen vervangen
     bonus: (o.salePrice !== null || o.isLidlPlus) ? {
       mechanism:   o.mechanism,
