@@ -1307,10 +1307,10 @@
     }
     // Precompute genormaliseerde woorden + trigram-set per product
     for (const p of data.products) {
-      p._w = normWords(p.name);
-      p._nl = p.name.toLowerCase();
-      p._tj = p._w.join(' ');
-      p._tg = trigrams(p._tj);
+      if (!p._w) p._w = normWords(p.name);
+      if (!p._nl) p._nl = p.name.toLowerCase();
+      if (!p._tj) p._tj = p._w.join(' ');
+      if (!p._tg) p._tg = trigrams(p._tj);
     }
     matchCache.clear();
   }
@@ -3162,9 +3162,11 @@
     const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
 
     const candidates = [];
+    const firstWord = effectiveWords[0];
     for (const p of data.products) {
+      const tj = p._tj || '';
+      if (tj && !tj.includes(firstWord)) continue;
       const productWords = p._w || normWords(p.name);
-      // Strict match: alle zoekwoorden moeten voorkomen (exact of meervoud)
       let allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
       // Fallback: compound-matching (bijv. "kip" in "kipdrumsticks", "drum" in "kipdrumsticks")
       if (!allMatch) {
@@ -3283,8 +3285,9 @@
         candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score, fuzzy: true });
       }
     }
-    if (!candidates.length) { matchCache.set(cacheKey, null); return null; }
+    if (!candidates.length) { matchCache.set(cacheKey, null); matchCache.set('cands:' + cacheKey, []); return null; }
     candidates.sort((a, b) => b.score - a.score);
+    matchCache.set('cands:' + cacheKey, candidates);
     const top = candidates[0];
     // Tier = matches die qua naam-relevantie nagenoeg gelijk staan. Binnen de tier
     // kiezen we de meest standaard verpakking met laagste €/eenheid
@@ -3305,44 +3308,21 @@
   function findStoreMatchCandidates(storeId, itemName, itemCategory, limit) {
     limit = limit || 6;
     findStoreMatch(storeId, itemName, itemCategory);
-    const cacheKey = 'cands:' + storeId + ':' + itemName + ':' + (itemCategory || '');
-    if (matchCache.has(cacheKey)) return matchCache.get(cacheKey);
-    const data = storeData[storeId];
-    if (!data || !data.products || !data.products.length) return [];
-    const store = STORE_BY_ID[storeId];
-    const catIdWords = itemCategory ? [itemCategory] : [];
-    const allItemWords = normWords(itemName);
-    const itemWords = allItemWords.filter(w => !catIdWords.some(c => stemMatch(w, c)));
-    const effectiveWords = itemWords.length >= 2 ? itemWords : allItemWords;
-    if (!effectiveWords.length) return [];
-    const today = new Date().toISOString().slice(0, 10);
-    const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
-    const candidates = [];
-    for (const p of data.products) {
-      const productWords = p._w || normWords(p.name);
-      let allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
-      if (!allMatch) allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw) || compoundContains(pw, iw)));
-      if (!allMatch) continue;
-      let eff = (typeof p.price === 'number') ? p.price : null;
-      let activeBonus = null;
-      if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
-        if (p.bonus.start <= today && today <= p.bonus.end) {
-          activeBonus = p.bonus;
-          if (typeof p.bonus_price === 'number') eff = p.bonus_price;
-        }
-      }
-      if (eff == null) continue;
-      const up = computeUnitPrice(eff, p.unit, p.name);
-      candidates.push({ storeId, p, eff, activeBonus, unitPrice: up });
+    const baseCacheKey = storeId + ':' + itemName + ':' + (itemCategory || '');
+    const raw = matchCache.get('cands:' + baseCacheKey) || [];
+    const seen = new Set();
+    const result = [];
+    for (const c of raw) {
+      if (seen.has(c.p.name) || result.length >= limit) break;
+      seen.add(c.p.name);
+      if (!c.unitPrice) c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
+      result.push(c);
     }
-    candidates.sort((a, b) => {
+    result.sort((a, b) => {
       const aUp = a.unitPrice?.value ?? Infinity;
       const bUp = b.unitPrice?.value ?? Infinity;
-      if (aUp !== bUp) return aUp - bUp;
-      return a.eff - b.eff;
+      return aUp !== bUp ? aUp - bUp : a.eff - b.eff;
     });
-    const result = candidates.slice(0, limit);
-    matchCache.set(cacheKey, result);
     return result;
   }
 
