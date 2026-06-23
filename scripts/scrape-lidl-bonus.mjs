@@ -22,6 +22,15 @@ function toIso(ddmm, year = new Date().getFullYear()) {
   return `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
+// Strip "voor X.XX (EUR)" prijstekst uit productnamen
+function cleanName(raw) {
+  if (!raw) return raw;
+  return raw
+    .replace(/\s+voor\s+\d+[.,]\d{2}(\s*EUR)?\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // Simpele normalisatie voor naam-matching (spiegelt normWords in de PWA)
 function norm(s) {
   return s.toLowerCase()
@@ -81,16 +90,21 @@ async function scrapeOffers(page) {
       const allText    = c.innerText || '';
       const dateMatch  = allText.match(/(\d{2}\/\d{2})\s*-\s*(\d{2}\/\d{2})/);
 
+      const rawName = nameEl?.textContent?.trim() || null;
+      // Parseer prijs uit naam als "Spinazie voor 0.89" of "Toiletpapier voor 5.99 EUR"
+      const namePriceMatch = rawName?.match(/\s+voor\s+(\d+[.,]\d{2})\s*(EUR)?\s*$/i);
+      const nameSalePrice = namePriceMatch ? parseFloat(namePriceMatch[1].replace(',', '.')) : null;
+
       return {
         lidlId:       idMatch ? `p${idMatch[1]}` : null,
-        name:         nameEl?.textContent?.trim() || null,
+        name:         rawName?.replace(/\s+voor\s+\d+[.,]\d{2}(\s*EUR)?\s*$/i, '').trim() || null,
         unit:         unit || null,
         regularPrice: strokeTxt
           ? parseFloat(strokeTxt.replace(',', '.'))
           : (valueTxt ? parseFloat(valueTxt.replace(',', '.')) : null),
         salePrice: strokeTxt
           ? (valueTxt ? parseFloat(valueTxt.replace(',', '.')) : null)
-          : null,
+          : (nameSalePrice || null),
         isLidlPlus: isPlus,
         mechanism:  discoTxt && !/^Elders|Mega/.test(discoTxt) ? discoTxt : (isPlus ? 'Lidl Plus' : null),
         dateFrom:   dateMatch?.[1] || null,
@@ -168,7 +182,7 @@ async function main() {
     cat:         catLookup[o.lidlId] || null,
     lidl_bonus:  true,   // marker zodat we ze volgende run kunnen vervangen
     bonus: (o.salePrice !== null || o.isLidlPlus) ? {
-      mechanism:   o.mechanism,
+      mechanism:   o.mechanism || (o.salePrice !== null && o.regularPrice ? `-${Math.round((1 - o.salePrice / o.regularPrice) * 100)}%` : 'Aanbieding'),
       start:       o.dateFrom ? toIso(o.dateFrom, year) : null,
       end:         o.dateTo   ? toIso(o.dateTo,   year) : null,
       infinite:    false,

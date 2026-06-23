@@ -1257,6 +1257,19 @@
   const matchCache = new Map(); // `${storeId}:${itemNorm}:${cat}` → result
   function setStoreData(id, data) {
     storeData[id] = data;
+    // Strip "voor X.XX (EUR)" uit productnamen (scraper-artefact) en herstel ontbrekende bonus-data
+    const today = new Date().toISOString().slice(0, 10);
+    for (const p of data.products) {
+      const priceInName = p.name.match(/\s+voor\s+(\d+[.,]\d{2})(\s*EUR)?\s*$/i);
+      if (priceInName) {
+        const salePrice = parseFloat(priceInName[1].replace(',', '.'));
+        p.name = p.name.slice(0, priceInName.index).trim();
+        if (!p.bonus && p.lidl_bonus && salePrice && p.price && salePrice < p.price) {
+          p.bonus_price = salePrice;
+          p.bonus = { mechanism: `-${Math.round((1 - salePrice / p.price) * 100)}%`, start: today, end: '2099-12-31', infinite: false, conditional: false };
+        }
+      }
+    }
     // Bonus-producten zonder categorie: erf van basis-product wiens normWords een subset zijn
     const withCat = data.products.filter(p => p.cat);
     for (const p of data.products) {
