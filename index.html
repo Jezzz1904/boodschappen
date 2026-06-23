@@ -1266,7 +1266,7 @@
   }
 
   // Stop-woorden die nooit op product-naam mogen forceren (anders matcht "yoghurt" op "yoghurtdrink")
-  const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch']);
+  const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch','normaal','beide']);
 
   // Synoniemen: jouw term → wat AH gebruikt. Toegepast op frasen vóór woord-splitsing.
   const SYNONYMS = [
@@ -1275,6 +1275,12 @@
     [/\bgehakt half om half\b/g, 'gehakt'],
     [/\bspa rood\b/g, 'spa rood'],
     [/\bcoca\s*cola\b/g, 'coca cola'],
+    // Friet: compound-splitting + adjectief-normalisatie
+    [/\bovenfriet\b/g, 'oven friet'],
+    [/\bairfryerfriet\b/g, 'airfryer friet'],
+    [/\bfrituurfriet\b/g, 'frituur friet'],
+    [/\bfriet dun\b/g, 'dunne friet'],
+    [/\bfriet dik\b/g, 'dikke friet'],
     // Compound aardappel-producten splitsen zodat "aardappelpartjes" ↔ "aardappel partjes" matcht
     [/\baardappelpartjes\b/g, 'aardappel partjes'],
     [/\baardappelschijfjes\b/g, 'aardappel schijfjes'],
@@ -2503,12 +2509,12 @@
                   }},
     friet:          { groups: {
                     'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes','Rösti','Hasselback','Zoete aardappelfriet'],
-                    'Bereiding':  ['Oven / airfryer','Frituur','Beide'],
+                    'Bereiding':  ['Oven','Airfryer','Frituur'],
                     'Merk':   ['McCain', 'Aviko', 'Huismerk'],
                   }},
     patat:          { groups: {
                     'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes'],
-                    'Bereiding':  ['Oven / airfryer','Frituur','Beide'],
+                    'Bereiding':  ['Oven','Airfryer','Frituur'],
                     'Merk':   ['McCain', 'Aviko', 'Huismerk'],
                   }},
     // Sauzen & condimenten
@@ -4620,7 +4626,9 @@
     // Als geen Merk gekozen of Merk is 'Huismerk', voeg baseTerm als prefix toe zodat
     // matching "Kind 120mg" vindt als "Paracetamol Kind 120mg" etc.
     const merkIsUseful = merk && merk !== 'Huismerk';
-    const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful)).map(g => picks[g]);
+    // Groepen die niet in de zoeknaam mee moeten (beschrijvend, niet zoekbaar)
+    const SKIP_IN_NAME = new Set(['Gewicht']);
+    const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful) && !SKIP_IN_NAME.has(g)).map(g => picks[g]);
     // Voeg baseTerm alleen toe als prefix wanneer:
     // 1. Geen merk gekozen (of Huismerk)
     // 2. De gekozen waarden bevatten de baseTerm nog niet
