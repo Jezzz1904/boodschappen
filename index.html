@@ -3987,6 +3987,10 @@
       cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
     }
 
+    // Sorteer-/vergelijksleutel: prijs-per-dominante-eenheid indien beschikbaar, anders absolute prijs.
+    const key = m => (sameUnit && m.unitPrice && m.unitPrice.unit === dominantUnit)
+      ? m.unitPrice.value : m.eff;
+
     const prefStore = getPrefStore();
     const sorted = [...matches].sort((a, b) => {
       if (prefStore) {
