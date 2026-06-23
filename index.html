@@ -149,7 +149,7 @@
     .bonus-tip-mech { background: #fcd34d; color: #78350f; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
     .bonus-tip-add { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--green-600); }
 
-    /* Multi-select variant builder */
+    /* Multi-select variant builder — dropdown style */
     .variant-group-row {
       margin-bottom: 8px;
     }
@@ -159,6 +159,17 @@
       text-transform: uppercase; letter-spacing: .06em;
       margin-bottom: 4px;
     }
+    .variant-select {
+      width: 100%; padding: 10px 12px; font-size: 14px; font-weight: 600;
+      border: 1.5px solid var(--green-200); border-radius: 10px;
+      background: white; color: var(--slate-700);
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' fill='none' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .variant-select:focus { outline: none; border-color: var(--green-500); box-shadow: 0 0 0 3px rgba(5,150,105,.12); }
+    .variant-select.has-value { border-color: var(--green-500); color: var(--green-700); }
     .chip.variant-chip-selected {
       background: var(--green-600); color: white; border-color: var(--green-600);
     }
@@ -4396,17 +4407,14 @@
 
         for (const g of groupNames) {
           const items = variants.groups[g];
+          const picked = picks[g] || '';
           html += `<div class="variant-group-row">
             <span class="variant-group-label">${escapeHtml(g)}</span>
-            <div class="suggestions">
-              ${items.map(v => {
-                const sel = picks[g] === v;
-                return `<span class="chip variant-chip${sel ? ' variant-chip-selected' : ''}"
-                  onclick="toggleVariantPick('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g,"\\'")}','${escapeHtml(v).replace(/'/g,"\\'")}')">
-                  ${escapeHtml(v)}${sel ? ' ✓' : ''}
-                </span>`;
-              }).join('')}
-            </div>
+            <select class="variant-select${picked ? ' has-value' : ''}"
+              onchange="toggleVariantPick('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g,"\\'")}',this.value)">
+              <option value="">${escapeHtml(g)} kiezen…</option>
+              ${items.map(v => `<option value="${escapeHtml(v)}"${v === picked ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+            </select>
           </div>`;
         }
 
@@ -4596,7 +4604,7 @@
   }
   function toggleVariantPick(term, group, value) {
     if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
-    if (variantPicks.picks[group] === value) delete variantPicks.picks[group];
+    if (!value || variantPicks.picks[group] === value) delete variantPicks.picks[group];
     else variantPicks.picks[group] = value;
     syncSubmitBtn();
     renderSuggestions();
