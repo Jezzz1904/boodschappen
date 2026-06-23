@@ -16,13 +16,26 @@ const DELAY     = ms => new Promise(r => setTimeout(r, ms));
 
 const OFFERS_URL = 'https://www.jumbo.com/aanbiedingen/nu';
 
-// "wo 10 t/m di 16 jun" → { from: "yyyy-mm-dd", to: "yyyy-mm-dd" }
+// "wo 17 t/m di 23 jun" of "t/m di 23 jun" → { from: "yyyy-mm-dd", to: "yyyy-mm-dd" }
 const MONTHS = { jan:1,feb:2,mrt:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12 };
 function parseDateRange(text) {
   if (!text) return { from: null, to: null };
-  // match "10 t/m 16 jun" or "10 jun t/m 16 jun"
-  const m = text.match(/(\d{1,2})\s*(?:(\w{3})\s*)?t\/m\s*(\d{1,2})\s+(\w{3})/i);
-  if (!m) return { from: null, to: null };
+  // Strip dagnamen (ma/di/wo/do/vr/za/zo)
+  const cleaned = text.replace(/\b(?:ma|di|wo|do|vr|za|zo)\b/gi, '').trim();
+  const m = cleaned.match(/(\d{1,2})\s*(?:(\w{3})\s*)?t\/m\s*(\d{1,2})\s+(\w{3})/i);
+  if (!m) {
+    // Fallback: "t/m 23 jun" (alleen einddatum)
+    const m2 = cleaned.match(/t\/m\s*(\d{1,2})\s+(\w{3})/i);
+    if (m2) {
+      const year = new Date().getFullYear();
+      const month = MONTHS[m2[2].toLowerCase()];
+      if (!month) return { from: null, to: null };
+      const pad = n => String(n).padStart(2, '0');
+      const today = new Date().toISOString().slice(0, 10);
+      return { from: today, to: `${year}-${pad(month)}-${pad(Number(m2[1]))}` };
+    }
+    return { from: null, to: null };
+  }
   const year = new Date().getFullYear();
   const toMonth   = MONTHS[m[4].toLowerCase()] || null;
   const fromMonth = m[2] ? (MONTHS[m[2].toLowerCase()] || toMonth) : toMonth;
@@ -107,7 +120,7 @@ function nameOverlap(a, b) {
 }
 
 async function scrapeOffers(page) {
-  await page.goto(OFFERS_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto(OFFERS_URL, { waitUntil: 'networkidle', timeout: 60000 });
 
   // Cookie-consent wegklikken
   for (const sel of [
@@ -128,7 +141,7 @@ async function scrapeOffers(page) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight));
     await DELAY(400);
   }
-  await DELAY(800);
+  await DELAY(1000);
 
   return page.evaluate(() => {
     const cards = document.querySelectorAll('.card-promotion');
@@ -138,15 +151,16 @@ async function scrapeOffers(page) {
       const subtitleEl = c.querySelector('.subtitle');
       const id         = c.id || null;
 
-      const dealText = tagEl?.innerText?.trim() || null;
-      const name     = titleEl?.innerText?.trim() || null;
+      const rawTag  = tagEl?.innerText?.trim() || '';
+      const name    = titleEl?.innerText?.trim() || null;
       const dateText = subtitleEl?.innerText?.trim() || null;
 
-      // Alleen in de winkel-vlag
-      const inStoreOnly = !!(c.innerText || '').match(/alleen in de winkel/i);
+      // Tag kan "Alleen in de winkel\nvoor 1,99" bevatten — strip "Alleen in de winkel" prefix
+      const inStoreOnly = /alleen in de winkel/i.test(rawTag);
+      const dealText = rawTag.replace(/^alleen in de winkel\s*/i, '').trim() || null;
 
       return { id, dealText, name, dateText, inStoreOnly };
-    }).filter(c => c.name && c.dealText && !c.inStoreOnly);
+    }).filter(c => c.name && c.dealText);
   });
 }
 
@@ -209,6 +223,14 @@ async function main() {
     }
   }
 
+  // Categorie-overerving van base-producten
+  const catLookup = {};
+  for (const offer of offers) {
+    for (const p of baseProducts) {
+      if (nameOverlap(p.name, offer.name) && p.cat) { catLookup[offer.name] = p.cat; break; }
+    }
+  }
+
   // Voeg nieuwe bonus-entries toe
   const bonusProducts = offers.map(offer => {
     const { from, to } = parseDateRange(offer.dateText);
@@ -218,7 +240,7 @@ async function main() {
       name:        offer.name,
       price:       null,
       bonus_price: bonusPrice,
-      category:    null,
+      cat:         catLookup[offer.name] || null,
       jumbo_bonus: true,
       bonus: {
         mechanism,
