@@ -563,7 +563,7 @@
     .browse-link:active { transform: scale(.98); }
 
     /* Browse-modal */
-    .modal.modal-browse { max-width: 520px; overflow-x: hidden; }
+    .modal.modal-browse { max-width: 520px; overflow-x: hidden; padding: 16px 12px; }
     .browse-head {
       display:flex; align-items:center; gap:10px;
       margin-bottom: 14px; min-height: 28px;
@@ -580,20 +580,21 @@
     }
     .browse-head .browse-emo { font-size:22px; }
     .browse-grid {
-      display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+      display:grid; grid-template-columns: 1fr 1fr; gap:8px;
     }
     .browse-cat {
-      display:flex; align-items:center; gap:10px;
-      padding: 14px 12px;
+      display:flex; align-items:center; gap:8px;
+      padding: 12px 10px;
       background: var(--green-50); border:1.5px solid var(--green-100);
       border-radius:14px; cursor:pointer;
       font-size:14px; font-weight:800; color: var(--slate-900);
-      text-align:left;
+      text-align:left; overflow:hidden;
       transition: transform .12s, background .15s;
     }
+    .browse-cat .b-name { flex:1; min-width:0; word-break:break-word; }
     .browse-cat:active { transform: scale(.96); }
     .browse-cat:hover { background: var(--green-100); border-color: var(--green-500); }
-    .browse-cat .b-emo { font-size:24px; flex-shrink:0; }
+    .browse-cat .b-emo { font-size:20px; flex-shrink:0; }
     .browse-cat .b-count {
       font-size:11px; font-weight:700; color: var(--green-700);
       background: white; padding:2px 7px; border-radius:99px;
@@ -678,7 +679,30 @@
       display:flex; align-items:center; gap:6px; font-size:12px;
       min-width:0; padding-left:6px;
       border-left: 3px solid transparent;
+      cursor:pointer;
     }
+    .cmp-row.has-override .cmp-product { text-decoration:underline; text-decoration-color:var(--green-400); }
+    .pick-panel {
+      background:var(--slate-50); border:1px solid var(--slate-200);
+      border-radius:10px; padding:6px; margin:4px 0 6px;
+    }
+    .pick-row {
+      display:flex; align-items:center; gap:6px; font-size:11px;
+      padding:6px 8px; border-radius:8px; cursor:pointer;
+      transition: background .12s;
+    }
+    .pick-row:hover { background:var(--green-50); }
+    .pick-row.active { background:var(--green-100); font-weight:700; }
+    .pick-row .pick-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pick-row .pick-price { font-weight:800; flex-shrink:0; }
+    .pick-row .pick-unit { font-size:10px; color:var(--slate-500); flex-shrink:0; }
+    .pick-row .pick-bonus { font-size:9px; font-weight:800; color:#B45309; background:#FEF3C7; padding:1px 5px; border-radius:99px; flex-shrink:0; }
+    .pick-auto {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:11px; font-weight:700; color:var(--slate-500);
+      padding:4px 10px; cursor:pointer; border:none; background:none;
+    }
+    .pick-auto:hover { color:var(--green-700); }
     .cmp-row.best .cmp-price { color: var(--green-700); font-weight:900; }
     .cmp-row:not(.best) { opacity:.7; }
     .cmp-row:not(.best) .cmp-price { color: var(--slate-600); font-weight:700; }
@@ -1283,10 +1307,10 @@
     }
     // Precompute genormaliseerde woorden + trigram-set per product
     for (const p of data.products) {
-      if (!p._w) p._w = normWords(p.name);
-      if (!p._nl) p._nl = p.name.toLowerCase();
-      if (!p._tj) p._tj = p._w.join(' ');
-      if (!p._tg) p._tg = trigrams(p._tj);
+      p._w = normWords(p.name);
+      p._nl = p.name.toLowerCase();
+      p._tj = p._w.join(' ');
+      p._tg = trigrams(p._tj);
     }
     matchCache.clear();
   }
@@ -1318,6 +1342,11 @@
     [/\bbakaardappeltjes\b/g, 'bak aardappeltjes'],
     [/\bkruimige aardappelen?\b/g, 'kruimige aardappel'],
     [/\bvastkokende aardappelen?\b/g, 'vastkokende aardappel'],
+    // Diepvries-compounds splitsen
+    [/\bdiepvries(\w+)\b/g, 'diepvries $1'],
+    [/\bgroentemix\b/g, 'groente mix'],
+    [/\bmosselgroente\b/g, 'mossel groente'],
+    [/\bgroentesaus\b/g, 'groente saus'],
     // Andere compound-woorden
     [/\bkerstomaatjes?\b/g, 'cherry tomaat'],
     [/\bcherrytomaat(en)?\b/g, 'cherry tomaat'],
@@ -1477,6 +1506,7 @@
     // Bakkerij-producten (kaascroissant ≠ kaas, koffiebroodje ≠ koffie)
     'croissant','broodje','broodjes','souffles','stengel','stengels','sticks',
     'pannenkoek','pannenkoeken','pancake','pancakes',
+    'saus','sausen',
   ]);
   // Voorberekend array voor compound-suffix check (alleen woorden >3 tekens)
   const NOISE_WORDS_ARR = [...NOISE_WORDS].filter(nw => nw.length > 3);
@@ -3124,8 +3154,9 @@
     // Strip woorden die de categorie zelf benoemen (bijv. "diepvries" in "Diepvries pizza"),
     // zodat alleen het inhoudelijke deel matcht en de catBoost de rest doet.
     const catIdWords = itemCategory ? [itemCategory] : [];
-    const itemWords = normWords(itemName).filter(w => !catIdWords.some(c => stemMatch(w, c)));
-    const effectiveWords = itemWords.length ? itemWords : normWords(itemName);
+    const allItemWords = normWords(itemName);
+    const itemWords = allItemWords.filter(w => !catIdWords.some(c => stemMatch(w, c)));
+    const effectiveWords = itemWords.length >= 2 ? itemWords : allItemWords;
     if (!effectiveWords.length) { matchCache.set(cacheKey, null); return null; }
     const today = new Date().toISOString().slice(0, 10);
     const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
@@ -3158,9 +3189,8 @@
       const content = productWords.filter(w => !BRAND_NOISE.has(w));
       const denom = Math.max(content.length, 1);
       const matchedContent = content.filter(pw => effectiveWords.some(iw => wordMatches(iw, pw))).length;
-      // Compound-only matches tellen als halve coverage
       const compoundOnly = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && effectiveWords.some(iw => compoundContains(pw, iw))).length;
-      const coverage = (matchedContent + compoundOnly * 0.5) / denom;
+      const coverage = (matchedContent + compoundOnly * 0.25) / denom;
       // Positie-bonus: item-woord vroeg in de naam
       let posBonus = 0;
       for (const iw of effectiveWords) {
@@ -3196,7 +3226,7 @@
       // Secundaire-rol penalty: zoekterm staat als LAATSTE content-woord met ≥1 andere woorden ervoor
       // → zoekterm is bijrol (bijv. "Kikkererwten Tomatensaus", "Tomato Frito (tomatensaus)")
       let secondaryRolePenalty = 0;
-      for (const iw of effectiveWords) {
+      if (matchedContent <= 1) for (const iw of effectiveWords) {
         const matchIdx = content.findIndex(w => wordMatches(iw, w));
         if (matchIdx === content.length - 1 && matchIdx >= 1) {
           secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 2.0);
@@ -3208,7 +3238,18 @@
         if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
         else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
       }
-      const score = coverage * 10 + posBonus + catBoost - noise * 4 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
+      const extraWords = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && !NOISE_WORDS.has(pw) && !BRAND_NOISE.has(pw)).length;
+      // Adjacency bonus: zoekwoorden die naast elkaar staan in het product zijn waarschijnlijker de juiste match
+      let adjacencyBonus = 0;
+      if (effectiveWords.length >= 2) {
+        const matchPositions = effectiveWords.map(iw => productWords.findIndex(pw => wordMatches(iw, pw))).filter(i => i >= 0).sort((a,b) => a - b);
+        if (matchPositions.length >= 2) {
+          let adjacent = 0;
+          for (let i = 1; i < matchPositions.length; i++) { if (matchPositions[i] - matchPositions[i-1] === 1) adjacent++; }
+          adjacencyBonus = adjacent * 3;
+        }
+      }
+      const score = coverage * 10 + posBonus + adjacencyBonus + catBoost - noise * 4 - extraWords * 1.5 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
     // Fuzzy fallback: als geen exacte/compound match, probeer trigram-similarity
@@ -3246,9 +3287,7 @@
     candidates.sort((a, b) => b.score - a.score);
     const top = candidates[0];
     // Tier = matches die qua naam-relevantie nagenoeg gelijk staan. Binnen de tier
-    // kiezen we de meest standaard verpakking met laagste €/eenheid — dat fixt het
-    // klassieke "AH halfvolle melk 0,5l (€0,85) wint van 1l (€1,29) op absolute prijs"
-    // probleem terwijl per liter de 1l-versie veel goedkoper is.
+    // kiezen we de meest standaard verpakking met laagste €/eenheid
     const tier = candidates.filter(c => c.score >= top.score - 1.0);
     for (const c of tier) {
       c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
@@ -3261,6 +3300,50 @@
     if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit, best.p.name);
     matchCache.set(cacheKey, best);
     return best;
+  }
+
+  function findStoreMatchCandidates(storeId, itemName, itemCategory, limit) {
+    limit = limit || 6;
+    findStoreMatch(storeId, itemName, itemCategory);
+    const cacheKey = 'cands:' + storeId + ':' + itemName + ':' + (itemCategory || '');
+    if (matchCache.has(cacheKey)) return matchCache.get(cacheKey);
+    const data = storeData[storeId];
+    if (!data || !data.products || !data.products.length) return [];
+    const store = STORE_BY_ID[storeId];
+    const catIdWords = itemCategory ? [itemCategory] : [];
+    const allItemWords = normWords(itemName);
+    const itemWords = allItemWords.filter(w => !catIdWords.some(c => stemMatch(w, c)));
+    const effectiveWords = itemWords.length >= 2 ? itemWords : allItemWords;
+    if (!effectiveWords.length) return [];
+    const today = new Date().toISOString().slice(0, 10);
+    const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
+    const candidates = [];
+    for (const p of data.products) {
+      const productWords = p._w || normWords(p.name);
+      let allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
+      if (!allMatch) allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw) || compoundContains(pw, iw)));
+      if (!allMatch) continue;
+      let eff = (typeof p.price === 'number') ? p.price : null;
+      let activeBonus = null;
+      if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+        if (p.bonus.start <= today && today <= p.bonus.end) {
+          activeBonus = p.bonus;
+          if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+        }
+      }
+      if (eff == null) continue;
+      const up = computeUnitPrice(eff, p.unit, p.name);
+      candidates.push({ storeId, p, eff, activeBonus, unitPrice: up });
+    }
+    candidates.sort((a, b) => {
+      const aUp = a.unitPrice?.value ?? Infinity;
+      const bUp = b.unitPrice?.value ?? Infinity;
+      if (aUp !== bUp) return aUp - bUp;
+      return a.eff - b.eff;
+    });
+    const result = candidates.slice(0, limit);
+    matchCache.set(cacheKey, result);
+    return result;
   }
 
   // Multipack-detectie: voordelpakken, "X stuks", "12x1l", "6-pack" etc.
@@ -3287,8 +3370,22 @@
     return { value: price / u.qty, unit: u.unit };
   }
 
-  // Vergelijk een item over alle winkels. Geeft { matches:[per winkel], cheapest, hasData }.
-  function findMatches(itemName, itemCategory) {
+  function resolveOverride(storeId, productName) {
+    const data = storeData[storeId];
+    if (!data || !data.products) return null;
+    const p = data.products.find(x => x.name === productName);
+    if (!p || typeof p.price !== 'number') return null;
+    const store = STORE_BY_ID[storeId];
+    const today = new Date().toISOString().slice(0, 10);
+    let eff = p.price, activeBonus = null, upcomingBonus = null;
+    if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+      if (p.bonus.start <= today && today <= p.bonus.end) { activeBonus = p.bonus; if (typeof p.bonus_price === 'number') eff = p.bonus_price; }
+      else if (today < p.bonus.start) upcomingBonus = p.bonus;
+    }
+    return { storeId, p, eff, activeBonus, upcomingBonus, score: 999, unitPrice: computeUnitPrice(eff, p.unit, p.name) };
+  }
+
+  function findMatches(itemName, itemCategory, overrides) {
     const itemNorm = normalize(itemName);
     const bl = loadBlacklist();
     const blocked = new Set(bl[itemNorm] || []);
@@ -3296,7 +3393,8 @@
     let anyData = false;
     for (const store of STORES) {
       if (storeData[store.id] && storeData[store.id].products?.length) anyData = true;
-      const m = findStoreMatch(store.id, itemName, itemCategory);
+      const ov = overrides && overrides[store.id];
+      const m = ov ? resolveOverride(store.id, ov) : findStoreMatch(store.id, itemName, itemCategory);
       if (m && !blocked.has(m.p.name)) matches.push(m);
     }
     if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
@@ -3346,7 +3444,8 @@
   let shareLastUpdatedAt = 0;
   let shareWritePending = false;
 
-  function getShareWorkerUrl() { try { return localStorage.getItem(SHARE_WORKER_KEY) || ''; } catch { return ''; } }
+  const SHARE_WORKER_DEFAULT = 'https://boodschappen-share.jerome-67a.workers.dev';
+  function getShareWorkerUrl() { try { return localStorage.getItem(SHARE_WORKER_KEY) || SHARE_WORKER_DEFAULT; } catch { return SHARE_WORKER_DEFAULT; } }
   function setShareWorkerUrl(url) { try { localStorage.setItem(SHARE_WORKER_KEY, url.replace(/\/$/, '')); } catch {} }
 
   function getShareCode() { try { return localStorage.getItem(SHARE_KEY) || null; } catch { return null; } }
@@ -3921,7 +4020,7 @@
   function getEstimatedTotal() {
     let total = 0;
     for (const it of items.filter(x => !x.checked)) {
-      const res = findMatches(it.name, it.category);
+      const res = findMatches(it.name, it.category, it.matchOverrides);
       if (res.cheapest) total += res.cheapest.eff * (it.qty || 1);
     }
     return total;
@@ -4135,7 +4234,7 @@
   }
 
   function renderPriceComparison(it) {
-    const res = findMatches(it.name, it.category);
+    const res = findMatches(it.name, it.category, it.matchOverrides);
     const { hasData, comparedByUnit } = res;
     if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
     if (!res.matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
@@ -4232,9 +4331,10 @@
               ? `<span class="price-trend up" title="${Math.round(trend.pct*100)}% duurder dan vorige week">↑</span>`
               : ''
         : '';
-      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : ''].filter(Boolean).join(' ');
+      const hasOv = it.matchOverrides && it.matchOverrides[m.storeId];
+      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : '', hasOv ? 'has-override' : ''].filter(Boolean).join(' ');
       return `
-        <div class="${rowClass}">
+        <div class="${rowClass}" onclick="event.stopPropagation();togglePicker(this,'${safeId}','${escapeHtml(m.storeId)}')">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
@@ -4340,6 +4440,59 @@
     }).join('') : '';
 
     return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
+  }
+
+  function togglePicker(rowEl, itemId, storeId) {
+    const existing = rowEl.nextElementSibling;
+    if (existing && existing.classList.contains('pick-panel')) { existing.remove(); return; }
+    document.querySelectorAll('.pick-panel').forEach(p => p.remove());
+    const it = items.find(x => x.id === itemId);
+    if (!it) return;
+    const candidates = findStoreMatchCandidates(storeId, it.name, it.category, 6);
+    if (!candidates.length) return;
+    const currentOverride = it.matchOverrides && it.matchOverrides[storeId];
+    const currentAuto = findStoreMatch(storeId, it.name, it.category);
+    const panel = document.createElement('div');
+    panel.className = 'pick-panel';
+    panel.onclick = function(e) { e.stopPropagation(); };
+    let html = candidates.map(function(c) {
+      const isActive = currentOverride ? c.p.name === currentOverride : (currentAuto && c.p.name === currentAuto.p.name);
+      const up = c.unitPrice;
+      const upStr = up ? `<span class="pick-unit">${fmtPrice(up.value)}${UNIT_LABEL[up.unit]||''}</span>` : '';
+      const bonusStr = c.activeBonus ? `<span class="pick-bonus">${escapeHtml(c.activeBonus.mechanism || 'bonus')}</span>` : '';
+      const safePN = escapeHtml(c.p.name).replace(/'/g, "\\'");
+      return `<div class="pick-row${isActive?' active':''}" onclick="setMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}','${safePN}')">
+        <span class="pick-name">${escapeHtml(c.p.name)}</span>
+        ${bonusStr}
+        <span class="pick-price">${fmtPrice(c.eff)}</span>
+        ${upStr}
+      </div>`;
+    }).join('');
+    if (currentOverride) {
+      html += `<button class="pick-auto" onclick="clearMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}')">↻ Automatisch</button>`;
+    }
+    panel.innerHTML = html;
+    rowEl.insertAdjacentElement('afterend', panel);
+  }
+
+  function setMatchOverride(itemId, storeId, productName) {
+    const it = items.find(x => x.id === itemId);
+    if (!it) return;
+    if (!it.matchOverrides) it.matchOverrides = {};
+    it.matchOverrides[storeId] = productName;
+    saveItems();
+    matchCache.clear();
+    renderList();
+  }
+
+  function clearMatchOverride(itemId, storeId) {
+    const it = items.find(x => x.id === itemId);
+    if (!it || !it.matchOverrides) return;
+    delete it.matchOverrides[storeId];
+    if (!Object.keys(it.matchOverrides).length) delete it.matchOverrides;
+    saveItems();
+    matchCache.clear();
+    renderList();
   }
 
   // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
@@ -4579,7 +4732,7 @@
               if (results.some(r => normalize(r.name) === norm && r.parentKey === key)) continue;
               // Als deze naam al bestaat voor een ander parentKey: voeg context toe aan label
               const dup = results.find(r => normalize(r.name) === norm && r.parentKey !== key);
-              if (dup && !dup.label.includes('(')) dup.label = `${dup.name} (${dup.parentKey})`;
+              if (dup && !dup.label.includes('(') && dup.parentKey) dup.label = `${dup.name} (${dup.parentKey})`;
               const label = dup ? `${v} (${key})` : v;
               results.push({ label, name: v, isVariantKey: false, parentKey: key, groupName, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
             }
@@ -5107,7 +5260,7 @@
             : e.length;
           return `
           <button class="browse-cat" onclick="openBrowseCat('${c.id}')">
-            <span class="b-emo">${c.emo}</span> ${escapeHtml(c.name)}
+            <span class="b-emo">${c.emo}</span><span class="b-name">${escapeHtml(c.name)}</span>
             <span class="b-count">${count}</span>
           </button>`;
         }).join('')
@@ -5125,7 +5278,7 @@
       body.innerHTML = `<div class="browse-grid">${
         catalogEntry.subgroups.map(sg => `
           <button class="browse-cat" onclick="openBrowseSubCat('${escapeHtml(sg.name).replace(/'/g,"\\'")}')">
-            <span class="b-emo">${sg.emo}</span> ${escapeHtml(sg.name)}
+            <span class="b-emo">${sg.emo}</span><span class="b-name">${escapeHtml(sg.name)}</span>
             <span class="b-count">${sg.items.length}</span>
           </button>`).join('')
       }</div>`;
@@ -5598,7 +5751,7 @@
     const selStores = getRouteStores();
     const activeStores = STORES.filter(s => selStores.has(s.id));
 
-    const allPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category) }));
+    const allPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category, it.matchOverrides) }));
     // Filter matches op geselecteerde winkels
     const itemPlans = allPlans.map(p => ({
       ...p,
