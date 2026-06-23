@@ -1,4 +1,4 @@
-const CACHE = 'boodschappen-v16';
+const CACHE = 'boodschappen-v17';
 const STATIC = ['./manifest.json', './logo.svg'];
 
 self.addEventListener('install', e => {

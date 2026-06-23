@@ -5613,8 +5613,20 @@
 
   // ── SW + INIT ──
   if ('serviceWorker' in navigator) {
+    // Herlaad eenmalig zodra een nieuwe service worker de controle overneemt,
+    // zodat devices die op een oude (kapotte) cache vastzaten direct bijwerken.
+    let swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swReloaded) return;
+      swReloaded = true;
+      window.location.reload();
+    });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        // Forceer een update-check bij elke start en periodiek.
+        reg.update().catch(() => {});
+        setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+      }).catch(() => {});
     });
   }
 
