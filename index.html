@@ -1887,6 +1887,10 @@
                     'Stijl': ['Italiaans', 'Mexicaans', 'Hollands', 'Provençaals', 'Aziatisch', 'Italiaans champignons'],
                     'Soort': ['Vers', 'Diepvries'],
                   }},
+    groentemix: { groups: {
+                    'Stijl': ['Hollands', 'Mexicaans', 'Boeren', 'Gegrild'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
     soepgroenten: { groups: {
                     'Type':  ['Fijne soepgroente', 'Basis soepgroente', 'Boeren soepgroente', 'Luxe soepgroente'],
                     'Soort': ['Vers', 'Diepvries'],
@@ -4900,21 +4904,7 @@
     //     maar "Kind 120mg" vindt niets → "Paracetamol" prefix wél nodig)
     const picksText = parts.join(' ').toLowerCase();
     if (!merkIsUseful && !picksText.includes(baseTerm.toLowerCase())) {
-      const testName = parts.join(' ');
-      const testWords = normWords(testName);
-      let anyMatch = false;
-      if (testWords.length) {
-        for (const store of STORES) {
-          const data = storeData[store.id];
-          if (!data || !data.products) continue;
-          for (const p of data.products) {
-            const pw = p._w || normWords(p.name);
-            if (testWords.every(iw => pw.some(w => wordMatches(iw, w)))) { anyMatch = true; break; }
-          }
-          if (anyMatch) break;
-        }
-      }
-      if (!anyMatch) parts.unshift(titleCase(baseTerm));
+      parts.unshift(titleCase(baseTerm));
     }
     const name = parts.join(' ');
     if (!name) return;
