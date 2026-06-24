@@ -4435,14 +4435,28 @@
     const panel = document.createElement('div');
     panel.className = 'pick-panel';
     panel.onclick = function(e) { e.stopPropagation(); };
+    const store = STORE_BY_ID[storeId];
+    const stripWords = new Set([
+      ...normWords(it.name),
+      ...(store ? [normalize(store.name), store.id] : []),
+      'biologisch','bio','plus','ah','jumbo','lidl',
+    ]);
+    function shortPickName(fullName, unit) {
+      let parts = fullName.replace(/\b(AH|Jumbo|PLUS|Lidl|Biologisch|BIO\+?)\b/gi, '').trim().split(/\s+/);
+      parts = parts.filter(function(w) { return !stripWords.has(normalize(w)); });
+      let short = parts.join(' ').replace(/^\s*[-·,]\s*/, '').trim();
+      if (unit && !short) { short = unit.replace(/\s+/g, ' ').trim(); }
+      return short || fullName;
+    }
     let html = candidates.map(function(c) {
       const isActive = currentOverride ? c.p.name === currentOverride : (currentAuto && c.p.name === currentAuto.p.name);
       const up = c.unitPrice;
       const upStr = up ? `<span class="pick-unit">${fmtPrice(up.value)}${UNIT_LABEL[up.unit]||''}</span>` : '';
       const bonusStr = c.activeBonus ? `<span class="pick-bonus">${escapeHtml(c.activeBonus.mechanism || 'bonus')}</span>` : '';
       const safePN = escapeHtml(c.p.name).replace(/'/g, "\\'");
+      const displayName = shortPickName(c.p.name, c.p.unit);
       return `<div class="pick-row${isActive?' active':''}" onclick="setMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}','${safePN}')">
-        <span class="pick-name">${escapeHtml(c.p.name)}</span>
+        <span class="pick-name">${escapeHtml(displayName)}</span>
         ${bonusStr}
         <span class="pick-price">${fmtPrice(c.eff)}</span>
         ${upStr}
