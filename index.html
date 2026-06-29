@@ -293,9 +293,19 @@
     }
     .route-item {
       display:flex; align-items:center; gap:8px;
-      padding:7px 0; font-size:14px;
+      padding:7px 0; font-size:14px; cursor:pointer;
     }
     .route-item:not(:last-child) { border-bottom:1px solid var(--slate-50); }
+    .route-item.checked { opacity:.45; }
+    .route-item.checked .route-item-name { text-decoration:line-through; }
+    .route-item-check {
+      width:22px; height:22px; flex-shrink:0;
+      border:2px solid var(--green-300); border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; color:white; background:white;
+      transition: background .12s, border-color .12s;
+    }
+    .route-item.checked .route-item-check { background:var(--green-500); border-color:var(--green-500); }
     .route-item-qty {
       width:26px; height:26px; flex-shrink:0;
       background: var(--green-50); color: var(--green-700);
@@ -5886,11 +5896,50 @@
       missingHtml = `
         <div class="route-missing">
           <div class="route-missing-title">⚠ ${missing.length} item${missing.length === 1 ? '' : 's'} nergens gevonden</div>
-          ${missing.map(it => `<div class="route-missing-item">• ${escapeHtml(it.name)}${it.qty > 1 ? ` (${it.qty}×)` : ''}</div>`).join('')}
+          ${missing.map(it => {
+            const safeId = it.id.replace(/'/g, "\\'");
+            return `<div class="route-missing-item route-item${it.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">${it.checked ? '✓' : ''}</span>
+              ${escapeHtml(it.name)}${it.qty > 1 ? ` (${it.qty}×)` : ''}
+            </div>`;
+          }).join('')}
         </div>`;
     }
 
-    wrap.innerHTML = recHtml + storesHtml + missingHtml;
+    const checkedItems = items.filter(x => x.checked);
+    let checkedHtml = '';
+    if (checkedItems.length) {
+      checkedHtml = `
+        <div class="route-store" style="opacity:.5">
+          <div class="route-store-head">
+            <span class="route-store-name" style="background:var(--slate-400)">✓</span>
+            <span class="route-store-count">Afgevinkt (${checkedItems.length})</span>
+          </div>
+          ${checkedItems.map(it => {
+            const safeId = it.id.replace(/'/g, "\\'");
+            return `<div class="route-item checked" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">✓</span>
+              <div style="flex:1;min-width:0;">
+                <div class="route-item-name">${escapeHtml(it.name)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    wrap.innerHTML = recHtml + storesHtml + missingHtml + checkedHtml;
+  }
+
+  function toggleRouteItem(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.checked = !it.checked;
+    saveItems();
+    renderRoute();
+    renderList();
+    renderPriceSummary();
+    renderHeaderSub();
+    renderActionbar();
   }
 
   function renderStoreSection(store, rows, total) {
@@ -5910,9 +5959,11 @@
             ? `<span class="route-item-unitprice">${fmtPrice(match.unitPrice.value)}${UNIT_LABEL[match.unitPrice.unit] || ''}</span>` : '';
           const wasPrice = match.activeBonus && match.p.price && match.eff < match.p.price
             ? `<span class="cmp-was" style="font-size:10px">${fmtPrice(match.p.price)}</span> ` : '';
+          const safeId = item.id.replace(/'/g, "\\'");
           return `
-            <div class="route-item">
-              ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : '<span class="route-item-qty">•</span>'}
+            <div class="route-item${item.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">${item.checked ? '✓' : ''}</span>
+              ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : ''}
               <div style="flex:1; min-width:0;">
                 <div class="route-item-name">${escapeHtml(item.name)}</div>
                 <div class="route-item-detail">${escapeHtml(match.p.name)}${match.p.unit ? ' · ' + escapeHtml(match.p.unit) : ''}${unitP}</div>
