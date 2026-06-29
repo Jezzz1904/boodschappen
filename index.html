@@ -291,6 +291,12 @@
     .route-store-total {
       margin-left:auto; font-size:18px; font-weight:900; color: var(--green-700);
     }
+    .route-reorder { display:flex; flex-direction:column; gap:0; margin-left:6px; }
+    .route-move-btn {
+      background:none; border:none; font-size:10px; color:var(--slate-400);
+      cursor:pointer; padding:0 4px; line-height:1.1;
+    }
+    .route-move-btn:hover { color:var(--green-700); }
     .route-item {
       display:flex; align-items:center; gap:8px;
       padding:7px 0; font-size:14px; cursor:pointer;
@@ -655,6 +661,14 @@
       background:white; border:1.5px solid var(--slate-200); border-radius:14px;
       padding: 12px 14px; margin-bottom:8px;
       box-shadow: 0 2px 8px rgba(15,23,42,.04);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .item.dragging {
+      opacity:.85; transform:scale(1.03);
+      box-shadow: 0 8px 24px rgba(15,23,42,.15);
+      z-index:100; position:relative;
+    }
+    .item.drag-over { border-color:var(--green-400); border-style:dashed;
       transition: opacity .2s, transform .15s;
     }
     .item.checked {
@@ -4630,7 +4644,7 @@
     let html = '';
     order.forEach(catId => {
       const cat = CAT_BY_ID[catId];
-      const arr = byCat[catId].sort((a,b) => (a.checked - b.checked) || (a.addedAt - b.addedAt));
+      const arr = byCat[catId].sort((a,b) => (a.checked - b.checked) || ((a.sortOrder ?? 9999) - (b.sortOrder ?? 9999)) || (a.addedAt - b.addedAt));
       const open = arr.filter(x => !x.checked).length;
       html += `
         <div class="category-group">
@@ -4653,6 +4667,80 @@
         </div>`;
     });
     wrap.innerHTML = html;
+  }
+
+  // ── DRAG & DROP (LIJST) ──
+  let dragItem = null, dragEl = null, dragStartY = 0, longPressTimer = null;
+  function initDrag() {
+    const wrap = document.getElementById('list-wrap');
+    wrap.addEventListener('touchstart', onDragTouchStart, { passive: false });
+    wrap.addEventListener('touchmove', onDragTouchMove, { passive: false });
+    wrap.addEventListener('touchend', onDragTouchEnd);
+  }
+  function getItemEl(el) { return el?.closest?.('.item[data-id]'); }
+  function onDragTouchStart(e) {
+    const itemEl = getItemEl(e.target);
+    if (!itemEl) return;
+    if (e.target.closest('button, .check, .cmp-row, .pick-panel, input, select')) return;
+    dragStartY = e.touches[0].clientY;
+    const id = itemEl.dataset.id;
+    longPressTimer = setTimeout(() => {
+      dragItem = id;
+      dragEl = itemEl;
+      itemEl.classList.add('dragging');
+      navigator.vibrate?.(30);
+    }, 400);
+  }
+  function onDragTouchMove(e) {
+    if (longPressTimer && Math.abs(e.touches[0].clientY - dragStartY) > 10) {
+      clearTimeout(longPressTimer); longPressTimer = null;
+    }
+    if (!dragItem) return;
+    e.preventDefault();
+    const y = e.touches[0].clientY;
+    const els = document.querySelectorAll('.item[data-id]');
+    els.forEach(el => el.classList.remove('drag-over'));
+    for (const el of els) {
+      if (el.dataset.id === dragItem) continue;
+      const r = el.getBoundingClientRect();
+      if (y > r.top && y < r.bottom) { el.classList.add('drag-over'); break; }
+    }
+  }
+  function onDragTouchEnd() {
+    clearTimeout(longPressTimer); longPressTimer = null;
+    if (!dragItem) return;
+    const overEl = document.querySelector('.item.drag-over');
+    if (overEl && overEl.dataset.id !== dragItem) {
+      const fromIdx = items.findIndex(x => x.id === dragItem);
+      const toIdx = items.findIndex(x => x.id === overEl.dataset.id);
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const [moved] = items.splice(fromIdx, 1);
+        items.splice(toIdx, 0, moved);
+        items.forEach((it, i) => { it.sortOrder = i; });
+        saveItems(); matchCache.clear(); renderList();
+      }
+    }
+    document.querySelectorAll('.item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+    dragItem = null; dragEl = null;
+  }
+
+  // ── DRAG & DROP (ROUTE WINKELS) ──
+  const ROUTE_ORDER_KEY = 'boodschappen.routeStoreOrder';
+  function getRouteStoreOrder() { try { return JSON.parse(localStorage.getItem(ROUTE_ORDER_KEY)) || null; } catch { return null; } }
+  function setRouteStoreOrder(order) { try { localStorage.setItem(ROUTE_ORDER_KEY, JSON.stringify(order)); } catch {} }
+  function moveRouteStore(storeId, dir) {
+    const current = getRouteStoreOrder() || Object.keys(document.querySelectorAll('.route-store') ? [] : []);
+    let storeIds = current;
+    if (!storeIds || !storeIds.length) {
+      storeIds = [...document.querySelectorAll('.route-store[data-store-id]')].map(el => el.dataset.storeId);
+    }
+    const idx = storeIds.indexOf(storeId);
+    if (idx < 0) return;
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= storeIds.length) return;
+    [storeIds[idx], storeIds[newIdx]] = [storeIds[newIdx], storeIds[idx]];
+    setRouteStoreOrder(storeIds);
+    renderRoute();
   }
 
   // Geeft HTML terug voor VARIANTS-submenu's, autocomplete en "vaak gekocht" (zonder recepten).
@@ -5878,15 +5966,19 @@
       const single = route.singles.find(s => s.store.id === advice.storeId);
       storesHtml = renderStoreSection(single.store, single.rows, single.total);
     } else {
-      const orderedIds = Object.keys(byStore).sort((a, b) =>
+      const defaultOrder = Object.keys(byStore).sort((a, b) =>
         byStore[b].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0) -
         byStore[a].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0)
       );
+      const savedOrder = getRouteStoreOrder();
+      const orderedIds = savedOrder
+        ? [...savedOrder.filter(id => byStore[id]), ...defaultOrder.filter(id => !savedOrder.includes(id))]
+        : defaultOrder;
       storesHtml = orderedIds.map(id => {
         const store = STORE_BY_ID[id];
         const rows = byStore[id];
         const total = rows.reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0);
-        return renderStoreSection(store, rows, total);
+        return renderStoreSection(store, rows, total, orderedIds.length > 1);
       }).join('');
     }
 
@@ -5942,13 +6034,19 @@
     renderActionbar();
   }
 
-  function renderStoreSection(store, rows, total) {
+  function renderStoreSection(store, rows, total, showReorder) {
+    const reorderBtns = showReorder ? `
+      <span class="route-reorder">
+        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',-1)">▲</button>
+        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',1)">▼</button>
+      </span>` : '';
     return `
-      <div class="route-store">
+      <div class="route-store" data-store-id="${store.id}">
         <div class="route-store-head">
           <span class="route-store-name" style="background:${store.color}">${store.name}</span>
           <span class="route-store-count">${rows.length} item${rows.length === 1 ? '' : 's'}</span>
           <span class="route-store-total">${fmtPrice(total)}</span>
+          ${reorderBtns}
         </div>
         ${rows.map(({ item, match }) => {
           const qty = item.qty || 1;
@@ -5997,6 +6095,7 @@
   render();
   renderShareBar();
   loadStores();
+  initDrag();
 </script>
 </body>
 </html>
