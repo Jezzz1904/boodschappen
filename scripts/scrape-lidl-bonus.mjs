@@ -159,6 +159,9 @@ async function main() {
     console.warn('Geen aanbiedingen gevonden — lidl.json ongewijzigd.');
     return;
   }
+  if (offers.length < 5) {
+    console.warn(`⚠️ Slechts ${offers.length} aanbieding(en) gevonden — Lidl heeft mogelijk hun HTML gewijzigd.`);
+  }
 
   // Voeg bonus-Lidl-producten toe als extra producten met bonus-info
   // Verwijder eerst eventueel vorige bonus-entries (gemarkeerd met lidl_bonus: true)

@@ -16,7 +16,13 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5180',  // lokale dev
 ];
 
-const MODEL = 'claude-opus-4-8';
+// Haiku voor eenvoudige taken (snel + goedkoop); Sonnet voor complexere analyse.
+const MODELS = {
+  recept:   'claude-haiku-4-5-20251001',
+  vergeten: 'claude-haiku-4-5-20251001',
+  weekmenu: 'claude-sonnet-4-6',
+  deals:    'claude-sonnet-4-6',
+};
 const MAX_TOKENS = 1500;
 
 // 4 modi met elk hun eigen system prompt. Houd elke prompt kort en concreet —
@@ -82,7 +88,7 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
     const corsHeaders = {
-      'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+      'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : 'null',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',
@@ -102,7 +108,7 @@ export default {
     const { mode } = body || {};
 
     if (mode === 'ping') {
-      return json({ ok: true, model: MODEL }, 200, corsHeaders);
+      return json({ ok: true, models: MODELS }, 200, corsHeaders);
     }
 
     // ── LIJST DELEN (KV) ──────────────────────────────────────────────────────
@@ -153,7 +159,7 @@ export default {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: MODEL,
+          model: MODELS[mode] || 'claude-haiku-4-5-20251001',
           max_tokens: MAX_TOKENS,
           system: PROMPTS[mode],
           messages: [{ role: 'user', content: userPrompt }],

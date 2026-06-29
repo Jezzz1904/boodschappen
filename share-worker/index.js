@@ -81,7 +81,19 @@ export default {
     }
 
     // POST /report  — sla foutmelding op (voor later inzien)
-    if (request.method === 'POST' && parts[0] === 'report') {
+    // GET  /reports — haal alle foutmeldingen op
+    // Beide vereisen X-Report-Token om drive-by spam te voorkomen.
+    // Stel REPORT_SECRET in via Cloudflare-omgevingsvariabele; standaard 'bheld-report-v1'.
+    if ((request.method === 'POST' && parts[0] === 'report') ||
+        (request.method === 'GET'  && parts[0] === 'reports')) {
+      const expectedToken = env.REPORT_SECRET || 'bheld-report-v1';
+      if (request.headers.get('x-report-token') !== expectedToken) {
+        return json({ error: 'Unauthorized' }, 401);
+      }
+      if (request.method === 'GET') {
+        const reports = JSON.parse(await env.SHARES.get('__reports__') || '[]');
+        return json(reports);
+      }
       let body;
       try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
       const reports = JSON.parse(await env.SHARES.get('__reports__') || '[]');
@@ -89,12 +101,6 @@ export default {
       if (reports.length > 200) reports.splice(200);
       await env.SHARES.put('__reports__', JSON.stringify(reports), { expirationTtl: TTL * 12 });
       return json({ ok: true });
-    }
-
-    // GET /reports  — haal alle foutmeldingen op
-    if (request.method === 'GET' && parts[0] === 'reports') {
-      const reports = JSON.parse(await env.SHARES.get('__reports__') || '[]');
-      return json(reports);
     }
 
     return json({ error: 'Not found' }, 404);

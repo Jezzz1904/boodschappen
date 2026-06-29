@@ -12,15 +12,18 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, writeFileSync } from 'fs';
 
-const WORKER_URL  = process.env.SHARE_WORKER_URL;
-const API_KEY     = process.env.ANTHROPIC_API_KEY;
-const CORRECTIONS = './data/corrections.json';
+const WORKER_URL    = process.env.SHARE_WORKER_URL;
+const API_KEY       = process.env.ANTHROPIC_API_KEY;
+const REPORT_SECRET = process.env.REPORT_SECRET || 'bheld-report-v1';
+const CORRECTIONS   = './data/corrections.json';
 
 if (!WORKER_URL) { console.error('SHARE_WORKER_URL niet ingesteld'); process.exit(1); }
 if (!API_KEY)    { console.error('ANTHROPIC_API_KEY niet ingesteld'); process.exit(1); }
 
 // Haal rapporten op
-const reportsRes = await fetch(`${WORKER_URL}/reports`);
+const reportsRes = await fetch(`${WORKER_URL}/reports`, {
+  headers: { 'x-report-token': REPORT_SECRET },
+});
 if (!reportsRes.ok) { console.error('Ophalen rapporten mislukt:', reportsRes.status); process.exit(1); }
 const reports = await reportsRes.json();
 

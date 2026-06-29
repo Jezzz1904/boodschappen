@@ -7,9 +7,10 @@
  *
  * Formaat price-history.json:
  * {
- *   "ah:1234567": { name: "Halfvolle melk 1L", entries: [[timestamp, price], ...] },
+ *   "ah:wi1234567": { name: "Halfvolle melk 1L", entries: [[timestamp, price, bonus_price|null], ...] },
  *   ...
  * }
+ * bonus_price is null als er geen actieve aanbieding is.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -43,9 +44,9 @@ for (const store of STORES) {
 
   for (const p of products) {
     const price = typeof p.price === 'number' ? p.price : null;
-    if (price === null) continue;
+    if (price === null || !p.id) continue; // sla over zonder stabiel ID (voorkomen duplicaten bij herindexatie)
 
-    const key = `${store.id}:${p.id || p.name}`;
+    const key = `${store.id}:${p.id}`;
     if (!history[key]) history[key] = { name: p.name, entries: [] };
 
     const entries = history[key].entries;
@@ -53,11 +54,13 @@ for (const store of STORES) {
     // Verwijder oude entries (>60 dagen)
     history[key].entries = entries.filter(([ts]) => now - ts < MAX_AGE_MS);
 
-    // Voeg alleen toe als prijs veranderd is of het de eerste entry van vandaag is
+    const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : null;
+
+    // Voeg alleen toe als prijs of bonusprijs veranderd is, of het de eerste entry van vandaag is
     const lastEntry = history[key].entries.at(-1);
     const lastDate  = lastEntry ? new Date(lastEntry[0]).toISOString().slice(0, 10) : null;
-    if (!lastEntry || lastEntry[1] !== price || lastDate !== today) {
-      history[key].entries.push([now, price]);
+    if (!lastEntry || lastEntry[1] !== price || (lastEntry[2] ?? null) !== bonusPrice || lastDate !== today) {
+      history[key].entries.push([now, price, bonusPrice]);
       changed++;
     }
   }

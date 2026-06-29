@@ -246,6 +246,9 @@ async function main() {
     console.warn('Geen aanbiedingen gevonden — plus.json ongewijzigd.');
     return;
   }
+  if (offers.length < 5) {
+    console.warn(`⚠️ Slechts ${offers.length} aanbieding(en) gevonden — Plus heeft mogelijk hun HTML gewijzigd.`);
+  }
 
   const baseProducts = (plusData.products || []).filter(p => !p.plus_bonus);
 

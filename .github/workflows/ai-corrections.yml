@@ -31,6 +31,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SHARE_WORKER_URL: ${{ secrets.SHARE_WORKER_URL }}
+          REPORT_SECRET: ${{ secrets.REPORT_SECRET }}
         run: node scripts/ai-corrections.mjs
 
       - name: Commit corrections als er wijzigingen zijn

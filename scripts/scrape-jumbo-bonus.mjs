@@ -198,6 +198,9 @@ async function main() {
     console.warn('Geen aanbiedingen gevonden — jumbo.json ongewijzigd.');
     return;
   }
+  if (offers.length < 5) {
+    console.warn(`⚠️ Slechts ${offers.length} aanbieding(en) gevonden — Jumbo heeft mogelijk hun HTML gewijzigd. Controleer de .card-promotion selector.`);
+  }
 
   const baseProducts = (jumboData.products || []).filter(p => !p.jumbo_bonus);
 
