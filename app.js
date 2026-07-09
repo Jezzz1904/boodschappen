@@ -1,0 +1,5158 @@
+  // ── DATA ──
+  const CATEGORIES = [
+    { id:'groente',   name:'Groente & Fruit', emo:'🥬' },
+    { id:'zuivel',    name:'Zuivel',          emo:'🥛' },
+    { id:'bakkerij',  name:'Bakkerij',        emo:'🥖' },
+    { id:'vlees',     name:'Vlees & Vis',     emo:'🥩' },
+    { id:'diepvries', name:'Diepvries',       emo:'🧊' },
+    { id:'houdbaar',  name:'Houdbaar',        emo:'🥫' },
+    { id:'snacks',      name:'Snacks & Snoep',    emo:'🍫' },
+    { id:'frisdranken', name:'Frisdranken',        emo:'🥤' },
+    { id:'koffie',      name:'Koffie & Thee',      emo:'☕' },
+    { id:'alcoholisch', name:'Alcoholisch',         emo:'🍺' },
+    { id:'drogist',     name:'Drogist',             emo:'🧴' },
+    { id:'maaltijden', name:'Kant-en-klaar',   emo:'🍽️' },
+    { id:'huishouden',name:'Huishouden',      emo:'🧻' },
+  ];
+  const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+
+  // Auto-categorisatie woordenboek (Nederlands, gericht op AH/Jumbo/Lidl/Plus assortiment)
+  const AUTO_CAT = {
+    groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
+    zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
+    bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','bollen','bolletjes','witte bollen','bruine bollen','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
+    vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol','vleesvervanger','vegetarische burger','hamburger','tofu','tempeh','seitan','falafel','quorn','jackfruit','vegan gehakt','vegetarisch gehakt','plantaardige spekjes','vegetarische worst'],
+    diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
+    houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
+    snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
+    frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster'],
+    koffie: [
+      'koffie','koffiebonen','filterkoffie','espressokoffie','instantkoffie','oploskoffie',
+      'koffiepads','koffiecups','koffie pads','koffie cups','koffie bonen','filter koffie',
+      'espresso','lungo','ristretto','cappuccino','latte','americano',
+      'senseo','nespresso','dolce gusto','tassimo','jacobs','douwe egberts','de koffie jongens',
+      'thee','zwarte thee','groene thee','rooibos','kruidenthee','earl grey','pepermunt thee',
+      'kamille','gember thee','chai','thee zakjes','thee blaadjes','infusie',
+      'pickwick','lipton','clipper','yogi tea','pure leaf',
+    ],
+    alcoholisch: ['bier','heineken','grolsch','amstel','speciaalbier','hertog jan','hoegaarden','leffe','duvel','weizen','ipa','pils','wijn','rode wijn','witte wijn','rosé','prosecco','cava','champagne','sterke drank','wodka','whisky','rum','gin','tequila','likeur','port','sherry','jenever','alcoholvrij bier'],
+    drogist: ['shampoo','conditioner','douchegel','zeep','handzeep','tandpasta','tandenborstel','flosdraad','mondwater','deodorant','deo','parfum','bodylotion','crème','creme','dagcreme','nachtcreme','zonnebrand','aftersun','make-up','mascara','lippenstift','foundation','wattenstaafjes','wattenschijfjes','maandverband','tampons','inlegkruisjes','luiers','babydoekjes','billendoekjes','paracetamol','ibuprofen','aspirine','pleisters','pleister','desinfecterend','scheermes','scheerschuim','vitaminen','vitamine','supplementen','condooms'],
+    maaltijden: [
+      'pannenkoeken','poffertjes','verse pannenkoeken','stamppot','verse stamppot',
+      'maaltijdpakket','maaltijdbox','hellofresh','marley spoon',
+      'quiche','hartige taart','wrap kant-en-klaar','sandwich kant-en-klaar',
+      'sushi','sushi pakket','pokébowl','poke bowl',
+      'verse lasagne','verse soep','verse pasta maaltijd',
+      'kant en klare maaltijd','kant-en-klare maaltijd',
+      'wok maaltijd','roerbak maaltijd','curry maaltijd',
+      'shoarma','döner','falafel wrap',
+      'salade maaltijd','salade bowl',
+    ],
+    huishouden: ['wc papier','toiletpapier','keukenpapier','tissues','zakdoekjes','vuilniszakken','afvalzakken','vaatwastabletten','vaatwasmiddel','afwasmiddel','allesreiniger','schoonmaakmiddel','wasmiddel','wasverzachter','vlekverwijderaar','aluminiumfolie','plasticfolie','vershoudfolie','bakpapier','boterhamzakjes','sponzen','vaatdoek','stofdoek','dweil','mop','mopvulling','luchtverfrisser','wc reiniger','wc-reiniger','badkamerreiniger','ontkalker','bleek','batterijen','batterij','lampen','lamp','aansteker','lucifers','kaarsen','plant','bloemen','aanmaakblokjes','houtskool','schuursponsje','schuurpad'],
+  };
+
+  const ITEMS_KEY = 'boodschappen.items';
+  const HIST_KEY        = 'boodschappen.history';
+  const SAVED_LISTS_KEY = 'boodschappen.savedLists';
+  const BLACKLIST_KEY   = 'boodschappen.blacklist'; // { itemNorm: ['productNaam1', ...] }
+
+  let items   = loadJson(ITEMS_KEY, []);
+  let history = loadJson(HIST_KEY,  {});
+
+  // Migreer opgeslagen items: 'dranken' → 'frisdranken' (categorie-split)
+  items.forEach(it => {
+    if (it.category === 'dranken') it.category = 'frisdranken';
+    // Migreer koffie/thee items die eerder als frisdranken waren gecategoriseerd
+    if (it.category === 'frisdranken') {
+      const n = normalize(it.name);
+      if (/koffie|thee|espresso|lungo|senseo|nespresso|cappuccino|latte|rooibos|earl grey|pickwick|lipton/.test(n)) {
+        it.category = 'koffie';
+      }
+    }
+  });
+
+  // ── PRIJSDATA (meerdere winkels) ──
+  // AH heeft bonus-data (eigen mobile-API scrape) + categorie. Jumbo via checkjebon: alleen reguliere prijs.
+  const STORES = [
+    { id:'ah',    name:'AH',    file:'./data/ah.json',    hasCategory:true,  hasBonus:true,  color:'#00A0E2' },
+    { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:true,  color:'#EAB308' },
+    { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:true,  color:'#E11D48' },
+    { id:'lidl',  name:'Lidl',  file:'./data/lidl.json',  hasCategory:false, hasBonus:true,  color:'#1E40AF' },
+  ];
+  const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
+
+  // IndexedDB cache voor winkeldata (localStorage was te klein: 5MB vs ~10MB data)
+  const idb = (() => {
+    const DB = 'boodschappen-cache', STORE = 'storeData', VER = 1;
+    let dbP;
+    function open() {
+      if (dbP) return dbP;
+      return dbP = new Promise((ok, fail) => {
+        const req = indexedDB.open(DB, VER);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+        req.onsuccess = () => ok(req.result);
+        req.onerror = () => fail(req.error);
+      });
+    }
+    return {
+      async get(key) {
+        const db = await open();
+        return new Promise((ok, fail) => {
+          const tx = db.transaction(STORE, 'readonly');
+          const r = tx.objectStore(STORE).get(key);
+          r.onsuccess = () => ok(r.result);
+          r.onerror = () => fail(r.error);
+        });
+      },
+      async put(key, val) {
+        const db = await open();
+        return new Promise((ok, fail) => {
+          const tx = db.transaction(STORE, 'readwrite');
+          tx.objectStore(STORE).put(val, key);
+          tx.oncomplete = () => ok();
+          tx.onerror = () => fail(tx.error);
+        });
+      }
+    };
+  })();
+
+  let storeData = {};  // id -> { products:[], scraped_at }
+  const matchCache = new Map(); // `${storeId}:${itemNorm}:${cat}` → result
+  function setStoreData(id, data) {
+    storeData[id] = data;
+    // Strip "voor X.XX (EUR)" uit productnamen (scraper-artefact) en herstel ontbrekende bonus-data
+    const today = new Date().toISOString().slice(0, 10);
+    for (const p of data.products) {
+      const priceInName = p.name.match(/\s+voor\s+(\d+[.,]\d{2})(\s*EUR)?\s*$/i);
+      if (priceInName) {
+        const salePrice = parseFloat(priceInName[1].replace(',', '.'));
+        p.name = p.name.slice(0, priceInName.index).trim();
+        if (!p.bonus && p.lidl_bonus && salePrice && p.price && salePrice < p.price) {
+          p.bonus_price = salePrice;
+          p.bonus = { mechanism: `-${Math.round((1 - salePrice / p.price) * 100)}%`, start: today, end: '2099-12-31', infinite: false, conditional: false };
+        }
+      }
+    }
+    // Bonus-producten zonder categorie: erf van basis-product wiens normWords een subset zijn
+    const withCat = data.products.filter(p => p.cat);
+    for (const p of data.products) {
+      if (p.cat) continue;
+      const pw = normWords(p.name);
+      if (!pw.length) continue;
+      for (const bp of withCat) {
+        const bw = bp._w || normWords(bp.name);
+        if (pw.every(w => bw.includes(w))) { p.cat = bp.cat; break; }
+      }
+    }
+    // Precompute genormaliseerde woorden + trigram-set per product
+    for (const p of data.products) {
+      if (!p._w) p._w = normWords(p.name);
+      if (!p._nl) p._nl = p.name.toLowerCase();
+      if (!p._tj) p._tj = p._w.join(' ');
+      if (!p._tg) p._tg = trigrams(p._tj);
+    }
+    matchCache.clear();
+  }
+
+  // Stop-woorden die nooit op product-naam mogen forceren (anders matcht "yoghurt" op "yoghurtdrink")
+  const MATCH_STOPWORDS = new Set(['de','het','een','met','en','of','voor','van','in','op','bio','biologisch','normaal','beide','verse','vers','gewone','grote','kleine']);
+
+  // Synoniemen: jouw term → wat AH gebruikt. Toegepast op frasen vóór woord-splitsing.
+  const SYNONYMS = [
+    [/\bwc[- ]?papier\b/g, 'toiletpapier'],
+    [/\bafwasmiddel\b/g, 'afwasmiddel'],
+    [/\bgehakt half om half\b/g, 'gehakt'],
+    [/\bspa rood\b/g, 'spa rood'],
+    [/\bcoca\s*cola\b/g, 'coca cola'],
+    // Laags-compound behouden (anders splitst "3-laags" in "3" + "laags" en wordt "3" gestript)
+    [/\b(\d)[\s-]?laags\b/g, '$1laags'],
+    // Friet: compound-splitting + adjectief-normalisatie
+    [/\bovenfriet\b/g, 'oven friet'],
+    [/\bairfryerfriet\b/g, 'airfryer friet'],
+    [/\bfrituurfriet\b/g, 'frituur friet'],
+    [/\bfriet dun\b/g, 'dunne friet'],
+    [/\bfriet dik\b/g, 'dikke friet'],
+    // Compound aardappel-producten splitsen zodat "aardappelpartjes" ↔ "aardappel partjes" matcht
+    [/\baardappelpartjes\b/g, 'aardappel partjes'],
+    [/\baardappelschijfjes\b/g, 'aardappel schijfjes'],
+    [/\baardappelballetjes\b/g, 'aardappel balletjes'],
+    [/\baardappelkroketjes\b/g, 'aardappel kroketjes'],
+    [/\baardappelpuree\b/g, 'aardappel puree'],
+    [/\bbakaardappeltjes\b/g, 'bak aardappeltjes'],
+    [/\bkruimige aardappelen?\b/g, 'kruimige aardappel'],
+    [/\bvastkokende aardappelen?\b/g, 'vastkokende aardappel'],
+    // Diepvries-compounds splitsen
+    [/\bdiepvries(\w+)\b/g, 'diepvries $1'],
+    [/\bgroentemix\b/g, 'groente mix'],
+    [/\bmosselgroente\b/g, 'mossel groente'],
+    [/\bgroentesaus\b/g, 'groente saus'],
+    // Andere compound-woorden
+    [/\bkerstomaatjes?\b/g, 'cherry tomaat'],
+    [/\bcherrytomaat(en)?\b/g, 'cherry tomaat'],
+    [/\btomatensoep\b/g, 'tomaten soep'],
+    [/\bappelsap\b/g, 'appel sap'],
+    [/\bsinaasappelsap\b/g, 'sinaasappel sap'],
+    [/\bvruchtensap\b/g, 'vruchtensap'],
+    [/\bpastasaus\b/g, 'pastasaus'],        // bewust niet splitsen — compound houden
+    [/\bpestosaus\b/g, 'pestosaus'],
+    [/\bpasta saus\b/g, 'pastasaus'],       // AH schrijft het soms los
+    [/\bpesto saus\b/g, 'pestosaus'],
+    [/\bverse pasta\b/g, 'verse pasta'],
+    [/\bkipfilet\b/g, 'kip filet'],
+    [/\bkipschnitzel\b/g, 'kip schnitzel'],
+    [/\bkipgehakt\b/g, 'kip gehakt'],
+    [/\brundergehakt\b/g, 'runder gehakt'],
+    [/\bgehaktschnitzel(s)?\b/g, 'gehakt schnitzel'],
+    [/\bzigeunerschnitzel(s)?\b/g, 'zigeuner schnitzel'],
+    [/\bzigeunergehaktschnitzel(s)?\b/g, 'zigeuner gehakt schnitzel'],
+    [/\bvarkensschnitzel(s)?\b/g, 'varken schnitzel'],
+    [/\bbloemkool\b/g, 'bloemkool'],
+    [/\bcashewnoten\b/g, 'cashew noten'],
+    [/\bcashews\b/g, 'cashew'],
+    [/\bpindanoten\b/g, 'pinda noten'],
+    [/\bpistachenoten\b/g, 'pistache noten'],
+    [/\bborrelnootjes\b/g, 'borrelnoten'],
+    [/\bborrelnoten\b/g, 'borrel noten'],
+    [/\bstudentenhaver\b/g, 'student haver noten'],
+    [/\bnotenmix\b/g, 'noten mix'],
+    [/\bhazelnoten\b/g, 'hazel noten'],
+    [/\bwalnoten\b/g, 'wal noten'],
+    // Vis en vlees compounds splitsen zodat stam-match werkt na de ratio-check
+    [/\bzalmfilet\b/g, 'zalm filet'],
+    [/\bkabeljauwfilet\b/g, 'kabeljauw filet'],
+    [/\btonijnsteak\b/g, 'tonijn steak'],
+    [/\bkipdrumstick(s)?\b/g, 'kip drumstick'],
+    [/\bvarkenshaas\b/g, 'varken haas'],
+    [/\bvarkensfilet\b/g, 'varken filet'],
+    [/\bvarkensribben\b/g, 'varken ribben'],
+    [/\blamsgehakt\b/g, 'lams gehakt'],
+    // Sauzen afkortingen
+    [/\bmayo\b/g, 'mayonaise'],
+    [/\bketchup\b/g, 'ketchup'],
+    [/\bbbq[- ]?saus\b/gi, 'barbecuesaus'],
+    [/\bbarbecue[- ]saus\b/gi, 'barbecuesaus'],
+    // Koffie compound-woorden splitsen zodat stemMatch werkt
+    [/\bkoffiebonen\b/g, 'koffie bonen'],
+    [/\bkoffiepads\b/g, 'koffie pads'],
+    [/\bkoffiecups\b/g, 'koffie cups'],
+    [/\bfilterkoffie\b/g, 'filter koffie'],
+    [/\bespressokoffie\b/g, 'espresso koffie'],
+    [/\binstantkoffie\b/g, 'instant koffie'],
+    [/\boploskoffie\b/g, 'oplos koffie'],
+    [/\bkoffiezetapparaat\b/g, 'koffie apparaat'],
+    // Thee compound-woorden splitsen
+    [/\bpepermuntthee\b/g, 'pepermunt thee'],
+    [/\bkruidenthee\b/g, 'kruiden thee'],
+    [/\bgroene\s*thee\b/g, 'groene thee'],
+    [/\bzwarte\s*thee\b/g, 'zwarte thee'],
+    [/\bgemberthee\b/g, 'gember thee'],
+    [/\bkamillethe\b/g, 'kamille thee'],
+    // Huismerk-namen strippen zodat matching alle winkels vindt
+    [/\bperla\b/gi, ''],
+    [/\bhuismerk\b/gi, ''],
+    [/\bjumbo koffie\b/gi, 'koffie'],
+    [/\bjumbo thee\b/gi, 'thee'],
+    [/\bjumbo kaas\b/gi, 'kaas'],
+    // Eieren/ei synonym
+    [/\beier(?:en)?\b/gi, 'ei'],
+    // Ontbijtgranen synoniemen
+    [/\bloops\b/gi, 'honey loops'],
+    [/\bhoops\b/gi, 'honey loops'],
+    // Vlokken → chocoladevlokken (voorkomt match op havervlokken)
+    [/\bvlokken\b/gi, 'chocoladevlokken'],
+    // Bon Maman → Bonne Maman (officiële merknaam)
+    [/\bbon maman\b/gi, 'bonne maman'],
+    // confiture = jam
+    [/\bconfiture\b/gi, 'jam'],
+    // Boter: naturel = ongezouten (AH/Lidl gebruiken 'ongezouten', Jumbo/Plus 'naturel')
+    [/\bnaturel\b/gi, 'ongezouten'],
+    // Roomboter compound splitsen
+    [/\broomboter\b/gi, 'room boter'],
+    // Bloem/meel synoniemen — compound-woorden omzetten zodat tarwebloem matcht op bloem-zoekopdracht
+    [/\btarwebloem\b/gi, 'bloem'],
+    [/\bbakmeel\b/gi, 'bloem'],
+    [/\bzelfrijzend\s+bakmeel\b/gi, 'bloem'],
+    // Frisdrank: cola → coca cola zodat 'Pina Colada' niet matcht
+    [/\b(coca[- ])?cola\b/g, 'coca cola'],
+    [/\bfanta\b/g, 'fanta'],           // bewust geen mapping — voorkomt matches op 'fantastisch'
+    [/\bsprite\b/g, 'sprite'],
+    // Bolletjes/bollen zijn synoniemen — AH zegt 'bollen', Jumbo 'bolletjes'
+    [/\bbolletjes\b/gi, 'bollen'],
+    // Shampoo: "dagelijks" = "iedere dag" = "elke dag"
+    [/\biedere dag\b/gi, 'dagelijks'],
+    [/\belke dag\b/gi, 'dagelijks'],
+    // Kinderparacetamol compound splitsen
+    [/\bkinderparacetamol\b/gi, 'paracetamol kind'],
+  ];
+  function applySynonyms(s) {
+    let out = s;
+    for (const [re, rep] of SYNONYMS) out = out.replace(re, rep);
+    return out;
+  }
+
+  // Merk-/ruisprefixen die niet meetellen voor coverage
+  const BRAND_NOISE = new Set(['ah','jumbo','g','de','jumbos','huismerk','perla','plus','lidl']);
+  // Bekende huismerk-namen per categorie → strip zodat de match alle winkels vindt.
+  // Lidl/Plus hebben geen eigen merknaam voor koffie, dus "Perla Koffiebonen" moet als
+  // "koffiebonen" worden gezocht zodat ook Lidl/Plus huismerk koffie opduikt.
+  const HOUSE_BRAND_NAMES = new Set([
+    'perla','jumbo koffie','ah koffie','plus koffie','lidl koffie',
+    'ah thee','jumbo thee','plus thee',
+    'ah kaas','jumbo kaas','plus kaas',
+    'huismerk',
+  ]);
+  // Bewerkte-product-indicatoren: als product dit bevat maar het item niet, straf af
+  // (zo wint "Appel" niet van "Appel drink"/"Appelsap", "Melk" niet van "Suikerwafels Melk").
+  // "pasta" en "saus" zijn hier bewust weggelaten: ze zitten in samengestelde productnamen
+  // zoals "pastasaus" en "pestosaus" en veroorzaken anders onterechte noise-penalty.
+  const NOISE_WORDS = new Set([
+    // Bewerkt/verwerkt product
+    'drink','sap','sapje','wafels','wafel','koek','koekjes','snack','snacks','mix',
+    'ijs','ijsje','reep','repen','chips','chocopasta','choco','snoep','smaak',
+    'toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep',
+    'pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade',
+    'puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread',
+    // Dieet-/bereidingsvariant (alleen penalty als NIET gezocht)
+    'glutenvrij','lactosevrij','suikervrij','vetvrij','zoutvrij',
+    // Graanvariant (alleen penalty als NIET gezocht)
+    'volkoren','meergranen','spelt','zeezout',
+    // Specifieke kaassoorten (alleen penalty als NIET gezocht)
+    'cheddar','emmentaler','parmezaan','ovengratin','gruyere',
+    // Gebruik-context descriptors op kaas/saus labels (bijv. "AH Pasta geraspte kaas")
+    'pasta',
+    // Bereiding/context die niet het product zelf is
+    'soesjes','vlaai','vlaaitje','rucola','sint','gegrilde','gegrild','snoepgroente',
+    // Ei-varianten (noedels met ei ≠ eieren)
+    'noedels',
+    // Melk-varianten (opschuimmelk, melkbrioche, melkbiscuit ≠ melk)
+    'opschuim','brioche','biscuit',
+    // Boter-varianten (ghee is geklaarde boter, niet gewone boter; cupjes = portieverpakking)
+    'ghee','cupjes',
+    // Non-food producten die soms op food-woorden matchen
+    'allesreiniger','reiniger','schoonmaakmiddel','douche','mousse','douchegel',
+    // Bloemen/non-food (bloemen ≠ bloem/meel)
+    'bloemen','lego','cadeautas','boeket','snijbloem','vaas','luchtvrij',
+    // Honing (bloemen honing matcht anders op bloem-zoekopdracht)
+    'honing',
+    // Ketjap-varianten (asin = zoute Aziatische sojasaus, niet de typische Dutch ketjap manis)
+    'asin',
+    // Bereidingen/maaltijden (risotto tomaat ≠ tomaat, champignon ragout ≠ champignons)
+    'risotto','ragout','stamppot','ovenschotel','wok','roerbak','stoofpot',
+    'verspakket','pakket','maaltijd','schotel','stoof','bouillon','fond',
+    // Meer verwerkte-product indicators
+    'babyvoeding','sjalot','sjalotten','banaansjalotten','banaansjalotjes',
+    'display','navulling','navulverpakking','hervulling',
+    // Bakkerij-producten (kaascroissant ≠ kaas, koffiebroodje ≠ koffie)
+    'croissant','broodje','broodjes','souffles','stengel','stengels','sticks',
+    'pannenkoek','pannenkoeken','pancake','pancakes',
+    'saus','sausen',
+  ]);
+  // Voorberekend array voor compound-suffix check (alleen woorden >3 tekens)
+  const NOISE_WORDS_ARR = [...NOISE_WORDS].filter(nw => nw.length > 3);
+
+  // Generiek → varianten. Toon chips bij invul, gekozen variant gaat op de lijst (en in historie).
+  const VARIANTS = {
+    pasta:        { groups: {
+                    'Droog':       ['Spaghetti', 'Penne', 'Macaroni', 'Lasagnebladen', 'Tagliatelle', 'Farfalle', 'Fusilli'],
+                    'Vers gevuld': ['Tortelloni', 'Cappelletti', 'Ravioli', 'Tortellini'],
+                    'Vers overig': ['Verse gnocchi', 'Verse tagliatelle', 'Verse spaghetti'],
+                  }},
+    lasagne:      { groups: {
+                    'Soort': ['Lasagnebladen', 'Verse lasagne bolognese', 'Verse lasagne spinazie ricotta', 'Verse lasagne vegetarisch', 'Diepvries lasagne bolognese'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    'nasi goreng':{ groups: {
+                    'Soort': ['Kant-en-klaar nasi goreng', 'Nasi goreng pakket', 'Nasi rijst los'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    'bami goreng':{ groups: {
+                    'Soort': ['Kant-en-klaar bami goreng', 'Bami goreng pakket', 'Bami mie los'],
+                    'Merk':   ['Huismerk'],
+                  }},
+
+    // ── Kant-en-klaar maaltijden ──
+    pannenkoeken: { groups: {
+                    'Soort': ['Verse pannenkoeken naturel', 'Verse pannenkoeken spek', 'Verse pannenkoeken kaas', 'Mini pannenkoekjes', 'Poffertjes', 'Pannenkoekenmix', 'Poffertjesmix'],
+                  }},
+    poffertjes:   { groups: {
+                    'Soort': ['Verse poffertjes', 'Diepvries poffertjes', 'Poffertjesmix'],
+                  }},
+    stamppot:     { groups: {
+                    'Soort': ['Boerenkool stamppot', 'Andijvie stamppot', 'Hutspot', 'Zuurkool stamppot', 'Spinazie stamppot', 'Witlof stamppot', 'Prei stamppot'],
+                    'Type':  ['Vers kant-en-klaar', 'Zelf maken groente los'],
+                  }},
+    quiche:       { groups: {
+                    'Soort': ['Quiche Lorraine', 'Quiche spinazie feta', 'Quiche zalm', 'Quiche groente', 'Hartige taart'],
+                  }},
+    sushi:        { groups: {
+                    'Soort': ['Sushi mix pakket', 'Zalm maki', 'Tonijn maki', 'California rolls', 'Nigiri mix', 'Veggie sushi', 'Pokébowl'],
+                  }},
+    'verse soep': { groups: {
+                    'Soort': ['Tomatensoep', 'Kippensoep', 'Groentesoep', 'Erwtensoep', 'Pompoensoep', 'Paprikasoep', 'Champignonsoep'],
+                  }},
+    'maaltijdpakket': { groups: {
+                    'Keuken': ['Italiaans', 'Aziatisch', 'Mexicaans', 'Indisch', 'Grieks', 'Nederlands', 'Vegetarisch'],
+                    'Merk':   ['HelloFresh', 'Marley Spoon', 'Dinnerly', 'AH Maaltijdbox', 'Huismerk'],
+                  }},
+    wrap:         { groups: {
+                    'Soort': ['Shoarma wrap', 'Falafel wrap', 'Kip caesar wrap', 'Tonijn wrap', 'Veggie wrap', 'Kip curry wrap'],
+                  }},
+    salade:       { groups: {
+                    'Soort': ['Maaltijdsalade kip', 'Maaltijdsalade tonijn', 'Maaltijdsalade griekse', 'Salade niçoise', 'Caesar salade', 'Coleslaw', 'Pasta salade'],
+                  }},
+    curry:        { groups: {
+                    'Soort': ['Kip curry', 'Groente curry', 'Garnalen curry', 'Dahl linzen curry', 'Tikka masala', 'Korma', 'Madras'],
+                    'Type':  ['Kant-en-klaar pot', 'Verse maaltijd', 'Currypasta + kokos zelf maken'],
+                  }},
+    shoarma:      { groups: {
+                    'Soort': ['Kip shoarma', 'Vlees shoarma', 'Döner', 'Gyros', 'Kebab', 'Vegan shoarma', 'Vegetarische shoarma'],
+                    'Verpakking': ['Kant-en-klaar wrap', 'Vlees los', 'Broodjes shoarma'],
+                  }},
+    rijst:        { groups: {
+                    'Soort': ['Basmati', 'Jasmijnrijst', 'Zilvervliesrijst', 'Risottorijst', 'Pandanrijst', 'Bruine rijst'],
+                    'Merk':   ['Uncle Ben\'s', 'Lassie', 'Huismerk'],
+                  }},
+    noedels:      { groups: {
+                    'Soort': ['Mie', 'Ramen', 'Soba', 'Udon', 'Glasnoedels', 'Rice noodles', 'Instant noedels', 'Cup noodles'],
+                    'Merk':   ['Doll', 'Nissin', 'Maggi', 'Blue Dragon', 'Huismerk'],
+                  }},
+    melk:         { groups: {
+                    'Soort': ['Halfvolle melk', 'Volle melk', 'Magere melk', 'Karnemelk', 'Havermelk', 'Sojamelk', 'Amandelmelk', 'Kokosmelk', 'Rijstmelk'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Alpro', 'Oatly', 'AH huismerk', 'Huismerk'],
+                  }},
+    yoghurt:      { groups: {
+                    'Stijl':      ['Naturel yoghurt', 'Griekse yoghurt', 'Skyr', 'Kwark'],
+                    'Vetgehalte': ['Mager (0%)', 'Halfvol', 'Vol'],
+                    'Smaak':      ['Aardbei', 'Bosvruchten', 'Perzik-mango', 'Vanille', 'Honing'],
+                    'Merk':   ['Campina', 'Danone', 'Alpro', 'Arla', 'AH huismerk', 'Huismerk'],
+                  }},
+    kwark:        { groups: {
+                    'Vetgehalte': ['Magere kwark', 'Halfvolle kwark', 'Volle kwark'],
+                    'Smaak':      ['Naturel', 'Vanille', 'Aardbei', 'Bosvruchten', 'Perzik'],
+                    'Merk':   ['Campina', 'Danone', 'Arla', 'Skyr', 'Huismerk'],
+                  }},
+    vla:          { groups: {
+                    'Smaak':  ['Vanillevla', 'Chocoladevla', 'Hopjesvla', 'Karamel vla', 'Boterscotch vla'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Mona', 'Huismerk'],
+                  }},
+    room:         { groups: {
+                    'Type':  ['Slagroom', 'Kookroom', 'Crème fraîche', 'Zure room', 'Koffieroom'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Arla', 'President', 'Huismerk'],
+                  }},
+    slagroom:     { groups: {
+                    'Type':  ['Slagroom spuitbus', 'Slagroom pak', 'Plantaardige slagroom'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Arla', 'Huismerk'],
+                  }},
+    karnemelk:    { groups: {
+                    'Type':  ['Karnemelk naturel', 'Karnemelk met fruit'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Huismerk'],
+                  }},
+    pudding:      { groups: {
+                    'Smaak': ['Vanillepudding', 'Chocoladepudding', 'Karamelpudding', 'Aardbeipudding'],
+                    'Merk':   ['Dr. Oetker', 'Koopmans', 'Mona', 'Huismerk'],
+                  }},
+    toetje:       { groups: {
+                    'Type':  ['Vla', 'Pudding', 'Panna cotta', 'Mousse', 'Tiramisu', 'Crème brûlée'],
+                    'Merk':   ['Mona', 'Campina', 'Danone', 'Dr. Oetker', 'Huismerk'],
+                  }},
+    drinkyoghurt: { groups: {
+                    'Type':  ['Drinkyoghurt naturel', 'Drinkyoghurt aardbei', 'Drinkyoghurt bosvruchten', 'Chocolademelk', 'Chocomel', 'Warme chocolademelk'],
+                    'Merk':   ['Campina', 'Chocomel', 'Yazoo', 'Huismerk'],
+                  }},
+    chocolademelk:{ groups: {
+                    'Type':  ['Chocolademelk', 'Warme chocolademelk', 'Chocolademelk light'],
+                    'Merk':   ['Chocomel', 'Campina', 'Huismerk'],
+                  }},
+    koffiemelk:   { groups: {
+                    'Type':  ['Koffiemelk', 'Koffiecreamer', 'Koffieroom', 'Halfvolle koffiemelk', 'Plantaardige koffiemelk'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Alpro', 'Huismerk'],
+                  }},
+    probiotica:   { groups: {
+                    'Type':  ['Actimel', 'Yakult', 'Activia drinkyoghurt', 'Kefir', 'Bifidus'],
+                    'Merk':   ['Yakult', 'Danone', 'Müller', 'Huismerk'],
+                  }},
+    kefir:        { groups: {
+                    'Type':  ['Kefir naturel', 'Kefir drank', 'Water kefir'],
+                    'Merk':   ['Biotona', 'Huismerk'],
+                  }},
+    'lactosevrij': { groups: {
+                    'Type':  ['Lactosevrije melk', 'Lactosevrije yoghurt', 'Lactosevrije room', 'Lactosevrije boter', 'Lactosevrije kaas'],
+                    'Merk':   ['Campina', 'Friesche Vlag', 'Huismerk'],
+                  }},
+    'plantaardige melk': { groups: {
+                    'Soort': ['Havermelk', 'Sojamelk', 'Amandelmelk', 'Kokosmelk', 'Rijstmelk', 'Erwtenmelk'],
+                    'Merk':   ['Alpro', 'Oatly', 'Califia', 'Huismerk'],
+                  }},
+    smeerkaas:    { groups: {
+                    'Type':  ['Smeerkaas naturel', 'Smeerkaas light', 'Smeerkaas kruiden', 'Cottage cheese', 'Roomkaas', 'Hüttenkäse'],
+                    'Merk':   ['Philadelphia', 'Boursin', 'Président', 'Huismerk'],
+                  }},
+    kaas:         { groups: {
+                    'Soort':      ['Goudse kaas', 'Edammer', 'Geitenkaas', 'Mozzarella', 'Feta', 'Brie', 'Camembert', 'Parmezaan', 'Cheddar'],
+                    'Rijping':    ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud', 'Extra oud'],
+                    'Vorm':       ['Stuk', 'Plakken', 'Geraspt', 'Smeerkaas'],
+                    'Gewicht':    ['200g', '350g', '500g', '750g', '1kg'],
+                    'Merk':   ['Beemster', 'Old Amsterdam', 'Leerdammer', 'Milner', 'Huismerk'],
+                  }},
+    boter:        { groups: {
+                    'Type':  ['Roomboter naturel', 'Roomboter gezouten', 'Halvarine', 'Margarine', 'Bakboter', 'Plantaardige boter'],
+                    'Merk':   ['Campina', 'Arla', 'Président', 'Kerrygold', 'Becel', 'Blue Band', 'Huismerk'],
+                  }},
+    brood:        { groups: {
+                    'Bruin/Volkoren': ['Bruin brood', 'Volkoren brood', 'Meergranen brood', 'Roggebrood', 'Speltbrood', 'Bruin tijgerbrood'],
+                    'Wit':            ['Wit brood', 'Wit tijgerbrood', 'Sandwich brood', 'Toast brood'],
+                    'Broodjes':       ['Witte bolletjes', 'Bruine bolletjes', 'Puntjes', 'Pistolets', 'Krentenbollen', 'Rozijnenbolletjes', 'Hamburgerbroodjes', 'Hotdogbroodjes'],
+                    'Speciaal':       ['Zuurdesem', 'Krentenbrood', 'Rozijnenbrood', 'Noten-rozijnenbrood'],
+                    'Afbak':          ['Afbak stokbrood', 'Afbak pistolets', 'Afbak baguette', 'Afbak ciabatta', 'Stokbrood'],
+                    'Diepvries':      ['Diepvries brood', 'Diepvries stokbrood', 'Diepvries pistolets'],
+                  }},
+    tijgerbrood:  ['Bruin tijgerbrood', 'Wit tijgerbrood'],
+    viennoiserie: { groups: {
+                    'Type':     ['Croissant', 'Pain au chocolat', 'Chocoladebol', 'Rozijnenbol', 'Krentenbol', 'Appelflap', 'Worstenbroodje', 'Suikerbol', 'Boterkoek'],
+                    'Versheid': ['Vers', 'Afbak', 'Diepvries'],
+                  }},
+    croissant:    { groups: {
+                    'Versheid': ['Vers croissant', 'Afbak croissant', 'Diepvries croissant'],
+                    'Vulling':  ['Boter croissant', 'Amandel croissant', 'Ham-kaas croissant', 'Pain au chocolat'],
+                  }},
+    ei:           { groups: {
+                    'Soort':  ['Scharrelei', 'Vrije-uitlooopei', 'Bio ei', 'Kooi ei'],
+                    'Aantal': ['6 eieren', '10 eieren', '12 eieren', '15 eieren'],
+                  }},
+    eieren:       { groups: {
+                    'Soort':  ['Scharreleieren', 'Vrije-uitloopeieren', 'Bio eieren', 'Kooi eieren'],
+                    'Aantal': ['6 eieren', '10 eieren', '12 eieren', '15 eieren'],
+                  }},
+    appel:        { groups: {
+                    'Ras':    ['Elstar', 'Jonagold', 'Gala', 'Fuji', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Kanzi', 'Jazz', 'Cosmic Crisp', 'SPRANK', 'Junami'],
+                    'Type':   ['Losse appel', 'Schaal', 'Zak'],
+                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio Gala', 'Bio appel'],
+                  }},
+    appels:       { groups: {
+                    'Ras':    ['Elstar', 'Jonagold', 'Gala', 'Fuji', 'Golden Delicious', 'Granny Smith', 'Pink Lady', 'Kanzi', 'Jazz', 'Cosmic Crisp', 'SPRANK', 'Junami'],
+                    'Type':   ['Losse appel', 'Schaal', 'Zak'],
+                    'Bio':    ['Bio Elstar', 'Bio Jonagold', 'Bio Gala', 'Bio appel'],
+                  }},
+    peer:         { groups: {
+                    'Ras':    ['Conference', 'Doyenne', 'Gieser Wildeman', 'Stofpeer', 'Pluot'],
+                    'Type':   ['Eetrijp', 'Bak', 'Schaal'],
+                    'Bio':    ['Bio Conference peer', 'Bio peer'],
+                  }},
+    mandarijn:    { groups: {
+                    'Soort':  ['Mandarijn', 'Clementine', 'Satsuma', 'Leanri mandarijn'],
+                    'Type':   ['Los', 'Net', 'Op sap (blik)'],
+                  }},
+    kersen:       { groups: {
+                    'Soort':  ['Zoete kersen', 'Nederlandse kersen', 'Zachte kersen', 'Cherry flamé', 'Cherry grande', 'Pitloze kersen'],
+                    'Bio':    ['Bio kersen'],
+                  }},
+    kiwi:         { groups: {
+                    'Soort':  ['Groene kiwi', 'Sungold kiwi', 'Zespri kiwi gold', 'Zespri kiwi groen', 'Verse kiwi'],
+                    'Type':   ['Los', 'Schaal'],
+                    'Bio':    ['Bio kiwi'],
+                  }},
+    perzik:       { groups: {
+                    'Soort':  ['Perzik', 'Wilde perziken', 'Witte perziken', 'Platte perzik'],
+                    'Type':   ['Los', 'Schaal', 'Op lichte siroop'],
+                    'Bio':    ['Bio perzik'],
+                  }},
+    nectarine:    { groups: {
+                    'Soort':  ['Gele nectarine', 'Rode nectarine', 'Sanguine rode nectarine', 'Witte nectarine'],
+                    'Type':   ['Los', 'Schaal'],
+                    'Bio':    ['Bio nectarines'],
+                  }},
+    meloen:       { groups: {
+                    'Soort':  ['Galia meloen', 'Cantaloupe meloen', 'Honingmeloen', 'Gele honingmeloen', 'Limelon meloen', 'Piel de sapo meloen', 'Watermeloen', 'Mini watermeloen'],
+                    'Type':   ['Heel', 'Gesneden', 'Stukjes', 'Sticks'],
+                  }},
+    passievrucht: { groups: {
+                    'Type':   ['Los', 'Zak'],
+                  }},
+    cranberries:  { groups: {
+                    'Soort':  ['Verse cranberries', 'Gedroogde cranberries'],
+                  }},
+    bramen:       { groups: {
+                    'Bio':    ['Bio bramen'],
+                  }},
+    'rode bessen': { groups: {
+                    'Soort':  ['Rode bessen', 'Zwarte bessen', 'Aalbessen'],
+                  }},
+    dadels:       { groups: {
+                    'Soort':  ['Medjoul dadels', 'Deglet dadels', 'Zachte dadels'],
+                  }},
+    kokos:        { groups: {
+                    'Soort':  ['Kokos rasp', 'Kokos geraspte', 'Kokosmelk', 'Kokoswater', 'Verse kokos'],
+                  }},
+    appelmoes:    { groups: {
+                    'Type':   ['Appelmoes', 'Appelmoes 0% suiker', 'Appel-peer moes'],
+                    'Merk':   ['Hak', 'Huismerk'],
+                  }},
+    aardappel:    { groups: {
+                    'Vers':       ['Kruimige aardappelen', 'Vastkokende aardappelen', 'Drielingen', 'Krieltjes', 'Zoete aardappel'],
+                    'Diepvries':  ['Aardappel partjes', 'Aardappel schijfjes', 'Aardappel balletjes', 'Bak aardappeltjes', 'Aardappel puree'],
+                    'Voorverpakt':['Aardappel ovenschaal', 'Aardappelgratin', 'Puree pakket'],
+                  }},
+    aardappels:   { groups: {
+                    'Vers':       ['Kruimige aardappelen', 'Vastkokende aardappelen', 'Drielingen', 'Krieltjes', 'Zoete aardappel'],
+                    'Diepvries':  ['Aardappel partjes', 'Aardappel schijfjes', 'Aardappel balletjes', 'Bak aardappeltjes', 'Aardappel puree'],
+                    'Voorverpakt':['Aardappel ovenschaal', 'Aardappelgratin', 'Puree pakket'],
+                  }},
+    ui:           { groups: {
+                    'Soort': ['Gele ui', 'Rode ui', 'Sjalot', 'Zilveruitjes', 'Bosui'],
+                    'Bio':   ['Bio gele ui', 'Bio rode ui'],
+                  }},
+    tomaat:       { groups: {
+                    'Soort': ['Cherrytomaat', 'Trostomaat', 'Vleestomaat', 'Snoeptomaat', 'Pruimtomaat'],
+                    'Bio':   ['Bio cherrytomaat', 'Bio trostomaat', 'Bio tomaat'],
+                  }},
+    tomaten:      { groups: {
+                    'Soort': ['Cherrytomaten', 'Trostomaten', 'Vleestomaat', 'Snoeptomaten'],
+                    'Bio':   ['Bio cherrytomaten', 'Bio trostomaten', 'Bio tomaten'],
+                  }},
+    paprika:      { groups: {
+                    'Kleur': ['Rode paprika', 'Gele paprika', 'Oranje paprika', 'Groene paprika', 'Mini paprika'],
+                    'Bio':   ['Bio rode paprika', 'Bio paprika mix', 'Bio mini paprika'],
+                  }},
+    sla:          { groups: {
+                    'Soort': ['IJsbergsla', 'Kropsla', 'Botersla', 'Veldsla', 'Rucola', 'Romaine', 'Eikenbladsla', 'Little gem', 'Gemengde salade', 'Salademix'],
+                    'Bio':   ['Bio veldsla', 'Bio rucola', 'Bio romaine', 'Bio sla mix'],
+                  }},
+    slamelange:   { groups: {
+                    'Type':  ['IJsbergsla melange', 'Rucola slamelange', 'Eikenblad slamelange', 'Krulslamelange', 'Jonge bladsla veldsla', 'Rodebiet slamelange', 'Krulsla IJsbergsla'],
+                    'Bio':   ['Bio rucola veldsla', 'Bio milde kiemgroente'],
+                  }},
+    rauwkost:     { groups: {
+                    'Type':  ['Rauwkost komkommer', 'Rauwkost radijs', 'Rauwkost Amsterdamse ui', 'Koolmix', 'Taugé'],
+                  }},
+    taugé:        ['Taugé', 'Bio taugé'],
+    kool:         { groups: {
+                    'Soort': ['Rode kool', 'Witte kool', 'Spitskool', 'Savooiekool', 'Boerenkool', 'Paksoi', 'Chinese kool', 'Spruitjes'],
+                    'Bio':   ['Bio boerenkool', 'Bio spitskool'],
+                  }},
+    andijvie:     { groups: {
+                    'Soort': ['Andijvie', 'Krullandijvie', 'Gesneden andijvie'],
+                    'Bio':   ['Bio andijvie'],
+                  }},
+    witlof:       { groups: {
+                    'Soort': ['Witlof', 'Roodlof', 'Witlof duo'],
+                    'Bio':   ['Bio witlof'],
+                  }},
+    pompoen:      { groups: {
+                    'Soort': ['Butternut pompoen', 'Hokkaido pompoen', 'Spaghettipompoen', 'Pompoenblokjes', 'Flespompoen'],
+                    'Bio':   ['Bio butternut'],
+                  }},
+    venkel:       { groups: {
+                    'Soort': ['Venkel heel', 'Venkel gesneden', 'Venkelknol'],
+                    'Bio':   ['Bio venkel'],
+                  }},
+    snijbonen:    { groups: {
+                    'Soort': ['Snijbonen vers', 'Snijbonen diepvries', 'Sperziebonen vers', 'Sperziebonen blik'],
+                    'Bio':   ['Bio snijbonen'],
+                  }},
+    snoepgroente: { groups: {
+                    'Soort': ['Snoeptomaat', 'Snackpaprika', 'Snackkomkommer', 'Snackworteltjes', 'Snackradijs', 'Sugarsnap'],
+                    'Bio':   ['Bio snoeptomaat', 'Bio snackgroente'],
+                  }},
+    gember:       { groups: {
+                    'Soort': ['Verse gember', 'Gemberpoeder', 'Gember in siroop', 'Gemberpasta'],
+                  }},
+    peper:        { groups: {
+                    'Soort': ['Rode peper', 'Groene peper', 'Chili peper', 'Jalapeño', 'Paprikapoeder', 'Cayennepeper'],
+                  }},
+    kiemgroenten: { groups: {
+                    'Soort': ['Tuinkers', 'Radijskiemen', 'Broccolikiemen', 'Zonnebloemkiemen', 'Gemengde kiemen', 'Erwtensckeuten'],
+                    'Bio':   ['Bio kiemgroenten', 'Bio milde kiemgroente'],
+                  }},
+    groentepasta: { groups: {
+                    'Soort': ['Courgettespaghetti', 'Bloemkoolrijst', 'Bietenspaghetti', 'Wortellinten', 'Courgettepasta mix'],
+                  }},
+    komkommer:    { groups: {
+                    'Soort': ['Komkommer heel', 'Mini komkommer', 'Snack komkommer'],
+                    'Bio':   ['Bio komkommer', 'Bio mini komkommer'],
+                  }},
+    champignons:  { groups: {
+                    'Soort': ['Witte champignons', 'Bruine champignons', 'Portobello', 'Shiitake', 'Oesterzwam', 'Gemengde paddenstoelen', 'Champignons in blik'],
+                    'Bio':   ['Bio champignons', 'Bio gemengde paddenstoelen'],
+                  }},
+    knoflook:     { groups: {
+                    'Soort': ['Knoflookbol', 'Knoflookteentjes', 'Gehakte knoflook (potje)', 'Knoflookpoeder', 'Knoflookgranulaat', 'Knoflook in olie'],
+                  }},
+    wortel:       { groups: {
+                    'Soort': ['Wortelen', 'Babyworteltjes', 'Winterpeen', 'Geraspte wortel', 'Wortelpakket'],
+                    'Bio':   ['Bio wortelen', 'Bio babyworteltjes'],
+                  }},
+    broccoli:     { groups: {
+                    'Soort': ['Broccoli heel', 'Broccoliroosjes', 'Broccolini'],
+                    'Bio':   ['Bio broccoli'],
+                  }},
+    bloemkool:    { groups: {
+                    'Soort': ['Bloemkool heel', 'Bloemkoolroosjes', 'Romanesco', 'Gekleurde bloemkool'],
+                    'Bio':   ['Bio bloemkool'],
+                  }},
+    courgette:    { groups: {
+                    'Soort': ['Groene courgette', 'Gele courgette', 'Mini courgette'],
+                    'Bio':   ['Bio courgette'],
+                  }},
+    spinazie:     { groups: {
+                    'Soort': ['Verse spinazie', 'Baby spinazie', 'Diepvries spinazie', 'Spinazie gewassen'],
+                    'Bio':   ['Bio baby spinazie', 'Bio spinazie'],
+                  }},
+    prei:         { groups: {
+                    'Soort': ['Prei heel', 'Prei gesneden', 'Mini prei'],
+                    'Bio':   ['Bio prei'],
+                  }},
+    mais:         { groups: {
+                    'Soort': ['Maiskolven', 'Mais in blik', 'Mais diepvries', 'Mini maiskolven'],
+                    'Merk':   ['Bonduelle', 'Huismerk'],
+                  }},
+    asperges:     { groups: {
+                    'Soort': ['Witte asperges', 'Groene asperges', 'Asperges in pot', 'Asperges diepvries'],
+                    'Maat':  ['Dun', 'Normaal', 'Dik', 'AA'],
+                  }},
+    avocado:      { groups: {
+                    'Soort': ['Hass avocado', 'Rijpe avocado', 'Avocado duo', 'Mini avocado'],
+                    'Bio':   ['Bio avocado'],
+                  }},
+    sinaasappel:  { groups: {
+                    'Soort': ['Sinaasappel', 'Bloedsinaasappel', 'Mandarijn', 'Clementine', 'Satsuma', 'Navel sinaasappel'],
+                    'Bio':   ['Bio sinaasappel', 'Bio clementine'],
+                  }},
+    // Wokgroenten & bereide groentenmixen
+    wokgroenten:  { groups: {
+                    'Stijl': ['Chinees', 'Thais', 'Oosters', 'Japans', 'Naturel'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    roerbakgroenten: { groups: {
+                    'Stijl': ['Italiaans', 'Mexicaans', 'Hollands', 'Provençaals', 'Aziatisch', 'Italiaans champignons'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    groentemix: { groups: {
+                    'Stijl': ['Hollands', 'Mexicaans', 'Boeren', 'Gegrild'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    soepgroenten: { groups: {
+                    'Type':  ['Fijne soepgroente', 'Basis soepgroente', 'Boeren soepgroente', 'Luxe soepgroente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'nasi groente': { groups: {
+                    'Type':  ['Nasi groente', 'Gele wortel nasi', 'Nasi bami groente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'bami groente': { groups: {
+                    'Type':  ['Bami groente', 'Nasi bami groente'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    'oven groente': { groups: {
+                    'Type':  ['Courgette rode paprika', 'Prei peen', 'Zoete aardappel', 'Mediterrane groente', 'Wortel biet'],
+                  }},
+    'broccoli mix': { groups: {
+                    'Type':  ['Broccoli wortel bloemkool', 'Broccoli champignons', 'Broccoli mix'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    groentenmix:  { groups: {
+                    'Type':  ['Stamppotgroenten', 'Mediterrane mix', 'Mexicaanse mix', 'Basismix Aziatisch', 'Saladkit'],
+                    'Soort': ['Vers', 'Diepvries'],
+                  }},
+    kip:          { groups: {
+                    'Soort':     ['Kipfilet', 'Kipdijfilet', 'Kippenpoten', 'Kipdrumsticks', 'Kippenvleugels', 'Kluifjes', 'Kiphaasjes', 'Kippenlevertjes', 'Hele kip', 'Kipgehakt', 'Soepvlees kip'],
+                    'Bereiding': ['Naturel', 'Gerookt', 'Gebraden', 'Gemarineerd', 'Gepaneerd', 'Gekruid', 'Provençaals', 'Thais', 'Cajun', 'Tex Mex', 'Sweet chili', 'Yoghurt-paprika', 'Italiaans', 'Mediterraan', 'American style', 'À la minute paprika'],
+                    'Snijwijze': ['Heel', 'Blokjes', 'Reepjes', 'Treesjes', 'Plakjes', 'Stukjes roerbak', 'Saté blokjes'],
+                    'Kant-en-klaar': ['Kipschnitzel', 'Kipschnitzel krokant', 'Kipburger', 'Kipburger smokey', 'Kipburger jalapeño', 'Kip cordon bleu', 'Kip saté', 'Kip satéspies', 'Kip shoarma', 'Kip kebab', 'Kip gyros', 'Kipkofte', 'Kipmerguez', 'Kipworst', 'Kip hotdog', 'Kipnuggets', 'Kip popcorn nuggets', 'Kip fingers', 'Kip krokant', 'Chicken tenders', 'Chicken wings', 'Chicken bites', 'Kip shaslick', 'Kipballetjes', 'Kipsoepballetjes', 'Borrelhaasjes', 'Rotirol kip'],
+                    'Kwaliteit': ['Scharrel', 'Biologisch', 'Frans scharrel', 'Maiskip', 'Halal', 'Diepvries'],
+                  }},
+    varkensvlees: { groups: {
+                    'Soort':     ['Varkenshaas', 'Varkensfilet', 'Karbonade', 'Ribkarbonade', 'Schouderkarbonade', 'Speklap', 'Filetlap', 'Hamlap', 'Casselerrib', 'Procureur', 'Spareribs', 'Gehakt varken', 'Half-om-half gehakt'],
+                    'Spek':      ['Ontbijtspek', 'Kateraspek', 'Pannenkoekspek', 'Bacon', 'Bacon reepjes', 'Spekblokjes', 'Vetspek', 'Zeeuws spek', 'Gerookt ontbijtspek', 'Pancetta', 'Guanciale'],
+                    'Worst':     ['Braadworst', 'Braadworst Catalaans', 'Braadworst Italiaans', 'Chipolataworstjes', 'Chorizo braadworst', 'Slavink', 'Verse worst', 'Varkensbraadworst biologisch'],
+                    'Kant-en-klaar': ['Varkensschnitzel', 'Gehaktschnitzel', 'Wiener schnitzel', 'Slavink', 'Boomstammetje', 'Gehaktbal', 'Shoarma', 'Gyros', 'Saté', 'BBQ spareribs', 'BBQ worst', 'BBQ hotdog', 'Hamburger', 'Nasi bami vlees'],
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Gerookt', 'Gekruid', 'À la minute', 'BBQ', 'Smokey', 'Indisch', 'Asian style', 'Black garlic'],
+                    'Bio':       ['Biologisch speklap', 'Biologisch ontbijtspek', 'Biologisch half-om-half', 'Biologisch slavink', 'Biologisch varkensschnitzel', 'Biologisch schouderkarbonade'],
+                  }},
+    rundvlees:    { groups: {
+                    'Soort':     ['Biefstuk', 'Kogelbiefstuk', 'Biefstukpuntjes', 'Entrecôte', 'Ribeye', 'Bavette', 'Ossenhaas', 'Diamanthaas', 'Flat iron steak', 'Wagyu rump steak', 'Runderlap', 'Riblap', 'Sukadelap', 'Stoofvlees', 'Hachee', 'Goulash', 'Schenkel', 'Rosbief', 'Runderreepjes', 'Runderhart', 'Mergpijp'],
+                    'Gehakt':    ['Rundergehakt', 'Rundergehakt mager', 'Rundergehakt minder vet', 'Runderkingehakt', 'Soepballetjes', 'Gehaktballetjes Hollands', 'Gehaktballetjes Italiaans', 'Rundergehaktbal', 'Gevulde gehaktbal'],
+                    'Hamburger': ['Hamburger', 'Hamburger naturel', 'Beefburger jalapeño', 'Beefburger bacon', 'Beefburger truffelsmaak', 'Beefburger tomaat', 'Black Angus burger', 'Wagyu burger', 'Ultimate burger', 'BBQ grillburger', 'BBQ partyburger'],
+                    'Worst':     ['Runderbraadworst', 'Rundervink', 'Chipolatawors'],
+                    'BBQ':       ['BBQ biefstukspies', 'BBQ biefstukspies black garlic', 'BBQ runderkebabspies', 'BBQ entrecôte smoked', 'BBQ hamburger'],
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Gekruid Italiaans', 'Smoked', 'Black garlic', 'Paprika'],
+                    'Bio':       ['Biologisch rundergehakt', 'Biologisch biefstuk', 'Biologisch hamburger', 'Biologisch rundertartaar', 'Biologisch rundervink', 'Biologisch runderbraadworst'],
+                  }},
+    lamsvlees:    { groups: {
+                    'Soort':  ['Lamskotelet', 'Lamsgehakt', 'Lamsbout', 'Lamsschouder', 'Lamsrack'],
+                  }},
+    kalkoen:      { groups: {
+                    'Soort':  ['Kalkoenfilet', 'Kalkoenfilet blokjes', 'Kalkoenfilet schnitzel', 'Kalkoenfilet à la minute', 'Kalkoengehakt', 'Kalkoenrollade', 'Magere spekreepjes kalkoen'],
+                  }},
+    ovenschotel:  { groups: {
+                    'Vlees':  ['Scharrelkip', 'Kipfilet', 'Varkenshaas', 'Beenham', 'Pulled pork', 'Varkensoesters'],
+                    'Saus':   ['Groene pesto', 'Kruidenroomsaus', 'Tandoori', 'Piri piri', 'Sweet chili', 'Koreaanse stijl', 'Sate ajam', 'Ham pepersaus', 'Tomaat mozzarella', 'Honing mosterd'],
+                  }},
+    eend:         { groups: {
+                    'Soort':  ['Eendenborstfilet', 'Gerookte eendenborstfilet', 'Eendenpoten confit'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    hert:         { groups: {
+                    'Soort':  ['Hertenbiefstuk', 'Hertenstoofvlees', 'Hert gemarineerd'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    hachee:       { groups: {
+                    'Soort':  ['Hachee', 'Vlaamse hachee', 'Runderzuurvlees', 'Stoofvlees', 'Rundergoulash', 'Rundergoulash Hongaars'],
+                    'Merk':   ['Unox', 'Coertjens', 'Huismerk'],
+                  }},
+    vlees:        { groups: {
+                    'Rund':   ['Rundergehakt', 'Biefstuk', 'Runderlap', 'Rosbief', 'Hamburger'],
+                    'Varken': ['Varkenshaas', 'Varkensfilet', 'Speklap', 'Spekjes', 'Karbonade'],
+                    'Kip':    ['Kipfilet', 'Kipdijfilet', 'Kippenpoten', 'Kipschnitzel', 'Kipgehakt'],
+                    'Lam':    ['Lamskotelet', 'Lamsgehakt', 'Lamsbout'],
+                    'Gemengd':['Half-om-half gehakt', 'Gekruid gehakt', 'Slavink'],
+                  }},
+    spekjes:      { groups: {
+                    'Soort': ['Spekjes', 'Spekblokjes', 'Spekreepjes', 'Bacon reepjes', 'Plantaardige spekjes', 'Vegetarische spekjes'],
+                  }},
+    gehakt:       { groups: {
+                    'Soort':  ['Rundergehakt', 'Half-om-half gehakt', 'Kipgehakt', 'Lamsgehakt', 'Varkensgehakt', 'Vegetarisch gehakt', 'Vegan gehakt'],
+                    'Smaak':  ['Naturel', 'Gekruid', 'Italiaans gekruid'],
+                  }},
+    beleg:        { groups: {
+                    'Soort': ['Vleeswaren', 'Ham', 'Salami', 'Rookvlees', 'Zoet beleg', 'Kaasbeleg', 'Vegetarisch beleg'],
+                  }},
+    vleeswaren:   { groups: {
+                    'Soort': ['Ham', 'Beenham', 'Schouderham', 'Achterham', 'Kipfilet beleg', 'Kalkoenfilet beleg', 'Kalkoenham', 'Kalkoen salami', 'Kalkoen bacon', 'Kalkoen chorizo', 'Salami', 'Cervelaat', 'Rookvlees', 'Runderrookvlees', 'Rosbief', 'Pastrami', 'Filet Americain', 'Chorizo', 'Mortadella', 'Sucuk', 'Smeerleversworst'],
+                    'Merk':   ['Hema', 'Stegeman', 'Zwan', 'Wahid', 'Marhaba', 'Ikbal', 'Chatar', 'Fulya', 'Koc', 'Huismerk'],
+                  }},
+    sucuk:        { groups: {
+                    'Soort': ['Sucuk plakjes', 'Sucuk traditioneel', 'Sucuk gekruid'],
+                    'Merk':   ['Koc', 'Efepasa', 'Egetürk', 'Huismerk'],
+                  }},
+    ham:          { groups: {
+                    'Soort': ['Beenham', 'Schouderham', 'Achterham', 'Gekookte ham', 'Kipfilet beleg', 'Gerookte ham'],
+                    'Type':  ['Plakken', 'Heel stuk', 'Dun gesneden'],
+                    'Merk':   ['Hema', 'Stegeman', 'Zwan', 'Huismerk'],
+                  }},
+    salami:       { groups: {
+                    'Soort': ['Salami', 'Cervelaat', 'Chorizo', 'Pepperoni', 'Droge worst', 'Mortadella'],
+                    'Merk':   ['Hema', 'Stegeman', 'Zwan', 'Huismerk'],
+                  }},
+    rookvlees:    { groups: {
+                    'Soort': ['Rookvlees', 'Rosbief', 'Pastrami', 'Gerookte kip'],
+                    'Merk':   ['Hema', 'Stegeman', 'Huismerk'],
+                  }},
+    'filet americain': { groups: {
+                    'Type':  ['Filet Americain naturel', 'Filet Americain pikant', 'Filet Americain light'],
+                    'Merk':   ['Hema', 'Stegeman', 'Huismerk'],
+                  }},
+    paté:         { groups: {
+                    'Soort': ['Champignonpaté', 'Leverpaté', 'Wildpaté', 'Truffelpaté', 'Kippenleverpastei'],
+                    'Merk':   ['Unilever', 'Huismerk'],
+                  }},
+    wokkip:       { groups: {
+                    'Bereiding': ['Naturel', 'Gekruid', 'Gemarineerd', 'Roerbak'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    wokrundvlees: { groups: {
+                    'Bereiding': ['Naturel', 'Gemarineerd', 'Zeezout-peper', 'Teriyaki'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    kattenvoer:   { groups: {
+                    'Type':  ['Natvoer', 'Droogvoer', 'Snacks'],
+                    'Merk':   ['Felix', 'Whiskas', 'Purina', 'Huismerk'],
+                  }},
+    hondenvoer:   { groups: {
+                    'Type':  ['Natvoer', 'Droogvoer', 'Snacks', 'Brokken'],
+                    'Merk':   ['Pedigree', 'Cesar', 'Purina', 'Huismerk'],
+                  }},
+    knakworst:    { groups: {
+                    'Soort': ['Kipknakworst', 'Varkensknakworst', 'Runderknakworst', 'Magere knakworst', 'Duitse knakworst', 'Pittige knakworst', 'Vegetarische knakworst', 'Party knaks', 'Mini knaks'],
+                    'Merk':   ['Unox', 'Wikinger', 'Huismerk'],
+                  }},
+    ragout:       { groups: {
+                    'Soort': ['Kipragout', 'Kalfragout', 'Rundvleesragout', 'Champignonragout', 'Kippenragout ambachtelijk'],
+                    'Merk':   ['Unox', 'Huismerk'],
+                  }},
+    leverpastei:  { groups: {
+                    'Soort': ['Leverpastei', 'Magere leverpastei', 'Leverpastei naturel'],
+                    'Merk':   ['Unox', 'Huismerk'],
+                  }},
+    hotdog:       { groups: {
+                    'Soort': ['Hotdogs naturel', 'American hotdogs', 'Frankfurters', 'Bockworsten', 'Cocktailworstjes'],
+                    'Merk':   ['Unox', 'Wikinger', 'Isla Délice', 'Huismerk'],
+                  }},
+    'kip spread': { groups: {
+                    'Soort': ['Kip spread', 'Kip pikant spread', 'Kip halal spread', 'Salmon spread', 'Meatless chicken spread'],
+                    'Merk':   ['Argeta', 'Huismerk'],
+                  }},
+    hamburger:    { groups: {
+                    'Soort': ['Rundvlees hamburger', 'Kipburger', 'Lamsburger', 'Vegetarische burger', 'Vegan burger', 'Black bean burger', 'Bietenburger'],
+                    'Merk':   ['Huismerk', 'Beyond Meat', 'Vivera', 'Garden Gourmet'],
+                  }},
+    worst:        { groups: {
+                    'Soort': ['Braadworst', 'Rookworst', 'Chorizo', 'Merguez', 'Vegetarische worst', 'Vegan worst', 'Vegetarische rookworst'],
+                    'Merk':   ['Huismerk', 'Vivera', 'Garden Gourmet'],
+                  }},
+    'vleesvervanger': { groups: {
+                    'Soort': ['Vegan gehakt', 'Vegetarische burger', 'Vegan worst', 'Kipstukjes plantaardig', 'Falafel', 'Quorn gehakt', 'Tempeh', 'Tofu', 'Seitan', 'Jackfruit'],
+                    'Merk':   ['Vivera', 'Garden Gourmet', 'Beyond Meat', 'Quorn', 'Valess', 'Huismerk'],
+                  }},
+    'vegetarisch beleg': { groups: {
+                    'Soort': ['Hummus', 'Vegetarische salami', 'Vegetarische ham', 'Falafel beleg', 'Notenpasta'],
+                    'Merk':   ['Hema', 'Vivera', 'Huismerk'],
+                  }},
+    // Verse sappen & fruit
+    'verse sappen': { groups: {
+                    'Soort': ['Sinaasappel', 'Sinaasappel-banaan', 'Sinaasappel-aardbei', 'Appel-peer-framboos', 'Ananas-meloen-mango', 'Sinaasappel-mango-appel', 'Gember-passievrucht', 'Gember-kurkuma-sinaasappel', 'Groentesap', 'Wortelsap', 'Bietensap'],
+                    'Merk':   ['Innocent', 'CoolBest', 'Huismerk'],
+                  }},
+    smoothie:     { groups: {
+                    'Soort': ['Mango-maracuja', 'Sinaasappel-mango', 'Yoghurt-aardbei', 'Groene smoothie', 'Rode smoothie', 'Tropische smoothie'],
+                    'Merk':   ['Innocent', 'CoolBest', 'Huismerk'],
+                  }},
+    mango:        { groups: {
+                    'Soort': ['Mango heel', 'Mango gesneden', 'Mango diepvries', 'Mango smoothie'],
+                    'Bio':   ['Bio mango'],
+                  }},
+    ananas:       { groups: {
+                    'Soort': ['Ananas heel', 'Ananas gesneden', 'Ananas in blik', 'Ananas stukjes'],
+                  }},
+    druiven:      { groups: {
+                    'Soort': ['Groene druiven', 'Rode druiven', 'Blauwe druiven', 'Zwarte druiven', 'Druiven mix'],
+                    'Bio':   ['Bio groene druiven', 'Bio rode druiven'],
+                  }},
+    aardbeien:    { groups: {
+                    'Soort': ['Aardbeien', 'Mini aardbeien', 'Zoete aardbeien', 'Nederlandse aardbeien', 'Aardbeien diepvries', 'Aardbeienjam', 'Aardbeienconfiture'],
+                    'Bio':   ['Bio aardbeien'],
+                  }},
+    aardbei:      { groups: {
+                    'Soort': ['Aardbeien', 'Aardbeienjam', 'Aardbeienconfiture', 'Aardbeien diepvries', 'Aardbeien yoghurt'],
+                  }},
+    granaatappel: { groups: {
+                    'Soort': ['Granaatappel heel', 'Verse granaatappelpitjes', 'Granaatappelpitjes (bak)'],
+                  }},
+    vijgen:       { groups: {
+                    'Soort': ['Verse vijgen', 'Gedroogde vijgen'],
+                    'Bio':   ['Bio gedroogde vijgen'],
+                  }},
+    abrikozen:    { groups: {
+                    'Soort': ['Verse abrikozen', 'Gedroogde abrikozen', 'Gedroogde abrikozen geweld', 'Abrikozen op lichte siroop'],
+                    'Bio':   ['Bio abrikozen'],
+                  }},
+    grapefruit:   { groups: {
+                    'Soort': ['Rode grapefruit', 'Gele grapefruit', 'Grapefruit los', 'Grapefruit net'],
+                  }},
+    jackfruit:    { groups: {
+                    'Soort': ['Verse jackfruit', 'Pulled young jackfruit', 'Jackfruit op sap'],
+                    'Merk':   ['Fairtrade', 'Huismerk'],
+                  }},
+    'gedroogde vruchten': { groups: {
+                    'Soort': ['Rozijnen', 'Krenten', 'Pruimen zonder pit', 'Abrikozen gedroogd', 'Vijgen gedroogd', 'Mango gedroogd', 'Ananas gedroogd', 'Dadels gedroogd', 'Tutti frutti', 'Frambozen-dadels-amandel', 'Kokos snippers'],
+                    'Bio':   ['Bio rozijnen', 'Bio mango gedroogd', 'Bio pruimen gedroogd', 'Bio ananas droog'],
+                  }},
+    'fruit op sap': { groups: {
+                    'Soort': ['Ananasschijven', 'Ananasstukjes', 'Ananasschijven op siroop', 'Mandarijnen', 'Perziken halve', 'Fruitcocktail', 'Aardbeien op sap', 'Kersen pitloos', 'Kwetsen pruimen'],
+                    'Merk':   ['Del Monte', 'Dole', 'Aarts', 'Fairtrade', 'Huismerk'],
+                  }},
+    groentesap:   { groups: {
+                    'Soort': ['Wortel-sinaas-gember 50%', 'Rode biet-aardbei 50%', 'Gele wortel-mango-ananas 50%', 'Paprika-wortel 80%', 'Komkommer-spinazie 80%', 'Rode biet-appel 80%', 'Spinazie 85%', 'Wortel 85%', 'Rode biet-avocado 85%'],
+                    'Merk':   ['Zonnatura', 'Huismerk'],
+                  }},
+    groentesmoothie: { groups: {
+                    'Soort': ['Spinazie-komkommer 75%', 'Rode biet-aardbei 75%', 'Wortel-mango 75%', 'Haver-banaan-appel', 'Banaan-haver-rode druif', 'Kokosmelk-appel-aardbei', 'Wortel-mango super'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    vitamineshot: { groups: {
+                    'Soort': ['Vitamine C', 'Vitamine D', 'Multivitamine', 'Gember-kurkuma', 'Immunity gember-turmeric'],
+                    'Merk':   ['MOJU', 'Innocent', 'Huismerk'],
+                  }},
+    gembershot:   { groups: {
+                    'Soort': ['Gember mild', 'Fresh root ginger', 'Appel-gember-framboos', 'Appel-kiwi-gember', 'Mango boost', 'Mango-ananas immunity'],
+                    'Merk':   ['MOJU', 'Huismerk'],
+                  }},
+    knijpfruit:   { groups: {
+                    'Soort': ['Appel-mango', 'Appel-aardbei', 'Mango-wortel bio', 'Appel-banaan', 'Appel-peer'],
+                    'Merk':   ['Zonnatura', 'Healthy people', 'Servero', 'Huismerk'],
+                  }},
+    vis:          { groups: {
+                    'Soort':    ['Verse vis', 'Gerookte vis', 'Vis in blik', 'Diepvries vis', 'Gepaneerde vis', 'Vissalade', 'Garnalen', 'Sushi'],
+                  }},
+    zalm:         { groups: {
+                    'Soort':    ['Zalmfilet', 'Zalmfilet op huid', 'Wilde zalmfilet', 'Zalm moot', 'Zalmsteak', 'Zalmsnippers', 'Zalmfilet à la minute'],
+                    'Bereiding':['Vers', 'Gerookt', 'Warmgerookt', 'Biologisch'],
+                    'Merk':   ['Fish Tales', 'Olav\'s', 'Huismerk'],
+                  }},
+    tonijn:       { groups: {
+                    'Verpakking':['In water', 'In olijfolie', 'In zonnebloemolie'],
+                    'Type':      ['Stukken', 'Steak wit', 'Filets'],
+                    'Merk':   ['Princes', 'John West', 'Statesman', 'Rio Mare', 'Huismerk'],
+                  }},
+    kabeljauw:    { groups: {
+                    'Soort':    ['Kabeljauwfilet', 'Kabeljauwhaas', 'Kabeljauwburger gepaneerd', 'Kabeljauwschnitzel'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    pangasius:    { groups: {
+                    'Smaak':    ['Naturel', 'Knoflook-citroen', 'Tuinkruiden'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    haring:       { groups: {
+                    'Soort':    ['Haring met uitjes', 'Haringfilet', 'Maatjesharing', 'Gerookte haring', 'Zoute haring'],
+                  }},
+    kibbeling:    { groups: {
+                    'Smaak':    ['Naturel', 'Gekruid'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    surimi:       { groups: {
+                    'Soort':    ['Surimi sticks', 'Surimi-krab salade', 'Surimi reepjes'],
+                  }},
+    ansjovis:     { groups: {
+                    'Verpakking':['In olijfolie', 'In zonnebloemolie', 'In zout'],
+                    'Merk':   ['Princes', 'Huismerk'],
+                  }},
+    sardines:     { groups: {
+                    'Verpakking':['In water', 'In olijfolie', 'In tomatensaus'],
+                    'Merk':   ['Fish Tales', 'Princes', 'Huismerk'],
+                  }},
+    'gerookte vis':   { groups: {
+                    'Soort':    ['Gerookte zalm', 'Warmgerookte zalm', 'Gerookte makreel', 'Gerookte haring', 'Gerookte forel', 'Gerookte paling'],
+                    'Merk':   ['Foppen', 'Steur', 'Olav\'s', 'Fish Tales', 'Huismerk'],
+                  }},
+    'vis in blik':    { groups: {
+                    'Soort':    ['Tonijn', 'Sardines', 'Makreel', 'Haring', 'Zalm', 'Ansjovis'],
+                    'Verpakking':['In water', 'In olijfolie', 'In zonnebloemolie', 'In tomatensaus'],
+                    'Merk':   ['Princes', 'John West', 'Fish Tales', 'Rio Mare', 'Huismerk'],
+                  }},
+    vissticks:    { groups: {
+                    'Type':     ['Vissticks', 'Lekkerbekjes', 'Kipfiletschnitzel vis'],
+                    'Merk':   ['Iglo', 'Huismerk'],
+                  }},
+    vissalade:    { groups: {
+                    'Soort':    ['Tonijnsalade', 'Zalmsalade', 'Forelsalade', 'Surimi-krab salade', 'Vitello tonnato'],
+                    'Merk':   ['Johma', 'Huismerk'],
+                  }},
+    'verse vis':      { groups: {
+                    'Soort':    ['Zalmfilet', 'Zalmhaas', 'Kabeljauwfilet', 'Kabeljauwhaas', 'Pangasiusfilet', 'Schol', 'Tonijnsteak', 'Haring', 'Forel', 'Zeebaars', 'Roodbaars', 'Dorade', 'Heek', 'Tilapia'],
+                    'Merk':   ['Fish Tales', 'Huismerk'],
+                  }},
+    garnalen:     { groups: {
+                    'Soort':    ['Cocktailgarnalen', 'Hollandse garnalen', 'Grote garnalen', 'Reuzengarnalen', 'Roerbakgarnalen', 'Roerbakgarnalen knoflook', 'Gepelde roze garnalen', 'Biologische garnalen'],
+                    'Type':     ['Rauw en gepeld', 'Gekookt', 'Gemarineerd BBQ'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    mosselen:     { groups: {
+                    'Soort':    ['Verse mosselen', 'Mosselen in tomatensaus', 'Mosselen in witte wijnsaus', 'Gerookte mosselen'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    makreel:      { groups: {
+                    'Soort':    ['Gerookte makreel', 'Gerookte horsmakreel', 'Makreel in tomatensaus', 'Horsmakreel in zonnebloemolie', 'Horsmakreel in water'],
+                    'Merk':   ['Fish Tales', 'Princes', 'Statesman', 'Huismerk'],
+                  }},
+    zeebaars:     { groups: {
+                    'Bereiding':['Vers', 'BBQ', 'Gemarineerd'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    dorade:       { groups: {
+                    'Bereiding':['Vers op huid', 'Gemarineerd'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    tilapia:      { groups: {
+                    'Bereiding':['Naturel', 'Mediterraans', 'Thai stijl'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    zalmforel:    { groups: {
+                    'Soort':    ['Gerookte zalmforel', 'Zalmforel eitjes', 'Gravad lax'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    'gemengde zeevruchten': { groups: {
+                    'Bereiding':['Rauw', 'Gemarineerd', 'Roerbak zeezout-peper'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    rivierkreeftjes: { groups: {
+                    'Bereiding':['Naturel', 'Gemarineerd', 'Knoflook'],
+                  }},
+    sushi:        { groups: {
+                    'Soort':    ['Hosomaki zalm', 'Uramaki', 'Sushi cali', 'Sushi sumire', 'Sushi edo', 'Sushi mix', 'Onigiri tonijn', 'Onigiri zalm', 'Onigiri California', 'Sashimi'],
+                    'Merk':   ['Soosh', 'Huismerk'],
+                  }},
+    coquilles:    { groups: {
+                    'Bereiding':['Naturel', 'Gemarineerd BBQ', 'Met roomsaus'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    kreeft:       { groups: {
+                    'Soort':    ['Kreeftenstaarten', 'Kreeftenbisque', 'Hele kreeft', 'Kreeftensoep'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    langoustines: { groups: {
+                    'Bereiding':['Vers', 'Gegrild', 'Gemarineerd'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    oesters:      { groups: {
+                    'Soort':    ['Zeeuwse oesters', 'Oesters zilt & robuust'],
+                    'Merk':   ['Premier Zeeland', 'Huismerk'],
+                  }},
+    oktopus:      { groups: {
+                    'Soort':    ['Oktopus staart', 'Oktopus tentakels', 'Inktvis'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    kaviaar:      { groups: {
+                    'Soort':    ['Kaviaar', 'Zwarte kaviaar', 'Rode kaviaar', 'Kaviaar imperial'],
+                    'Merk':   ['Cavinoir', 'Huismerk'],
+                  }},
+    escargots:    { groups: {
+                    'Soort':    ['Escargots naturel', 'Escargots met kruidenboter'],
+                    'Merk':   ['Delby\'s', 'Huismerk'],
+                  }},
+    'black tiger garnalen': { groups: {
+                    'Bereiding':['Naturel', 'Knoflook', 'Cajun', 'BBQ'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    chocolade:    { groups: {
+                    'Soort': ['Pure chocolade', 'Melkchocolade', 'Witte chocolade', 'Hazelnoot chocolade', 'Gezouten karamel', 'Fruit & noot', 'Puur 70%', 'Puur 85%'],
+                    'Merk':   ["Tony's Chocolonely", "Côte d'Or", 'Lindt', 'Milka', 'Verkade', 'Huismerk'],
+                  }},
+    chips:        ['Naturel chips', 'Paprika chips', 'Bolognese chips', 'Ribbel chips', 'Tortilla chips'],
+    koffie:       { groups: {
+                    'Type':    ['Koffiebonen', 'Filterkoffie', 'Koffiepads', 'Koffiecups', 'Instant koffie'],
+                    'Merk':   ['Douwe Egberts', 'Senseo', 'Nespresso', 'Jacobs', 'Lavazza', 'Illy', 'De Koffie Jongens', 'Starbucks', 'Perla', 'Jumbo koffie', 'Huismerk'],
+                    'Stijl':   ['Espresso', 'Lungo', 'Ristretto', 'Cappuccino', 'Latte macchiato'],
+                  }},
+    thee:         { groups: {
+                    'Type':    ['Zwarte thee', 'Groene thee', 'Rooibos', 'Kruidenthee', 'Pepermunt thee', 'Gember thee', 'Kamille thee', 'Earl Grey', 'Chai'],
+                    'Merk':   ['Pickwick', 'Lipton', 'Clipper', 'Yogi Tea', 'Pure Leaf', 'Ahmad Tea', 'Huismerk'],
+                  }},
+    wijn:         { groups: {
+                    'Type':  ['Rode wijn', 'Witte wijn', 'Rosé', 'Prosecco', 'Cava', 'Champagne'],
+                    'Merk':   ['Huismerk', 'Baron de Lestac', 'Yellow Tail', 'Gallo', 'Hardys', 'Torres'],
+                  }},
+    bier:         { groups: {
+                    'Stijl': ['Pilsner', 'Witbier', 'IPA', 'Tripel', 'Dubbel', 'Abdijbier', 'Stout', 'Radler', 'Alcoholvrij bier'],
+                    'Merk':   ['Heineken', 'Amstel', 'Grolsch', 'Bavaria', 'Hertog Jan', 'Jupiler', 'Hoegaarden', 'La Trappe', 'Westmalle', 'Leffe', 'Duvel', 'Affligem', 'Brouwerij \'t IJ', 'Huismerk'],
+                  }},
+    water:        ['Spa rood', 'Spa blauw', 'Bronwater', 'Spa & fruit'],
+    sap:          ['Sinaasappelsap', 'Appelsap', 'Multivit', 'Smoothie'],
+    frisdrank:    { groups: {
+                    'Soort':      ['Cola', 'Fanta', 'Sprite', '7Up', 'Ice Tea', 'Aquarius', 'Dubbelfris', 'Rivella'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles 0.5L', 'Multipack blik 24'],
+                  }},
+    fanta:        { groups: {
+                    'Smaak':      ['Fanta Orange', 'Fanta Lemon', 'Fanta Watermeloen', 'Fanta Tropical', 'Fanta Cassis', 'Fanta Zero Orange', 'Fanta Zero Lemon'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles'],
+                  }},
+    sprite:       { groups: {
+                    'Type':       ['Sprite Regular', 'Sprite Zero Sugar', 'Sprite Cranberry'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik'],
+                  }},
+    cola:         { groups: {
+                    'Merk':   ['Coca-Cola', 'Coca-Cola Zero', 'Coca-Cola Light', 'Pepsi', 'Pepsi Max', 'Pepsi Light', 'Cola huismerk', 'Huismerk'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', 'Fles 2L', '6-pack blik', '6-pack fles 0.5L', 'Tray 24 blik'],
+                  }},
+    '7up':        { groups: {
+                    'Type':       ['7Up Regular', '7Up Zero Sugar', '7Up Free'],
+                    'Verpakking': ['Blikje 0.33L', 'Fles 0.5L', 'Fles 1.5L', '6-pack blik'],
+                  }},
+    pizza:        { groups: {
+                    'Soort':      ['Diepvries pizza', 'Verse pizza'],
+                  }},
+    'verse pizza':    { groups: {
+                    'Beleg':  ['Margherita', 'Salami', 'Hawaii', 'Quattro Formaggi', 'Pepperoni', 'Tonno', 'Vegetarisch'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    ijs:          { groups: {
+                    'Type':      ['Schepijs emmertje', 'IJslolly', 'Waterijs', 'Yoghurtijs'],
+                    'Smaak':     ['Vanille', 'Chocolade', 'Aardbei', 'Pistache', 'Stracciatella', 'Citroen', 'Karamel'],
+                    'Merk':   ["Ben & Jerry's", 'Häagen-Dazs', 'Magnum', 'Ola', 'Cornetto', 'Huismerk'],
+                  }},
+    ijslolly:     { groups: {
+                    'Soort':     ['Magnum', 'Cornetto', 'Calippo', 'Twister', 'Solero', 'Raketje', 'Waterijsje'],
+                    'Merk':   ['Ola', 'Huismerk'],
+                  }},
+    ijsblokjes:   ['IJsblokjes zak', 'IJsblokjes bol', 'IJsblokjes crushed'],
+    crackers:     { groups: {
+                    'Soort': ['Cream crackers', 'Knäckebröd', 'Rijstwafels', 'Maïswafels', 'Rondos', 'Volkorencrackers'],
+                    'Merk':   ['Wasa', 'Ryvita', 'Bolletje', 'Huismerk'],
+                  }},
+    rijstwafels:  { groups: {
+                    'Smaak': ['Naturel', 'Zeezout', 'Karamel', 'Chocolade', 'Rijstwafels met mais'],
+                    'Merk':   ['Quaker', 'Huismerk'],
+                  }},
+    hagelslag:    { groups: {
+                    'Soort': ['Melk hagelslag', 'Puur hagelslag', 'Wit hagelslag', 'Chocoladevlokken', 'Muisjes'],
+                    'Merk':   ['De Ruijter', 'Venz', 'Huismerk'],
+                  }},
+    pindakaas:    { groups: {
+                    'Type':  ['Pindakaas smooth', 'Pindakaas crunchy', 'Pindakaas naturel', 'Notenpasta'],
+                    'Merk':   ['Calvé', 'Déef', 'Skippy', 'Sun Pat', 'Huismerk'],
+                  }},
+    jam:          { groups: {
+                    'Smaak': ['Aardbeienjam', 'Frambozenijam', 'Abrikozenjam', 'Bosbessenjam', 'Kersenjam', 'Sinaasappelmarmelade', 'Viervruchten'],
+                    'Type':  ['Jam', 'Extra jam', 'Confiture', 'Suikervrije jam'],
+                    'Merk':   ['Bonne Maman', 'Zwan', 'Hero', 'Smuckers', 'Huismerk'],
+                  }},
+    aardbeienjam: { groups: {
+                    'Type':  ['Jam', 'Extra jam', 'Confiture', 'Suikervrije jam'],
+                    'Merk':  ['Bonne Maman', 'Zwan', 'Hero', 'Huismerk'],
+                  }},
+    honing:       { groups: {
+                    'Type':  ['Vloeibare honing', 'Gecremeerde honing', 'Honingraat', 'Manuka honing'],
+                    'Smaak': ['Bloemenhoning', 'Acacia honing', 'Boekweithoning', 'Wildflower honing'],
+                    'Merk':   ['Langnese', 'Billy Bee', 'Huismerk'],
+                  }},
+    chocoladepasta:{ groups: {
+                    'Type':  ['Chocoladepasta melk', 'Chocoladepasta puur', 'Duo chocoladepasta', 'Hazelnootpasta'],
+                    'Merk':   ['Nutella', 'Côte d\'Or', 'Huismerk'],
+                  }},
+    chocopasta:   { groups: {
+                    'Type':  ['Chocoladepasta melk', 'Chocoladepasta puur', 'Duo chocoladepasta', 'Hazelnootpasta'],
+                    'Merk':   ['Nutella', 'Côte d\'Or', 'Huismerk'],
+                  }},
+    muesli:       { groups: {
+                    'Type':  ['Muesli naturel', 'Muesli fruit', 'Granola', 'Crunchy muesli', 'Havermout'],
+                    'Merk':   ['Dr. Oetker', 'Jordans', 'Quaker', 'Huismerk'],
+                  }},
+    cornflakes:   { groups: {
+                    'Type':  ['Cornflakes naturel', 'Cornflakes suikervrij', 'Choco krispies', 'Frosties', 'Loops'],
+                    'Merk':   ['Kellogg\'s', 'Nestlé', 'Huismerk'],
+                  }},
+    havermout:    { groups: {
+                    'Type':  ['Havermout grof', 'Havermout fijn', 'Havermout instant', 'Havermoutpap'],
+                    'Merk':   ['Quaker', 'Huismerk'],
+                  }},
+    soep:         { groups: {
+                    'Smaak':      ['Tomatensoep', 'Kippensoep', 'Erwtensoep', 'Champignonsoep', 'Groentesoep', 'Minestrone', 'Uiensoep', 'Pompoensoep', 'Paprikasoep'],
+                    'Verpakking': ['Blik', 'Pak', 'Cup'],
+                    'Merk':   ['Unox', 'Campbell\'s', 'Knorr', 'Huismerk'],
+                  }},
+    bouillon:     { groups: {
+                    'Type':       ['Groentebouillon', 'Kippenbouillon', 'Runderbouillon', 'Visbouillon', 'Paddenstoelenbouillon'],
+                    'Verpakking': ['Blokjes', 'Pot', 'Vloeibaar', 'Zakjes'],
+                    'Merk':   ['Knorr', 'Maggi', 'Huismerk'],
+                  }},
+    saus:         { groups: {
+                    'Soort': ['Pastasaus', 'Pesto', 'Tomatensaus', 'Sojasaus', 'Sweet chili saus', 'Barbecuesaus', 'Teriyaki saus'],
+                  }},
+    pastasaus:    { groups: {
+                    'Smaak': ['Basilicum', 'Bolognese', 'Carbonara', 'Arrabbiata', 'Pomodori', 'Funghi', 'Puttanesca'],
+                    'Merk':   ['Barilla', 'Bertolli', 'Ragu', 'Huismerk'],
+                  }},
+    pesto:        { groups: {
+                    'Type':  ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese', 'Pesto met zongedroogde tomaat'],
+                    'Merk':   ['Barilla', 'Bertolli', 'Sacla', 'Huismerk'],
+                  }},
+    pestosaus:    { groups: {
+                    'Type':  ['Pesto verde', 'Pesto rosso', 'Pesto alla genovese'],
+                    'Merk':   ['Barilla', 'Bertolli', 'Sacla', 'Huismerk'],
+                  }},
+    tortelloni:   ['Tortelloni ricotta spinazie', 'Tortelloni kaas', 'Tortelloni ham'],
+    cappelletti:  ['Cappelletti prosciutto', 'Cappelletti kaas', 'Cappelletti kip'],
+    ravioli:      ['Ravioli ricotta spinazie', 'Ravioli 5 formaggio', 'Ravioli funghi'],
+    gnocchi:      ['Verse gnocchi', 'Gnocchi tomaat mozzarella'],
+    olie:         { groups: {
+                    'Type':  ['Olijfolie extra vierge', 'Olijfolie', 'Zonnebloemolie', 'Koolzaadolie', 'Bakolie', 'Sesamolie', 'Kokosolie', 'Avocado-olie'],
+                    'Merk':   ['Bertolli', 'Carbonell', 'Becel', 'Huismerk'],
+                  }},
+    tomatenpuree: { groups: {
+                    'Type':  ['Tomatenpuree', 'Geconcentreerde tomatenpuree', 'Tomatenpuree met kruiden'],
+                    'Merk':   ['Mutti', 'Cirio', 'Huismerk'],
+                  }},
+    tomatenblokjes:{ groups: {
+                    'Type':  ['Tomatenblokjes naturel', 'Tomatenblokjes met knoflook', 'Tomatenblokjes met kruiden', 'Gepelde tomaten', 'Passata'],
+                    'Merk':   ['Mutti', 'Cirio', 'Huismerk'],
+                  }},
+    passata:      { groups: {
+                    'Type':  ['Passata naturel', 'Passata met basilicum', 'Passata met knoflook'],
+                    'Merk':   ['Mutti', 'Cirio', 'Huismerk'],
+                  }},
+    sambal:       { groups: {
+                    'Type':  ['Sambal oelek', 'Sambal manis', 'Sambal badjak', 'Sambal brandal', 'Sriracha'],
+                    'Merk':   ['Conimex', 'Koningsvogel', 'Huismerk'],
+                  }},
+    sojasaus:     { groups: {
+                    'Type':  ['Sojasaus licht', 'Sojasaus donker', 'Ketjap manis', 'Tamari', 'Teriyaki saus'],
+                    'Merk':   ['Kikkoman', 'Conimex', 'Blue Dragon', 'Huismerk'],
+                  }},
+    azijn:        { groups: {
+                    'Type':  ['Witte wijnazijn', 'Rode wijnazijn', 'Balsamico azijn', 'Appelazijn', 'Rijstazijn', 'Malt azijn'],
+                    'Merk':   ['Mautner Markhof', 'Huismerk'],
+                  }},
+    zout:         { groups: {
+                    'Type':  ['Fijn zeezout', 'Grof zeezout', 'Keukenzout', 'Himalayazout', 'Rookzout', 'Minder zout', 'Kruidenzout'],
+                    'Merk':   ['Jozo', 'Maldon', 'Huismerk'],
+                  }},
+    suiker:       { groups: {
+                    'Type':  ['Witte basterdsuiker', 'Bruine basterdsuiker', 'Kristalsuiker', 'Poedersuiker', 'Rietsuiker', 'Suikervervanger'],
+                    'Merk':   ['Van Gilse', 'Huismerk'],
+                  }},
+    bloem:        { groups: {
+                    'Type':  ['Tarwebloem', 'Zelfrijzend bakmeel', 'Volkorenmeel', 'Speltbloem', 'Glutenvrije bloem', 'Maizena'],
+                    'Merk':   ['Patissier', 'Huismerk'],
+                  }},
+    olijven:      { groups: {
+                    'Type':  ['Groene olijven', 'Zwarte olijven', 'Olijven gevuld', 'Olijventapenade', 'Olijvenmix'],
+                    'Merk':   ['Mezzetta', 'Huismerk'],
+                  }},
+    augurken:     { groups: {
+                    'Type':  ['Augurken fijn', 'Augurken grof', 'Cornichons', 'Zilveruitjes', 'Augurken zoet-zuur'],
+                    'Merk':   ['Hengstenberg', 'Kühne', 'Huismerk'],
+                  }},
+    kikkererwten: { groups: {
+                    'Type':  ['Kikkererwten in blik', 'Gekookte kikkererwten', 'Gedroogde kikkererwten', 'Kikkererwten pasta'],
+                    'Merk':   ['Bonduelle', 'Huismerk'],
+                  }},
+    bonen:        { groups: {
+                    'Soort':      ['Bruine bonen', 'Witte bonen', 'Kidney bonen', 'Zwarte bonen', 'Kapucijners', 'Linzen rood', 'Linzen groen'],
+                    'Verpakking': ['Blik', 'Glas', 'Gedroogd'],
+                    'Merk':   ['Bonduelle', 'Hak', 'Huismerk'],
+                  }},
+    linzen:       { groups: {
+                    'Soort':      ['Rode linzen', 'Groene linzen', 'Beluga linzen', 'Puy linzen'],
+                    'Verpakking': ['Droog', 'Blik', 'Gekookt'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    sperziebonen: { groups: {
+                    'Verpakking': ['Vers', 'Blik', 'Diepvries'],
+                    'Merk':   ['Hak', 'Bonduelle', 'Huismerk'],
+                  }},
+    // shampoo: duplicate verwijderd, tweede entry (drogist-sectie) is actief
+    conditioner:  { groups: {
+                    'Type':   ['Conditioner normaal', 'Conditioner droog haar', 'Leave-in conditioner', 'Haarmasker'],
+                    'Merk':   ['Andrelon', 'Pantene', 'Elvive', 'Dove', 'Schwarzkopf', 'Huismerk'],
+                  }},
+    douchegel:    { groups: {
+                    'Type':   ['Douchegel fris', 'Douchegel verzorgend', 'Douchegel sport', 'Douchegel men'],
+                    'Merk':   ['Dove', 'Nivea', 'Fa', 'Palmolive', 'Zwitsal', 'Axe', 'Huismerk'],
+                  }},
+    tandpasta:    { groups: {
+                    'Type':   ['Tandpasta whitening', 'Tandpasta gevoelige tanden', 'Tandpasta kids', 'Tandpasta original', 'Tandpasta complete'],
+                    'Merk':   ['Colgate', 'Oral-B', 'Aquafresh', 'Elmex', 'Sensodyne', 'Signal', 'Huismerk'],
+                  }},
+    deodorant:    { groups: {
+                    'Type':   ['Deodorant spray', 'Deodorant roller', 'Deodorant stick', 'Deodorant cream'],
+                    'Merk':   ['Dove', 'Nivea', 'Axe', 'Rexona', 'Sure', 'Fa', 'Huismerk'],
+                  }},
+    wasmiddel:    { groups: {
+                    'Type':   ['Vloeibaar wasmiddel', 'Wasmiddel capsules', 'Wasmiddel poeder', 'Wasmiddel kleur', 'Wasmiddel wit', 'Wasmiddel wol/fijn'],
+                    'Merk':   ['Ariel', 'Persil', 'Robijn', 'Omo', 'Bold', 'Dreft', 'Huismerk'],
+                  }},
+    wasverzachter:{ groups: {
+                    'Type':   ['Wasverzachter bloemen', 'Wasverzachter fris', 'Wasverzachter sport', 'Wasverzachter baby'],
+                    'Merk':   ['Robijn', 'Lenor', 'Comfort', 'Huismerk'],
+                  }},
+    afwasmiddel:  { groups: {
+                    'Type':   ['Afwasmiddel citroen', 'Afwasmiddel original', 'Afwasmiddel vet-oplossend'],
+                    'Merk':   ['Dreft', 'Fairy', 'Palmolive', 'Morning Fresh', 'Huismerk'],
+                  }},
+    vaatwastabletten: { groups: {
+                    'Type':   ['Vaatwastabletten all-in-1', 'Vaatwastabletten classic', 'Vaatwastabletten platinum', 'Vaatwastabletten pods'],
+                    'Merk':   ['Finish', 'Dreft', 'Somat', 'Sun', 'Huismerk'],
+                  }},
+    allesreiniger:{ groups: {
+                    'Type':   ['Allesreiniger spray', 'Allesreiniger citroen', 'Allesreiniger ontvet', 'Badkamerreiniger', 'Keukenreiniger'],
+                    'Merk':   ['Dettol', 'Mr. Proper', 'Flash', 'Ajax', 'Cif', 'Glorix', 'Huismerk'],
+                  }},
+    toiletpapier: { groups: {
+                    'Laag':   ['2-laags toiletpapier', '3-laags toiletpapier', '4-laags toiletpapier'],
+                    'Type':   ['Normaal', 'Extra zacht', 'Recycled', 'Bamboe'],
+                    'Merk':   ['Edet', 'Lotus', 'Zewa', 'Hakle', 'Page', 'Huismerk'],
+                  }},
+    'vochtig toiletpapier': ['Andrex vochtig', 'Cottonelle vochtig', 'Huismerk vochtig toiletpapier'],
+    zonnebrand:   { groups: {
+                    'SPF':    ['SPF 15', 'SPF 30', 'SPF 50', 'SPF 50+'],
+                    'Type':   ['Zonnebrand lotion', 'Zonnebrand spray', 'Zonnebrand stick', 'Kids zonnebrand', 'Gezicht zonnebrand', 'Aftersun'],
+                    'Merk':   ['Nivea Sun', 'Ambre Solaire', 'Piz Buin', 'Riemann P20', 'Eucerin', 'Zwitsal', 'Huismerk'],
+                  }},
+    luiers:       { groups: {
+                    'Maat':   ['Maat 1 (2-5 kg)', 'Maat 2 (3-6 kg)', 'Maat 3 (4-9 kg)', 'Maat 4 (7-18 kg)', 'Maat 5 (11-25 kg)', 'Maat 6 (13+ kg)'],
+                    'Type':   ['Luiers', 'Broekjesluiers', 'Nacht luiers'],
+                    'Merk':   ['Pampers', 'Huggies', 'Libero', 'Lillydoo', 'Lidl Lupilu', 'Huismerk'],
+                  }},
+    maandverband: { groups: {
+                    'Type':   ['Maandverband normaal', 'Maandverband nacht', 'Maandverband super', 'Inlegkruisjes', 'Tampons normaal', 'Tampons super', 'Menstruatiecup'],
+                    'Merk':   ['Always', 'Libresse', 'Tampax', 'OB', 'Huismerk'],
+                  }},
+    handzeep:     { groups: {
+                    'Type':   ['Vloeibare handzeep', 'Handzeep navulling', 'Antibacteriële handzeep', 'Handcrème'],
+                    'Merk':   ['Palmolive', 'Dettol', 'Dove', 'Sagrotan', 'Huismerk'],
+                  }},
+    bodylotion:   { groups: {
+                    'Type':   ['Bodylotion normaal', 'Bodylotion droge huid', 'Bodylotion parfumvrij', 'Body butter', 'Bodyolie'],
+                    'Merk':   ['Nivea', 'Dove', 'Palmer\'s', 'Vaseline', 'Zwitsal', 'Huismerk'],
+                  }},
+    vitaminen:    { groups: {
+                    'Type':   ['Vitamine D', 'Vitamine C', 'Vitamine B12', 'Multivitamine', 'Omega 3', 'Magnesium', 'IJzer', 'Zink', 'Foliumzuur'],
+                    'Merk':   ['Davitamon', 'Orthica', 'Holland & Barrett', 'AH huismerk', 'Huismerk'],
+                  }},
+    babydoekjes:  { groups: {
+                    'Type':   ['Babydoekjes normaal', 'Babydoekjes parfumvrij', 'Babydoekjes gevoelige huid', 'Billendoekjes'],
+                    'Merk':   ['Pampers', 'Huggies', 'WaterWipes', 'Zwitsal', 'Huismerk'],
+                  }},
+    // Diepvries
+    'diepvries groente': { groups: {
+                    'Soort':  ['Spinazie','Doperwten','Broccoli','Bloemkool','Haricots verts','Wokgroenten','Groentenmix','Maïs','Paprika mix','Uiringen','Courgette','Edamame'],
+                    'Type':   ['Heel','Fijngehakt','In stukjes','Mix'],
+                    'Merk':   ['McCain', 'Bonduelle', 'Huismerk'],
+                  }},
+    'diepvries fruit':  { groups: {
+                    'Soort':  ['Bosvruchten','Mango','Framboos','Aardbei','Blauwe bes','Kersen','Perzik','Ananas','Fruitcocktail'],
+                    'Type':   ['Heel','Gepureerd','Mix'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    'diepvries pizza':  { groups: {
+                    'Bodem':  ['Dunne bodem','Dikke bodem','Volkoren','Glutenvrij'],
+                    'Beleg':  ['Margherita','Salami','Ham','Vier kazen','Tonijn','Hawai','BBQ kip','Vegetarisch'],
+                    'Merk':   ['Dr. Oetker', 'Wagner', 'Casa di Mama', 'Chicago Town', 'Huismerk'],
+                  }},
+    'diepvries vlees':  { groups: {
+                    'Soort':  ['Kipfilet','Kipnuggets','Kipschnitzel','Kippenpoten','Runderburger','Vegaburger'],
+                    'Merk':   ['Mora', 'Huismerk'],
+                  }},
+    'diepvries vis':    { groups: {
+                    'Soort':  ['Vissticks','Zalmfilet','Kabeljauwfilet','Garnalen','Calamares','Pangasius'],
+                    'Merk':   ['Iglo', 'Huismerk'],
+                  }},
+    'diepvries snacks': { groups: {
+                    'Soort':     ['Frikandel','Kroket','Loempia','Bitterballen','Kaassoufflé','Samosa','Naan brood','Bladerdeeg'],
+                    'Bereiding': ['Oven / airfryer','Frituur','Beide'],
+                    'Merk':   ['Mora', 'Huismerk'],
+                  }},
+    'diepvries maaltijd': { groups: {
+                    'Keuken': ['Pasta','Rijst','Aziatisch','Indiaas','Mexicaans','Hollands'],
+                    'Soort':  ['Lasagne','Spaghetti bolognese','Nasi','Bami','Paella','Kerrie'],
+                    'Merk':   ['Iglo', 'La Famiglia', 'Huismerk'],
+                  }},
+    friet:          { groups: {
+                    'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes','Rösti','Hasselback','Zoete aardappelfriet'],
+                    'Bereiding':  ['Oven','Airfryer','Frituur'],
+                    'Merk':   ['McCain', 'Aviko', 'Huismerk'],
+                  }},
+    patat:          { groups: {
+                    'Type':       ['Friet normaal','Friet dun','Friet dik','Schilletjesfriet','Aardappelpartjes'],
+                    'Bereiding':  ['Oven','Airfryer','Frituur'],
+                    'Merk':   ['McCain', 'Aviko', 'Huismerk'],
+                  }},
+    // Sauzen & condimenten
+    mayonaise:    { groups: {
+                    'Type':  ['Mayonaise vol', 'Mayonaise halfvol', 'Zaanse mayonaise', 'Vegan mayonaise', 'Aioli'],
+                    'Merk':   ['Calvé', 'Hellmann\'s', 'Remia', 'Huismerk'],
+                  }},
+    mayo:         { groups: {
+                    'Type':  ['Mayonaise vol', 'Mayonaise halfvol', 'Zaanse mayonaise', 'Vegan mayonaise'],
+                    'Merk':   ['Calvé', 'Hellmann\'s', 'Remia', 'Huismerk'],
+                  }},
+    ketchup:      { groups: {
+                    'Type':  ['Ketchup', 'Ketchup minder suiker', 'Ketchup pittig', 'Tomatenketchup'],
+                    'Merk':   ['Heinz', 'Calvé', 'Remia', 'Huismerk'],
+                  }},
+    mosterd:      { groups: {
+                    'Type':  ['Grove mosterd', 'Dijon mosterd', 'Honingmosterd', 'Mierikswortelmosterd', 'Amerikaans mosterd'],
+                    'Merk':   ['Maille', 'Calvé', 'Remia', 'Huismerk'],
+                  }},
+    barbecuesaus: { groups: {
+                    'Smaak': ['Original', 'Smoky', 'Honey', 'Spicy', 'Jack Daniel\'s', 'Memphis BBQ'],
+                    'Merk':   ['Heinz', 'Remia', 'Sweet Baby Ray\'s', 'Bull\'s-Eye', 'Huismerk'],
+                  }},
+    chips:        { groups: {
+                    'Smaak': ['Naturel', 'Paprika', 'Bolognese', 'Ribbel', 'Pickles', 'Sour cream & onion', 'Cheese & onion', 'BBQ', 'Zout & azijn', 'Bacon', 'Jalapeño'],
+                    'Merk':   ['Lays', 'Croky', 'Pringles', 'Huismerk'],
+                  }},
+    tortilla:     { groups: {
+                    'Smaak': ['Naturel', 'Paprika', 'Nacho cheese', 'Cool ranch', 'Sweet chili', 'Guacamole'],
+                    'Merk':   ['Doritos', 'Old El Paso', 'Huismerk'],
+                  }},
+
+    // Vegetarisch & plantaardig
+    vleesvervanger: { groups: {
+                    'Soort':   ['Vegaburger', 'Vega gehakt', 'Vega schnitzel', 'Vega nuggets', 'Vega worst', 'Vega balletjes', 'Vega kipstukjes', 'Vega shoarma', 'Vega saté', 'Vega gyros', 'Vega loempia', 'Vega merguez', 'Vega knakworst'],
+                    'Merk':   ['Vivera', 'Garden Gourmet', 'Beyond Meat', 'The Vegetarian Butcher', 'Valess', 'Fry\'s', 'Huismerk'],
+                  }},
+    vleesvervangers:{ groups: {
+                    'Soort':   ['Vegaburger', 'Vega gehakt', 'Vega schnitzel', 'Vega nuggets', 'Vega worst', 'Vega balletjes', 'Vega kipstukjes', 'Vega shoarma'],
+                    'Merk':   ['Vivera', 'Garden Gourmet', 'Beyond Meat', 'The Vegetarian Butcher', 'Valess', 'Huismerk'],
+                  }},
+    tofu:         { groups: {
+                    'Soort':   ['Naturel tofu', 'Gerookte tofu', 'Marinated tofu', 'Silken tofu', 'Smoked tofu', 'Tofu blokjes pittig'],
+                    'Merk':   ['Alpro', 'Provamel', 'Taifun', 'Huismerk'],
+                  }},
+    tempeh:       { groups: {
+                    'Soort':   ['Naturel tempeh', 'Gerookt tempeh', 'Gekruid tempeh', 'Tempeh blokjes'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    hummus:       { groups: {
+                    'Smaak':   ['Naturel', 'Rode paprika', 'Knoflook', 'Jalapeño', 'Edamame', 'Biet', 'Zwarte olijf', 'Pittig', 'Zon-gedroogde tomaat'],
+                    'Merk':   ['Maza', 'Zorba', 'Huismerk'],
+                  }},
+    falafel:      { groups: {
+                    'Soort':   ['Falafel balletjes', 'Falafel wrap', 'Mini falafel'],
+                    'Merk':   ['Cauldron', 'Huismerk'],
+                  }},
+
+    // Noten & gedroogde vruchten (borrel/snacks)
+    noten:        { groups: {
+                    'Soort':   ['Notenmix', 'Cashewnoten', 'Amandelen', 'Walnoten', 'Paranoten', 'Pecannoten', 'Macadamianoten', 'Pistaches', 'Pinda\'s', 'Hazelnoten'],
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Gebrand', 'Ongebrand', 'Gekarameliseerd', 'Gerookt'],
+                    'Merk':   ['Duyvis', 'Huismerk'],
+                  }},
+    cashewnoten:  { groups: {
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Gebrand', 'Ongebrand'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    amandelen:    { groups: {
+                    'Bereiding':['Ongebrand', 'Gebrand', 'Gezouten', 'Geschaafd', 'Gemalen'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    walnoten:     { groups: {
+                    'Bereiding':['Ongebrand', 'Gebrand', 'Ongezouten'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    pistaches:    { groups: {
+                    'Bereiding':['Ongezouten', 'Gezouten', 'Geroosterd'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    notenmix:     { groups: {
+                    'Soort':   ['Studentenhaver', 'Cranberry notenmix', 'Rood fruit notenmix', 'Dadel rozijn mix', 'Macadamia mix', 'Borrelnoten'],
+                    'Merk':   ['Duyvis', 'Huismerk'],
+                  }},
+    borrelnootjes:{ groups: {
+                    'Soort':   ['Borrelnoten naturel', 'Borrelnoten gekruid', 'Pinda\'s gezouten', 'Pinda\'s ongezouten', 'Cashewnoten', 'Pistaches', 'Amandelen', 'Macadamia', 'Borrelmix'],
+                    'Merk':   ['Duyvis', 'Huismerk'],
+                  }},
+    pinda:        { groups: {
+                    'Bereiding':['Gezouten', 'Ongezouten', 'Gekruid', 'Naturel'],
+                    'Merk':   ['Duyvis', 'Huismerk'],
+                  }},
+    olijven:      { groups: {
+                    'Soort':   ['Groene olijven', 'Zwarte olijven', 'Kalamata olijven', 'Gevulde olijven', 'Gemengde olijven', 'Olijventapenade'],
+                    'Merk':   ['Maza', 'Royal', 'Huismerk'],
+                  }},
+    pesto:        { groups: {
+                    'Soort':   ['Pesto alla genovese', 'Pesto rosso', 'Pesto arrabbiata', 'Pesto truffelsmaak', 'Pesto ricotta walnoot', 'Pesto calabrese', 'Vegan pesto'],
+                    'Merk':   ['Grand\'Italia', 'Bertolli', 'Costa Ligure', 'De Cecco', 'Huismerk'],
+                  }},
+    popcorn:      { groups: {
+                    'Smaak':   ['Zoet', 'Zout', 'Karamel', 'Zoet & zout', 'Nacho cheese', 'Sweet chili', 'Butter', 'Churros'],
+                    'Merk':   ['Jimmy\'s', 'Proper', 'Pathé', 'Huismerk'],
+                  }},
+
+    // Frisdrank specifics
+    'ice tea':    { groups: {
+                    'Smaak':   ['Green', 'Peach', 'Lemon', 'Sparkling', 'Mango chamomile'],
+                    'Suiker':  ['Normaal', 'Zero sugar'],
+                    'Merk':   ['Lipton', 'Fuze Tea', 'Huismerk'],
+                  }},
+    'energy drink':{ groups: {
+                    'Smaak':   ['Original', 'Suikervrij', 'Watermeloen', 'Bosvrucht', 'Abrikoos-aardbei', 'Kersen', 'Tropical'],
+                    'Merk':   ['Red Bull', 'Monster', 'Bullit', 'Celsius', 'AA Drink', 'Huismerk'],
+                  }},
+    sinaasappelsap:{ groups: {
+                    'Type':    ['100% puur sap', 'Met vruchtvlees', 'Mild', 'Biologisch', 'Nectar'],
+                    'Merk':   ['Appelsientje', 'Tropicana', 'Huismerk'],
+                  }},
+    appelsap:     { groups: {
+                    'Type':    ['Helder', 'Troebel', 'Elstar', 'Bio', 'Boomgaard'],
+                    'Merk':   ['Flevosap', 'Appelsientje', 'Huismerk'],
+                  }},
+    mineraalwater:{ groups: {
+                    'Type':    ['Koolzuurvrij', 'Koolzuurhoudend', 'Licht bruisend'],
+                    'Merk':   ['Spa Reine', 'Spa Intense', 'Bar-le-Duc', 'Huismerk'],
+                  }},
+    kokoswater:   { groups: {
+                    'Smaak':   ['Naturel', 'Ananas', 'Aardbei'],
+                    'Merk':   ['Healthy People', 'Huismerk'],
+                  }},
+    kombucha:     { groups: {
+                    'Smaak':   ['Aardbei blauwe bes cranberry', 'Gember citroen', 'Passievrucht'],
+                    'Merk':   ['Remedy', 'Huismerk'],
+                  }},
+
+    // Bakkerij specifics
+    brood:        { groups: {
+                    'Soort':   ['Tijger wit', 'Tijger bruin', 'Tijger volkoren', 'Waldkorn', 'Zaans wit', 'Zaans bruin', 'Zaans volkoren', 'Les pains', 'OerDesem', 'Casino wit', 'Rond wit', 'Vloerbrood', 'Liefde & Passie'],
+                    'Snit':    ['Heel', 'Half', 'Gesneden'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    stokbrood:    { groups: {
+                    'Soort':   ['Wit stokbrood', 'Robuust stokbrood', 'Spelt stokbrood', 'Knoflookboter', 'Kruidenboter', 'Kaas-ui', 'Waldkorn', 'Tijger', 'Meerzaden'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    baguette:     { groups: {
+                    'Soort':   ['Baguette', 'Demi baguette', 'Petit stokbrood', 'Frans stokbrood', 'Biologisch stokbrood'],
+                    'Merk':   ['Schnitzer', 'Schär (glutenvrij)', 'Huismerk'],
+                  }},
+    speculaas:    { groups: {
+                    'Soort':  ['Speculaasjes', 'Speculaas', 'Bastognekoeken', 'Pepernoten', 'Kruidnoten', 'Speculaaspasta'],
+                    'Merk':   ['Lotus', 'Verkade', 'Bolletje', 'Huismerk'],
+                  }},
+    stroopwafel:  { groups: {
+                    'Soort':  ['Stroopwafel', 'Mini stroopwafel', 'Stroopwafel minder suiker', 'Stroopwafelkoek'],
+                    'Merk':   ['Daelmans', 'Huismerk'],
+                  }},
+    mueslirepep:  { groups: {
+                    'Soort':  ['Mueslirepep', 'Granenreep', 'Proteïnereep', 'Noten-reep', 'Chocolade reep'],
+                    'Merk':   ['Liga', 'Sultana', 'Snelle Jelle', 'Huismerk'],
+                  }},
+    mueslireep:   { groups: {
+                    'Soort':  ['Mueslireep', 'Granenreep', 'Proteïnereep', 'Noten-reep', 'Chocoladereep'],
+                    'Merk':   ['Liga', 'Sultana', 'Snelle Jelle', 'Huismerk'],
+                  }},
+    ontbijtkoek:  { groups: {
+                    'Soort':  ['Naturel', 'Volkoren', 'Parelkandij', 'Gember', 'Rozijnen', 'Minder suiker', 'Zero', 'Kruidkoek'],
+                    'Vorm':   ['Gesneden', 'Ongesneden', 'Portieverpakking'],
+                    'Merk':   ['Peijnenburg', 'Bolletje', 'Snelle Jelle', 'GIJS', 'Huismerk'],
+                  }},
+    saucijzenbrood: { groups: {
+                    'Soort':  ['Saucijzenbrood', 'Mini saucijzenbrood'],
+                    'Merk':   ['Mora', 'Huismerk'],
+                  }},
+    worstenbroodje: { groups: {
+                    'Soort':  ['Worstenbroodje', 'Mini worstenbroodje'],
+                    'Merk':   ['Mora', 'Huismerk'],
+                  }},
+    bollen:       { groups: {
+                    'Soort':   ['Witte bollen', 'Bruine bollen', 'Volkoren bollen', 'Meergranen bollen', 'Zachte witte bollen', 'Pistolets', 'Puntjes'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    bolletjes:    { groups: {
+                    'Soort':   ['Witte bolletjes', 'Bruine bolletjes', 'Volkoren bolletjes', 'Meergranen bolletjes', 'Pistolets', 'Puntjes'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    broodje:      { groups: {
+                    'Soort':   ['Pistolet', 'Volkoren bolletje', 'Witte bol', 'Hamburgerbroodje', 'Kaisertje', 'Schnittbroodje', 'Rozijnenbol', 'Mueslibol', 'Beschuitbol'],
+                    'Merk':   ['Huismerk'],
+                  }},
+    beschuit:     { groups: {
+                    'Soort':   ['Beschuit naturel', 'Beschuit volkoren', 'Meerzadenbeschuit', 'Speltbeschuit', 'Eiwitrijke beschuit'],
+                    'Merk':   ['Bolletje', 'TastyBasics', 'Huismerk'],
+                  }},
+    croissant:    { groups: {
+                    'Soort':   ['Roomboter croissant', 'Ham-kaas croissant', 'Chocolade croissant', 'Amandel croissant', 'Mini croissant', 'Super croissant', 'Praliné croissant'],
+                    'Merk':   ['Danerolles', 'Huismerk'],
+                  }},
+
+    // Kaas specifics
+    'goudse kaas':{ groups: {
+                    'Rijping':  ['Jong', 'Jong belegen', 'Belegen', 'Extra belegen', 'Oud'],
+                    'Vetgehalte':['48+', '30+', '20+'],
+                    'Vorm':     ['Stuk', 'Plakken', 'Geraspt'],
+                    'Gewicht':  ['200g', '350g', '500g', '750g', '1kg'],
+                    'Merk':   ['AH Zaanlander', 'De Zaanse Hoeve', 'Beemster', 'Milner', 'Huismerk'],
+                  }},
+    mozzarella:   { groups: {
+                    'Soort':    ['Mozzarella', 'Buffelmozzarella', 'Mini mozzarella', 'Mozzarella geraspt', 'Mozzarella light'],
+                    'Merk':   ['Galbani', 'Biologisch', 'Huismerk'],
+                  }},
+    feta:         { groups: {
+                    'Soort':    ['Feta blok', 'Feta gecrumbled', 'Gemarineerde feta', 'Feta in olie'],
+                    'Merk':   ['Dodoni', 'Salakis', 'Huismerk'],
+                  }},
+    roomkaas:     { groups: {
+                    'Smaak':    ['Naturel', 'Knoflook & kruiden', 'Avocado feta', 'Ananas', 'Gember', 'Jalapeño', 'Sambal'],
+                    'Merk':   ['Philadelphia', 'Garlan', 'Huismerk'],
+                  }},
+    smeerkaas:    { groups: {
+                    'Smaak':    ['Naturel', 'Sambal', 'Ham', 'Jalapeño', 'Kruiden'],
+                    'Vetgehalte':['15+', '48+'],
+                    'Merk':   ['Eru', 'La Vache Qui Rit', 'Huismerk'],
+                  }},
+
+    // Koffie & thee
+    koffiebonen:  { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Filterkoffie', 'Americano', 'Decaf'],
+                    'Intensiteit':['Mild', 'Medium', 'Sterk', 'Extra sterk'],
+                    'Merk':   ['Douwe Egberts', 'Lavazza', 'Illy', 'Starbucks', 'Perla', 'Jacobs', 'De Koffie Jongens', 'Huismerk'],
+                  }},
+    filterkoffie: { groups: {
+                    'Intensiteit':['Mild', 'Medium', 'Sterk', 'Decaf'],
+                    'Merk':   ['Douwe Egberts', 'Perla', 'Jacobs', 'Huismerk'],
+                  }},
+    koffiepads:   { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Cappuccino', 'Latte macchiato'],
+                    'Merk':   ['Senseo', 'Douwe Egberts', 'Huismerk'],
+                  }},
+    koffiecups:   { groups: {
+                    'Soort':   ['Espresso', 'Lungo', 'Ristretto', 'Cappuccino', 'Latte macchiato', 'Decaf'],
+                    'Merk':   ['Nespresso', 'Dolce Gusto', 'Starbucks', 'Lavazza', 'Illy', 'Huismerk'],
+                  }},
+    instantkoffie:{ groups: {
+                    'Soort':   ['Granulaat', 'Gevriesdroogd', '3-in-1'],
+                    'Merk':   ['Nescafé', 'Douwe Egberts', 'Jacobs', 'Huismerk'],
+                  }},
+
+    // Drogist — persoonlijke verzorging
+    shampoo:      { groups: {
+                    'Type':    ['Dagelijks', 'Anti-roos', 'Volume', 'Repair', '2-in-1', 'Color', 'Krullen'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Head & Shoulders', 'Pantene', 'Elvive', 'Andrelon', 'Dove', 'Herbal Essences', 'Huismerk'],
+                  }},
+    conditioner:  { groups: {
+                    'Type':    ['Normaal haar', 'Droog haar', 'Gekleurd haar', 'Beschadigd haar', 'Volume', 'Leave-in'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Pantene', 'Elvive', 'Andrelon', 'Dove', 'Huismerk'],
+                  }},
+    douchegel:    { groups: {
+                    'Geur':    ['Fris', 'Bloemen', 'Houtachtig', 'Citrus', 'Vanille', 'Sport', 'Geurloos'],
+                    'Type':    ['Douchegel', 'Douchecrème', 'Doucheschuim', '2-in-1 haar & lichaam'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Dove', 'Nivea', 'Fa', 'Axe', 'Palmolive', 'Huismerk'],
+                  }},
+    deodorant:    { groups: {
+                    'Type':    ['Spray', 'Roller', 'Stick', 'Crème'],
+                    'Soort':   ['Normaal', '48u', '72u', 'Sensitive', 'Sport', 'Whitening'],
+                    'Merk':   ['Dove', 'Rexona', 'Nivea', 'Axe', 'Huismerk'],
+                  }},
+    bodylotion:   { groups: {
+                    'Type':    ['Normale huid', 'Droge huid', 'Gevoelige huid', 'Stralende huid', 'Zelfbruiner'],
+                    'Merk':   ['Dove', 'Nivea', 'Etos', 'Huismerk'],
+                  }},
+    zonnebrand:   { groups: {
+                    'SPF':     ['SPF 15', 'SPF 20', 'SPF 30', 'SPF 50', 'SPF 50+'],
+                    'Type':    ['Lotion', 'Spray', 'Crème', 'Spray kids', 'After sun'],
+                    'Merk':   ['Zwitsal', 'Nivea', 'Eucerin', 'Ambre Solaire', 'Huismerk'],
+                  }},
+    handzeep:     { groups: {
+                    'Type':    ['Vloeibare handzeep', 'Navulling', 'Antibacterieel', 'Geurloos'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Dettol', 'Dove', 'Sanytol', 'Huismerk'],
+                  }},
+    maandverband: { groups: {
+                    'Type':    ['Normaal', 'Nacht', 'Mini', 'Super', 'Ultra thin'],
+                    'Merk':   ['Always', 'Libresse', 'Etos', 'Huismerk'],
+                  }},
+    tampons:      { groups: {
+                    'Maat':    ['Mini', 'Normal', 'Super', 'Super plus'],
+                    'Merk':   ['Tampax', 'o.b.', 'Etos', 'Huismerk'],
+                  }},
+    luiers:       { groups: {
+                    'Maat':    ['Maat 1', 'Maat 2', 'Maat 3', 'Maat 4', 'Maat 5', 'Maat 6'],
+                    'Type':    ['Normaal', 'Pants', 'Nacht'],
+                    'Merk':   ['Pampers', 'Huggies', 'Libero', 'Huismerk'],
+                  }},
+    strepsils:    { groups: {
+                    'Smaak':   ['Citroen honing', 'Mentol eucalyptus', 'Sinaasappel vitamine C', 'Blackcurrant', 'Aardbei', 'Original'],
+                    'Type':    ['Zuigtablet', 'Suikervrij'],
+                    'Merk':   ['Strepsils', 'Huismerk'],
+                  }},
+    trachitol:    { groups: {
+                    'Soort':   ['Trachitol 20 tabletten', 'Trachitol forte'],
+                    'Merk':   ['Trachitol', 'Huismerk'],
+                  }},
+    zuigtabletten:{ groups: {
+                    'Smaak':   ['Menthol', 'Citroen', 'Honing', 'Eucalyptus', 'Bosvruchten'],
+                    'Merk':   ['Strepsils', 'Halls', 'Ricola', 'Jakobijner', 'Huismerk'],
+                  }},
+    keelspray:    { groups: {
+                    'Type':    ['Keelspray', 'Neusdruppels', 'Neusspray'],
+                    'Merk':   ['Otrivine', 'Sterimar', 'Rhinospray', 'Huismerk'],
+                  }},
+    paracetamol:  { groups: {
+                    'Sterkte': ['500mg', '1000mg', 'Kind 120mg', 'Kind 250mg'],
+                    'Type':    ['Tablet', 'Zetpil', 'Siroop'],
+                    'Merk':   ['Paracetamol', 'Perdolan', 'Dafalgan', 'Huismerk'],
+                  }},
+    ibuprofen:    { groups: {
+                    'Sterkte': ['200mg', '400mg', '600mg'],
+                    'Type':    ['Tablet', 'Capsule', 'Liquid caps'],
+                    'Merk':   ['Advil', 'Nurofen', 'Huismerk'],
+                  }},
+    vitaminen:    { groups: {
+                    'Soort':   ['Vitamine C', 'Vitamine D', 'Vitamine B12', 'Multivitamine', 'Omega 3', 'Magnesium', 'Zink', 'IJzer'],
+                    'Merk':   ['Davitamon', 'Orthica', 'Jamieson', 'Huismerk'],
+                  }},
+    scheermesjes: { groups: {
+                    'Type':    ['Wegwerpmesjes', 'Systeem mesjes', 'Dames scheermesjes'],
+                    'Merk':   ['Gillette', 'Wilkinson', 'Schick', 'BIC', 'Huismerk'],
+                  }},
+
+    // Huishouden
+    wasmiddel:    { groups: {
+                    'Type':    ['Poeder', 'Vloeibaar', 'Capsules', 'Pods', 'Color', 'Wol & fijn', 'Zwart'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Ariel', 'Persil', 'Omo', 'Robijn', 'Huismerk'],
+                  }},
+    wasverzachter:{ groups: {
+                    'Geur':    ['Fris', 'Bloemen', 'Geurloos', 'Sport'],
+                    'Merk':   ['Robijn', 'Lenor', 'Snuggle', 'Huismerk'],
+                  }},
+    vaatwastabletten:{ groups: {
+                    'Type':    ['Normaal', 'All-in-one', 'Eco', 'Extra krachtig'],
+                    'Merk':   ['Finish', 'Dreft', 'Somat', 'Huismerk'],
+                  }},
+    afwasmiddel:  { groups: {
+                    'Type':    ['Normaal', 'Sensitive', 'Anti-vet', 'Geconcentreerd'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Dreft', 'Fairy', 'Sun', 'Huismerk'],
+                  }},
+    allesreiniger:{ groups: {
+                    'Type':    ['Normaal', 'Ontvet', 'Anti-bacterieel', 'Schuurmiddel'],
+                    'Merk':   ['Marcel\'s Green Soap', 'Seepje', 'Dettol', 'Mr Proper', 'Flash', 'Huismerk'],
+                  }},
+    vuilniszakken:{ groups: {
+                    'Inhoud':  ['20L', '40L', '60L', '80L', '120L'],
+                    'Type':    ['Normaal', 'Met sluitband', 'Composteerbaar', 'Extra sterk'],
+                    'Merk':   ['Toppits', 'Huismerk'],
+                  }},
+    keukenpapier: { groups: {
+                    'Type':    ['Normaal', 'Extra sterk', '3-laags'],
+                    'Merk':   ['Zewa', 'Plenty', 'Huismerk'],
+                  }},
+    aluminiumfolie:{ groups: {
+                    'Type':    ['Normaal', 'Extra sterk', 'BBQ'],
+                    'Merk':   ['Toppits', 'Huismerk'],
+                  }},
+    ontkalker:    { groups: {
+                    'Voor':    ['Koffiezetter', 'Vaatwasser', 'Waterkoker', 'Wasmachine', 'Universeel'],
+                    'Vorm':    ['Vloeistof', 'Tabletten', 'Poeder', 'Sachets'],
+                    'Merk':   ['Durgol', 'Calgon', 'Huismerk'],
+                  }},
+    stofdoek:     { groups: {
+                    'Type':    ['Stofdoek', 'Microvezeldoek', 'Vaatdoek', 'Schuursponsje', 'Schuurpad'],
+                    'Merk':   ['Spontex', 'Vileda', 'Scotch-Brite', 'Huismerk'],
+                  }},
+    'gezouten karamel': { groups: {
+                    'Soort':  ['Chocolade gezouten karamel', 'Ijs gezouten karamel', 'Karamelsaus gezouten', 'Karamelkoekjes'],
+                    'Merk':  ['Tony\'s Chocolonely', 'Huismerk'],
+                  }},
+  };
+
+  const RECIPES = {
+    'pasta carbonara':      { emo:'🍝', ingredients:['Spaghetti','Spekjes','Ei','Parmezaan','Room'] },
+    'spaghetti bolognese':  { emo:'🍝', ingredients:['Spaghetti','Rundergehakt','Tomatensaus','Ui','Knoflook'] },
+    'lasagne':              { emo:'🫕', ingredients:['Lasagnebladen','Rundergehakt','Tomatensaus','Melk','Bloem','Boter','Geraspte kaas'] },
+    'stamppot boerenkool':  { emo:'🥬', ingredients:['Aardappels','Boerenkool','Rookworst','Spekjes'] },
+    'stamppot andijvie':    { emo:'🥔', ingredients:['Aardappels','Andijvie','Spekjes','Ui'] },
+    'hutspot':              { emo:'🥕', ingredients:['Aardappels','Wortel','Ui','Runderlap'] },
+    'erwtensoep':           { emo:'🫛', ingredients:['Spliterwten','Rookworst','Aardappel','Ui','Wortel','Prei','Selderij'] },
+    'pannenkoeken':         { emo:'🥞', ingredients:['Bloem','Ei','Melk','Boter','Poedersuiker'] },
+    'nasi goreng':          { emo:'🍚', ingredients:['Rijst','Ei','Ui','Kipfilet','Ketjap','Sambal'] },
+    'bami goreng':          { emo:'🍜', ingredients:['Mie','Ei','Ui','Kipfilet','Ketjap','Sambal'] },
+    'kippensoep':           { emo:'🍲', ingredients:['Kip','Soepgroenten','Bouillon','Vermicelli','Peterselie'] },
+    'caesar salade':        { emo:'🥗', ingredients:['Romaine sla','Kipfilet','Parmezaan','Croutons','Caesar dressing'] },
+    'bruschetta':           { emo:'🍅', ingredients:['Stokbrood','Tomaten','Knoflook','Basilicum','Olijfolie'] },
+    'chili con carne':      { emo:'🌶️', ingredients:['Rundergehakt','Kidney bonen','Tomatensaus','Ui','Knoflook','Sambal','Paprikapoeder'] },
+    'omelet':               { emo:'🍳', ingredients:['Ei','Melk','Boter','Zout','Peper'] },
+    'quiche':               { emo:'🥧', ingredients:['Bladerdeeg','Ei','Room','Geraspte kaas','Spekjes','Ui'] },
+    'risotto':              { emo:'🍚', ingredients:['Risottorijst','Bouillon','Ui','Witte wijn','Parmezaan','Boter'] },
+    'gehaktballen':         { emo:'🍖', ingredients:['Half-om-half gehakt','Ei','Paneermeel','Ui','Nootmuskaat','Boter'] },
+    'wraps kip':            { emo:'🌯', ingredients:['Wraps','Kipfilet','Paprika','Sla','Tomatensaus','Geraspte kaas'] },
+    'soep':                 { emo:'🍲', ingredients:['Soepgroenten','Bouillon','Ui','Wortel','Prei'] },
+  };
+
+  // Mijn categorie → AH-categorieen (boost score als de match daarin valt)
+  const USER_CAT_TO_AH = {
+    groente:   ['Groente, aardappelen', 'Fruit, verse sappen'],
+    fruit:     ['Fruit, verse sappen'],
+    zuivel:    ['Zuivel, eieren', 'Kaas'],
+    bakkerij:  ['Bakkerij'],
+    vlees:     ['Vlees', 'Vis', 'Vleeswaren'],
+    diepvries: ['Diepvries'],
+    houdbaar:  ['Soepen, sauzen, kruiden, olie', 'Pasta, rijst, wereldkeuken', 'Ontbijtgranen, beleg', 'Maaltijden, salades', 'Glutenvrij', 'Vegetarisch, vegan en plantaardig'],
+    snacks:    ['Koek, snoep, chocolade', 'Borrel, chips, snacks', 'Tussendoortjes'],
+    frisdranken: ['Frisdrank, sappen, water'],
+    koffie:      ['Koffie, thee'],
+    alcoholisch: ['Bier, wijn, aperitieven', 'Sterke drank'],
+    maaltijden:['Maaltijden, salades', 'Pasta, rijst, wereldkeuken', 'Bakkerij'],
+    drogist:   ['Drogisterij', 'Gezondheid en sport', 'Baby en kind'],
+    verzorging:['Drogisterij', 'Gezondheid en sport'],
+    baby:      ['Baby en kind'],
+    huisdier:  ['Dierenvoeding'],
+    huishouden:['Huishouden'],
+    dranken:   ['Frisdrank, sappen, water', 'Koffie, thee', 'Bier, wijn, aperitieven'],
+    vis:       ['Vis'],
+    kaas:      ['Kaas'],
+    brood:     ['Bakkerij'],
+  };
+
+  function renderStaleBanner(show, label) {
+    const el = document.getElementById('stale-banner');
+    if (!el) return;
+    el.innerHTML = show
+      ? `<div class="stale-banner">⚠️ ${label || 'Offline — prijzen zijn mogelijk verouderd. Verbind met internet voor actuele data.'}</div>`
+      : '';
+  }
+
+  async function loadStores() {
+    // Per winkel: eerst cache uit IndexedDB (snel), dan vers ophalen op achtergrond.
+    let anyCache = false;
+    let cacheStale = false;
+    const now = Date.now();
+    await Promise.all(STORES.map(async store => {
+      try {
+        const cached = await idb.get(store.id);
+        if (cached && Array.isArray(cached.products)) {
+          setStoreData(store.id, cached);
+          anyCache = true;
+          if (cached.scraped_at) {
+            const ageH = (now - new Date(cached.scraped_at).getTime()) / 3600000;
+            if (ageH > 25) cacheStale = true;
+          }
+        }
+      } catch (e) {}
+    }));
+    render();
+    if (anyCache && cacheStale) renderStaleBanner(true, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
+    // Vers ophalen (parallel)
+    const results = await Promise.all(STORES.map(async store => {
+      try {
+        const res = await fetch(store.file, { cache: 'no-cache' });
+        if (!res.ok) { console.error(`[data] ${store.id}: HTTP ${res.status}`); return false; }
+        const data = await res.json();
+        if (Array.isArray(data.products)) {
+          const slim = { scraped_at: data.scraped_at, products: data.products };
+          setStoreData(store.id, slim);
+          idb.put(store.id, slim).catch(() => {});
+          return true;
+        }
+      } catch (e) { console.error(`[data] ${store.id}: ${e.message}`); }
+      return false;
+    }));
+    const freshLoaded = results.some(Boolean);
+    renderStaleBanner(!freshLoaded && cacheStale, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
+    render();
+    if (!freshLoaded && !anyCache) {
+      toast('⚠️ Prijsdata kon niet worden geladen. Controleer je verbinding.');
+    }
+    // Eenmalig: ruim oude localStorage data-keys op
+    for (const store of STORES) {
+      try { localStorage.removeItem('boodschappen.data.' + store.id); } catch {}
+    }
+  }
+
+  // Laad server-correcties parallel met winkeldata
+  loadServerCorrections().then(() => { matchCache.clear(); render(); });
+  loadPriceHistory();
+
+  // Eenheid-tokens die uit productnamen gestript worden vóór het matchen
+  // (anders verdunnen "1", "l", "500ml" de woord-dichtheid).
+  const UNIT_TOKENS = new Set(['l','ml','cl','dl','g','gr','gram','kg','kilo','st','stuk','stuks','stk','pak','pack','x','liter','stems','rollen','rol','tabletten','wasbeurten','plakken','zakjes','bossen','bos','tros','per','ca','001']);
+  function isQtyToken(w) {
+    if (UNIT_TOKENS.has(w)) return true;
+    if (/^\d+([.,]\d+)?$/.test(w)) return true;          // puur getal: "1", "0,5"
+    if (/^\d+([.,]\d+)?(l|ml|cl|dl|g|gr|kg|st|stuks?|x|pak)$/.test(w)) return true; // "500ml","400g","6x"
+    return false;
+  }
+  function normWords(s, stripUnits = true) {
+    const cleaned = applySynonyms(
+      normalize(s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+    );
+    let words = cleaned.split(/[\s,.;:()/\-+]+/).filter(w => w && !MATCH_STOPWORDS.has(w));
+    if (stripUnits) words = words.filter(w => !isQtyToken(w));
+    return words;
+  }
+
+  // Parse formaat-string → { qty, unit:'l'|'kg'|'st' } voor prijs-per-eenheid.
+  function parseUnit(unitStr, fallbackName) {
+    // Probeer eerst de unit-string, daarna de productnaam als fallback
+    const sources = [unitStr, fallbackName].filter(Boolean);
+    for (const src of sources) {
+      const s = normalize(src).replace(',', '.');
+      let m;
+      // multipack: "6 x 0.2 l", "3x1l"
+      let mult = 1;
+      if ((m = s.match(/(\d+)\s*x\s*(.+)/))) { mult = parseInt(m[1], 10) || 1; }
+      const rest = mult > 1 ? s.slice(s.indexOf('x') + 1) : s;
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(l|liter)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(ml)\b/)))             return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(cl)\b/)))             return { qty: parseFloat(m[1]) / 100 * mult, unit: 'l' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(kg|kilo)\b/)))        return { qty: parseFloat(m[1]) * mult, unit: 'kg' };
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(g|gr|gram)\b/)))      return { qty: parseFloat(m[1]) / 1000 * mult, unit: 'kg' };
+      if ((m = rest.match(/(\d+)\s*(stuks?|stk|st|x)\b/)))          return { qty: parseInt(m[1], 10) * mult, unit: 'st' };
+      // "per kilo" / "per liter" zonder getal → 1 eenheid
+      if (/\bper\s*kilo\b/.test(s))  return { qty: 1, unit: 'kg' };
+      if (/\bper\s*liter\b/.test(s)) return { qty: 1, unit: 'l' };
+    }
+    return null;
+  }
+
+  const SHORT_EN_OK = new Set(['ui','ei','bi','do','la','ra']);
+  // Woord-grens match met simpele NL-meervouden, GEEN substring.
+  function wordMatches(itemWord, productWord) {
+    if (productWord === itemWord) return true;
+    if (productWord === itemWord + 's') return true;
+    if (productWord === itemWord + 'es') return true;
+    // -en suffix alleen als stam ≥4 tekens OF bekende korte stam (voorkomt "bon"→"bonen")
+    if ((itemWord.length >= 4 || SHORT_EN_OK.has(itemWord)) && productWord === itemWord + 'en') return true;
+    // andersom
+    if (itemWord === productWord + 's') return true;
+    if ((productWord.length >= 4 || SHORT_EN_OK.has(productWord)) && itemWord === productWord + 'en') return true;
+    // NL diminutieven: -je, -tje, -pje, -jes, -tjes
+    if (itemWord.length >= 4) {
+      for (const suf of ['je','tje','pje','jes','tjes','pjes']) {
+        if (productWord === itemWord + suf) return true;
+        if (itemWord === productWord + suf) return true;
+      }
+    }
+    return false;
+  }
+
+  // Compound-aware matching: "kipdrumsticks" bevat "kip" als prefix of "drumstick" als suffix
+  // Retourneert false als het restdeel een NOISE_WORD is (koffiekoeken → koffie+koeken → false)
+  function compoundContains(productWord, itemWord) {
+    if (itemWord.length < 4 || productWord.length < itemWord.length + 3) return false;
+    let rest = '';
+    if (productWord.startsWith(itemWord)) rest = productWord.slice(itemWord.length);
+    else if (productWord.endsWith(itemWord)) rest = productWord.slice(0, -itemWord.length);
+    else if (productWord.endsWith(itemWord + 's')) rest = productWord.slice(0, -(itemWord.length + 1));
+    else if (productWord.endsWith(itemWord + 'en')) rest = productWord.slice(0, -(itemWord.length + 2));
+    else return false;
+    if (!rest) return true;
+    if (NOISE_WORDS.has(rest)) return false;
+    for (const nw of NOISE_WORDS_ARR) { if (rest.startsWith(nw)) return false; }
+    return true;
+  }
+
+  // Trigram-similarity (Sørensen-Dice) voor fuzzy matching
+  function trigrams(s) {
+    const t = new Set();
+    for (let i = 0; i < s.length - 2; i++) t.add(s.slice(i, i + 3));
+    return t;
+  }
+  function trigramSim(a, b) {
+    const ta = trigrams(a), tb = trigrams(b);
+    if (!ta.size || !tb.size) return 0;
+    let overlap = 0;
+    for (const t of ta) if (tb.has(t)) overlap++;
+    return (2 * overlap) / (ta.size + tb.size);
+  }
+
+  // Zoek de beste product-match binnen één winkel.
+  function findStoreMatch(storeId, itemName, itemCategory) {
+    const data = storeData[storeId];
+    if (!data || !data.products || !data.products.length) return null;
+    // Cache: dezelfde naam+categorie geeft altijd hetzelfde resultaat zolang storeData niet wijzigt
+    const cacheKey = storeId + ':' + itemName + ':' + (itemCategory || '');
+    if (matchCache.has(cacheKey)) return matchCache.get(cacheKey);
+
+    const store = STORE_BY_ID[storeId];
+    // Strip woorden die de categorie zelf benoemen (bijv. "diepvries" in "Diepvries pizza"),
+    // zodat alleen het inhoudelijke deel matcht en de catBoost de rest doet.
+    const catIdWords = itemCategory ? [itemCategory] : [];
+    const allItemWords = normWords(itemName);
+    const itemWords = allItemWords.filter(w => !catIdWords.some(c => stemMatch(w, c)));
+    const effectiveWords = itemWords.length >= 2 ? itemWords : allItemWords;
+    if (!effectiveWords.length) { matchCache.set(cacheKey, null); return null; }
+    const today = new Date().toISOString().slice(0, 10);
+    const allowedCats = (store.hasCategory && itemCategory) ? (USER_CAT_TO_AH[itemCategory] || []) : [];
+
+    const candidates = [];
+    const firstWord = effectiveWords[0];
+    for (const p of data.products) {
+      const tj = p._tj || '';
+      if (tj && !tj.includes(firstWord)) continue;
+      const productWords = p._w || normWords(p.name);
+      let allMatch = effectiveWords.every(iw => productWords.some(pw => wordMatches(iw, pw)));
+      // Fallback: compound-matching (bijv. "kip" in "kipdrumsticks", "drum" in "kipdrumsticks")
+      if (!allMatch) {
+        allMatch = effectiveWords.every(iw =>
+          productWords.some(pw => wordMatches(iw, pw) || compoundContains(pw, iw))
+        );
+      }
+      if (!allMatch) continue;
+
+      let eff = (typeof p.price === 'number') ? p.price : null;
+      let activeBonus = null, upcomingBonus = null;
+      if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+        if (p.bonus.start <= today && today <= p.bonus.end) {
+          activeBonus = p.bonus;
+          if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+        } else if (today < p.bonus.start) {
+          upcomingBonus = p.bonus;
+        }
+      }
+      if (eff == null) continue;
+      // Coverage: welk deel van de inhoudswoorden (merk/eenheid weggehaald) is het gevraagde item?
+      const content = productWords.filter(w => !BRAND_NOISE.has(w));
+      const denom = Math.max(content.length, 1);
+      const matchedContent = content.filter(pw => effectiveWords.some(iw => wordMatches(iw, pw))).length;
+      const compoundOnly = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && effectiveWords.some(iw => compoundContains(pw, iw))).length;
+      const coverage = (matchedContent + compoundOnly * 0.25) / denom;
+      // Positie-bonus: item-woord vroeg in de naam
+      let posBonus = 0;
+      for (const iw of effectiveWords) {
+        const idx = productWords.findIndex(pw => wordMatches(iw, pw));
+        if (idx === 0) posBonus += 0.4;
+        else if (idx === 1) posBonus += 0.2;
+      }
+      // Ruis-penalty: bewerkte-product-woorden die het item niet noemt
+      let noise = 0;
+      for (const pw of productWords) {
+        const isNoise = NOISE_WORDS.has(pw) ||
+          NOISE_WORDS_ARR.some(nw => pw.length > nw.length && pw.endsWith(nw));
+        // Exemptie alleen bij exacte match: niet vrijstellen als de gebruiker 'bloem' zocht
+        // maar het product 'bloemen' bevat (anders ontsnapt het aan de noise-penalty).
+        if (isNoise && !effectiveWords.some(iw => iw === pw)) noise++;
+      }
+      // "in [term]"-penalty: zoekterm staat als bestanddeel achter "in" (bijv. "Bonen in Tomatensaus"
+      // als de gebruiker zoekt op "tomatensaus"). Dit zijn andere producten, zwaar afstraffen.
+      let inComponentPenalty = 0;
+      const pNameLower = p._nl || p.name.toLowerCase();
+      for (const iw of effectiveWords) {
+        if (new RegExp('\\b(?:in|met)\\s+(?:\\w+\\s+){0,2}' + iw).test(pNameLower)) {
+          inComponentPenalty = 3;
+          break;
+        }
+      }
+      // Vegan/plantaardig penalty: als het product plantaardig/vegan/vegetarisch is maar de zoekterm niet
+      const VEGAN_WORDS = ['plantaardig','plantaardige','vegan','vegetarisch','vegetarische','veggie','vleesvervanger'];
+      const searchHasVegan = effectiveWords.some(w => VEGAN_WORDS.includes(w));
+      const productHasVegan = productWords.some(w => VEGAN_WORDS.includes(w));
+      const veganPenalty = (!searchHasVegan && productHasVegan) ? 6 : 0;
+
+      // Secundaire-rol penalty: zoekterm staat als LAATSTE content-woord met ≥1 andere woorden ervoor
+      // → zoekterm is bijrol (bijv. "Kikkererwten Tomatensaus", "Tomato Frito (tomatensaus)")
+      let secondaryRolePenalty = 0;
+      if (matchedContent <= 1) for (const iw of effectiveWords) {
+        const matchIdx = content.findIndex(w => wordMatches(iw, w));
+        if (matchIdx === content.length - 1 && matchIdx >= 1) {
+          secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 2.0);
+          break;
+        }
+      }
+      let catBoost = 0;
+      if (itemCategory) {
+        if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
+        else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
+      }
+      const extraWords = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && !NOISE_WORDS.has(pw) && !BRAND_NOISE.has(pw)).length;
+      // Adjacency bonus: zoekwoorden die naast elkaar staan in het product zijn waarschijnlijker de juiste match
+      let adjacencyBonus = 0;
+      if (effectiveWords.length >= 2) {
+        const matchPositions = effectiveWords.map(iw => productWords.findIndex(pw => wordMatches(iw, pw))).filter(i => i >= 0).sort((a,b) => a - b);
+        if (matchPositions.length >= 2) {
+          let adjacent = 0;
+          for (let i = 1; i < matchPositions.length; i++) { if (matchPositions[i] - matchPositions[i-1] === 1) adjacent++; }
+          adjacencyBonus = adjacent * 3;
+        }
+      }
+      const score = coverage * 10 + posBonus + adjacencyBonus + catBoost - noise * 4 - extraWords * 1.5 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
+      candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
+    }
+    // Fuzzy fallback: als geen exacte/compound match, probeer trigram-similarity
+    if (!candidates.length) {
+      const searchJoined = effectiveWords.join(' ');
+      const searchTg = trigrams(searchJoined);
+      const fuzzyThreshold = 0.45;
+      if (!searchTg.size) { matchCache.set(cacheKey, null); return null; }
+      for (const p of data.products) {
+        let eff = (typeof p.price === 'number') ? p.price : null;
+        if (eff == null) continue;
+        const ptg = p._tg || trigrams((p._w || normWords(p.name)).join(' '));
+        if (!ptg.size) continue;
+        let overlap = 0;
+        for (const t of searchTg) if (ptg.has(t)) overlap++;
+        const sim = (2 * overlap) / (searchTg.size + ptg.size);
+        if (sim < fuzzyThreshold) continue;
+        let activeBonus = null, upcomingBonus = null;
+        if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+          if (p.bonus.start <= today && today <= p.bonus.end) {
+            activeBonus = p.bonus;
+            if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+          } else if (today < p.bonus.start) upcomingBonus = p.bonus;
+        }
+        let catBoost = 0;
+        if (itemCategory) {
+          if (p.cat && p.cat === itemCategory) catBoost = 4;
+          else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4;
+        }
+        const score = sim * 8 + catBoost - eff * 0.02;
+        candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score, fuzzy: true });
+      }
+    }
+    if (!candidates.length) { matchCache.set(cacheKey, null); matchCache.set('cands:' + cacheKey, []); return null; }
+    candidates.sort((a, b) => b.score - a.score);
+    matchCache.set('cands:' + cacheKey, candidates);
+    const top = candidates[0];
+    // Tier = matches die qua naam-relevantie nagenoeg gelijk staan. Binnen de tier
+    // kiezen we de meest standaard verpakking met laagste €/eenheid
+    const tier = candidates.filter(c => c.score >= top.score - 1.0);
+    for (const c of tier) {
+      c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
+      c.multipack = isMultipack(c.p.name, c.p.unit);
+    }
+    const singles = tier.filter(c => !c.multipack && c.unitPrice);
+    const best = singles.length
+      ? singles.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a)
+      : top;
+    if (!best.unitPrice) best.unitPrice = computeUnitPrice(best.eff, best.p.unit, best.p.name);
+    matchCache.set(cacheKey, best);
+    return best;
+  }
+
+  function findStoreMatchCandidates(storeId, itemName, itemCategory, limit) {
+    limit = limit || 6;
+    findStoreMatch(storeId, itemName, itemCategory);
+    const baseCacheKey = storeId + ':' + itemName + ':' + (itemCategory || '');
+    const raw = matchCache.get('cands:' + baseCacheKey) || [];
+    const seen = new Set();
+    const result = [];
+    for (const c of raw) {
+      if (seen.has(c.p.name) || result.length >= limit) break;
+      seen.add(c.p.name);
+      if (!c.unitPrice) c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
+      result.push(c);
+    }
+    result.sort((a, b) => {
+      const aUp = a.unitPrice?.value ?? Infinity;
+      const bUp = b.unitPrice?.value ?? Infinity;
+      return aUp !== bUp ? aUp - bUp : a.eff - b.eff;
+    });
+    return result;
+  }
+
+  // Multipack-detectie: voordelpakken, "X stuks", "12x1l", "6-pack" etc.
+  // We hebben liefst de standaard enkele verpakking als match, niet de bulk-aanbieding.
+  function isMultipack(name, unit) {
+    const u = normalize(unit || '');
+    const n = normalize(name);
+    if (/\d\s*x\s*\d/.test(u)) return true;            // "12 x 1 l"
+    if (/\b\d+\s*stuks?\b/.test(u)) return true;       // "3 stuks"
+    if (/\b\d+\s*[- ]?pack\b/.test(n)) return true;    // "3-pack", "6 pack"
+    if (/voordeel(verpakking|pak)?\b/.test(n)) return true;
+    if (/familie(verpakking|pak)?\b/.test(n)) return true;
+    if (/\bxxl\b/.test(n)) return true;                // XXL-verpakking
+    // Grote bulkverpakkingen (≥ 3 kg of ≥ 3 l): niet standaard formaat
+    const parsed = parseUnit(unit);
+    if (parsed && parsed.qty >= 3 && (parsed.unit === 'kg' || parsed.unit === 'l')) return true;
+    return false;
+  }
+
+  // Prijs per liter/kg/stuk voor eerlijke vergelijking.
+  function computeUnitPrice(price, unitStr, name) {
+    const u = parseUnit(unitStr, name);
+    if (!u || !u.qty) return null;
+    return { value: price / u.qty, unit: u.unit };
+  }
+
+  function resolveOverride(storeId, productName) {
+    const data = storeData[storeId];
+    if (!data || !data.products) return null;
+    const p = data.products.find(x => x.name === productName);
+    if (!p || typeof p.price !== 'number') return null;
+    const store = STORE_BY_ID[storeId];
+    const today = new Date().toISOString().slice(0, 10);
+    let eff = p.price, activeBonus = null, upcomingBonus = null;
+    if (store.hasBonus && p.bonus && p.bonus.start && p.bonus.end) {
+      if (p.bonus.start <= today && today <= p.bonus.end) { activeBonus = p.bonus; if (typeof p.bonus_price === 'number') eff = p.bonus_price; }
+      else if (today < p.bonus.start) upcomingBonus = p.bonus;
+    }
+    return { storeId, p, eff, activeBonus, upcomingBonus, score: 999, unitPrice: computeUnitPrice(eff, p.unit, p.name) };
+  }
+
+  function findMatches(itemName, itemCategory, overrides) {
+    const itemNorm = normalize(itemName);
+    const bl = loadBlacklist();
+    const blocked = new Set(bl[itemNorm] || []);
+    const matches = [];
+    let anyData = false;
+    for (const store of STORES) {
+      if (storeData[store.id] && storeData[store.id].products?.length) anyData = true;
+      const ov = overrides && overrides[store.id];
+      const m = ov ? resolveOverride(store.id, ov) : findStoreMatch(store.id, itemName, itemCategory);
+      if (m && !blocked.has(m.p.name)) matches.push(m);
+    }
+    if (!matches.length) return { matches: [], cheapest: null, hasData: anyData };
+    // Goedkoopste: op prijs-per-eenheid als ≥2 winkels dezelfde dominante eenheid hebben.
+    // Zelfs als één winkel (bijv. Lidl via checkjebon) geen eenheiddata heeft, vergelijken
+    // we de rest toch op €/kg of €/l — de winkel zonder unit valt buiten de 'beste' selectie.
+    const withUnit = matches.filter(m => m.unitPrice);
+    const unitCounts = {};
+    for (const m of withUnit) unitCounts[m.unitPrice.unit] = (unitCounts[m.unitPrice.unit] || 0) + 1;
+    const dominantUnit = Object.keys(unitCounts).sort((a, b) => unitCounts[b] - unitCounts[a])[0];
+    const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
+    let cheapest;
+    if (sameUnit) {
+      // Goedkoopste op €/dominante eenheid
+      const unitWinner = withUnit
+        .filter(m => m.unitPrice.unit === dominantUnit)
+        .reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+      // Controleer ook absolute prijs: als een andere winkel goedkoper is in absolute prijs, gebruik die
+      const absWinner = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+      cheapest = absWinner.eff < unitWinner.eff ? absWinner : unitWinner;
+    } else {
+      cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+    }
+    return { matches, cheapest, hasData: anyData, comparedByUnit: sameUnit, dominantUnit };
+  }
+
+  function fmtPrice(n) {
+    if (typeof n !== 'number') return '';
+    return '€' + n.toFixed(2).replace('.', ',');
+  }
+
+  // ── HELPERS ──
+  function loadJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
+  }
+  function saveItems() {
+    try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch(e){}
+    shareWrite(); // push naar gedeelde lijst als actief
+  }
+  function saveHistory() { try { localStorage.setItem(HIST_KEY,  JSON.stringify(history)); } catch(e){} }
+
+  // ── LIJST DELEN ─────────────────────────────────────────────────────────────
+  const SHARE_KEY         = 'boodschappen.shareCode';
+  const SHARE_WORKER_KEY  = 'boodschappen.shareWorkerUrl';
+  let shareCode = null;
+  let sharePollTimer = null;
+  let shareLastUpdatedAt = 0;
+  let shareWritePending = false;
+
+  const SHARE_WORKER_DEFAULT = 'https://boodschappen-share.jerome-67a.workers.dev';
+  function getShareWorkerUrl() { try { return localStorage.getItem(SHARE_WORKER_KEY) || SHARE_WORKER_DEFAULT; } catch { return SHARE_WORKER_DEFAULT; } }
+  function setShareWorkerUrl(url) { try { localStorage.setItem(SHARE_WORKER_KEY, url.replace(/\/$/, '')); } catch {} }
+
+  function getShareCode() { try { return localStorage.getItem(SHARE_KEY) || null; } catch { return null; } }
+  function setShareCode(c) { try { if (c) localStorage.setItem(SHARE_KEY, c); else localStorage.removeItem(SHARE_KEY); } catch {} }
+
+  async function shareCreate() {
+    const base = getShareWorkerUrl();
+    if (!base) throw new Error('Stel eerst de deellijst-Worker URL in bij Instellingen (⚙️).');
+    const res = await fetch(`${base}/share`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.id) throw new Error(data.error || 'Aanmaken mislukt');
+    return data.id; // Worker geeft { id, items, updatedAt }
+  }
+
+  async function shareReadRemote(code) {
+    const base = getShareWorkerUrl();
+    if (!base) throw new Error('Geen share-worker geconfigureerd');
+    const res = await fetch(`${base}/share/${code}`);
+    if (res.status === 404) throw new Error('Onbekende code');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Lezen mislukt');
+    return data; // { id, items, updatedAt }
+  }
+
+  async function shareWrite() {
+    if (!shareCode) return;
+    if (shareWritePending) return;
+    const base = getShareWorkerUrl();
+    if (!base) return;
+    shareWritePending = true;
+    try {
+      await fetch(`${base}/share/${shareCode}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+    } catch {}
+    shareWritePending = false;
+  }
+
+  function sharePoll() {
+    if (!shareCode) return;
+    shareReadRemote(shareCode).then(data => {
+      // Alleen updaten als de remote nieuwer is dan onze laatste pull én onze laatste write
+      if (data.updatedAt > shareLastUpdatedAt) {
+        shareLastUpdatedAt = data.updatedAt;
+        items = data.items || [];
+        try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch {}
+        render();
+      }
+      renderShareBar();
+    }).catch(() => renderShareBar(false));
+  }
+
+  function shareStart(code) {
+    shareCode = code;
+    setShareCode(code);
+    shareLastUpdatedAt = 0;
+    clearInterval(sharePollTimer);
+    sharePollTimer = setInterval(sharePoll, 3500);
+    sharePoll();
+    renderShareBar();
+  }
+
+  function shareStop() {
+    shareCode = null;
+    setShareCode(null);
+    clearInterval(sharePollTimer);
+    sharePollTimer = null;
+    renderShareBar();
+  }
+
+  function renderShareBar(online = true) {
+    const el = document.getElementById('share-bar');
+    if (!el) return;
+    if (shareCode) {
+      const workerForUrl = getShareWorkerUrl();
+      const url = `${location.origin}${location.pathname}?deel=${shareCode}${workerForUrl ? '&w=' + encodeURIComponent(workerForUrl) : ''}`;
+      el.innerHTML = `
+        <div class="share-bar active">
+          <span class="share-indicator${online ? '' : ' offline'}">
+            <span class="share-pulse" style="${online ? '' : 'background:var(--slate-400)'}"></span>
+            ${online ? 'Live gedeeld' : 'Offline'}
+          </span>
+          <span class="share-code" onclick="copyShareLink('${escapeHtml(url)}')" title="Klik om te kopiëren">${shareCode}</span>
+          <button class="share-btn secondary" onclick="event.stopPropagation();shareStop()">Stop</button>
+          <button class="share-btn" onclick="event.stopPropagation();copyShareLink('${escapeHtml(url)}')">📤</button>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="share-bar" style="flex-direction:column;gap:8px;align-items:stretch">
+          <button class="share-btn" style="width:100%;padding:10px;font-size:14px" onclick="startShare()">📤 Deel lijst met iemand</button>
+          <div class="share-join">
+            <input id="share-code-input" placeholder="Code van iemand anders invoeren" maxlength="80"
+              oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"
+              onkeydown="if(event.key==='Enter')joinShare()">
+            <button class="share-btn secondary" onclick="joinShare()">Verbinden</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  async function startShare() {
+    try {
+      const code = await shareCreate();
+      shareStart(code);
+      const url = `${location.origin}${location.pathname}?deel=${code}`;
+      await copyShareLink(url);
+    } catch(e) { toast('Fout: ' + e.message); }
+  }
+
+  async function joinShare() {
+    let input = (document.getElementById('share-code-input')?.value || '').trim().toUpperCase();
+    // Link geplakt? Haal code eruit
+    const m = input.match(/[?&]deel=([a-zA-Z0-9]+)/);
+    if (m) input = m[1].toLowerCase();
+    if (input.length < 6) { toast('Voer een geldige deelcode in'); return; }
+    try {
+      const data = await shareReadRemote(input);
+      items = data.items || [];
+      try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch {}
+      shareLastUpdatedAt = data.updatedAt || 0;
+      shareStart(input);
+      render();
+      toast('Verbonden met gedeelde lijst!');
+    } catch(e) { toast('Fout: ' + e.message); }
+  }
+
+  async function copyShareLink(url) {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Boodschappenlijst', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast('Link gekopieerd!');
+      }
+    } catch { toast('Kopieer deze link: ' + url); }
+  }
+
+  function handleShareBtn() {
+    if (!getShareWorkerUrl()) {
+      showTab('settings');
+      setTimeout(() => document.getElementById('share-worker-config')?.scrollIntoView({ behavior: 'smooth' }), 100);
+      toast('Stel eerst de Deellijst Worker URL in');
+      return;
+    }
+    if (shareCode) {
+      // Al actief — kopieer link
+      const workerForUrl = getShareWorkerUrl();
+      const url = `${location.origin}${location.pathname}?deel=${shareCode}${workerForUrl ? '&w=' + encodeURIComponent(workerForUrl) : ''}`;
+      copyShareLink(url);
+    } else {
+      startShare();
+    }
+  }
+
+  // Sluit share modal (placeholder, niet meer nodig maar wacht op aanroepen)
+  function openShareModal() { handleShareBtn(); }
+  function closeShareModal() {}
+
+  // Bij opstarten: hervat actieve sessie of verwerk ?deel= in URL
+  (function initShare() {
+    const params = new URLSearchParams(location.search);
+    const urlCode = (params.get('deel') || '').toLowerCase();
+    // Worker-URL automatisch opslaan als die meegegeven is in de deel-link
+    const urlWorker = params.get('w');
+    if (urlWorker && !getShareWorkerUrl()) setShareWorkerUrl(urlWorker);
+    const savedCode = getShareCode();
+    const code = urlCode || savedCode;
+    if (code && code.length >= 6) {
+      shareCode = code;
+      setShareCode(code);
+      shareReadRemote(code).then(data => {
+        items = data.items || [];
+        try { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); } catch {}
+        shareLastUpdatedAt = data.updatedAt || 0;
+        shareStart(code);
+        render();
+        if (urlCode) history.replaceState({}, '', location.pathname); // URL opschonen
+      }).catch(() => { shareCode = null; setShareCode(null); });
+    }
+  })();
+  // ────────────────────────────────────────────────────────────────────────────
+
+  function normalize(s) { return (s || '').trim().toLowerCase(); }
+  function titleCase(s) {
+    s = (s || '').trim();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Normaliseer dubbele klinkers (banaan→banan) zodat meervoud "bananen" op de stam matcht.
+  function deDouble(w) { return w.replace(/([aeou])\1/g, '$1'); }
+  // Lichte stam-match: gelijk, of de een is prefix van de ander (min. 4 tekens stam).
+  // Ratio-check: de stam mag max 60% van het lange woord zijn — anders matcht 'fanta' op
+  // 'fantastische' of 'tonic' op 'tonisch'. Compound-woorden worden via SYNONYMS gesplitst.
+  function stemMatch(a, b) {
+    const da = deDouble(a), db = deDouble(b);
+    if (da === db) return true;
+    const short = da.length <= db.length ? da : db;
+    const long  = da.length <= db.length ? db : da;
+    return short.length >= 4 && long.startsWith(short) && short.length * 10 >= long.length * 6;
+  }
+  function guessCategory(name) {
+    const n = normalize(name);
+    if (!n) return null;
+    // exacte match eerst
+    for (const cat of Object.keys(AUTO_CAT)) {
+      if (AUTO_CAT[cat].includes(n)) return cat;
+    }
+    // dan woord-voor-woord met stam-tolerantie (bananen→banaan, tomaten→tomaat)
+    const words = n.split(/[\s,.;:()/\-]+/).filter(Boolean);
+    for (const cat of Object.keys(AUTO_CAT)) {
+      for (const kw of AUTO_CAT[cat]) {
+        if (kw.includes(' ')) {
+          if (n.includes(kw)) return cat;            // meerwoordige keyword: directe substring
+        } else if (words.some(w => stemMatch(w, kw))) {
+          return cat;
+        }
+      }
+    }
+    return null;
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // ── ACTIES ──
+  function addCurrent() {
+    const input = document.getElementById('add-input');
+    const qtyInput = document.getElementById('qty-input');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    // Multi-add: "melk, brood, kaas" → drie items tegelijk
+    if (name.includes(',')) {
+      const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length > 1) {
+        parts.forEach(p => addItem(p, 1));
+        input.value = '';
+        qtyInput.value = '';
+        syncSubmitBtn();
+        input.focus();
+        renderSuggestions();
+        toast(`${parts.length} items toegevoegd`);
+        return;
+      }
+    }
+    // Als de invoer exact een variant-suboptie is → open variant-picker
+    const normInp = normalize(name);
+    for (const [key, val] of Object.entries(VARIANTS)) {
+      if (val.groups) {
+        for (const [groupName, opts] of Object.entries(val.groups)) {
+          const match = opts.find(o => normalize(o) === normInp);
+          if (match) { selectVariantItem(key, groupName, match); return; }
+        }
+      }
+    }
+    const qty = parseInt(qtyInput.value, 10) || 1;
+    addItem(name, qty);
+    input.value = '';
+    qtyInput.value = '';
+    syncSubmitBtn();
+    input.focus();
+    renderSuggestions();
+  }
+
+  function addItem(name, qty) {
+    const norm = normalize(name);
+    // bestaande in lijst? verhoog aantal
+    const existing = items.find(it => normalize(it.name) === norm && !it.checked);
+    if (existing) {
+      existing.qty = (existing.qty || 1) + (qty || 1);
+      saveItems(); render();
+      toast(`${titleCase(name)}: ${existing.qty}×`);
+      return;
+    }
+    const histEntry = history[norm];
+    const category = (histEntry && histEntry.category) || guessCategory(name);
+    const item = {
+      id: Date.now() + Math.random().toString(36).slice(2,6),
+      name: histEntry ? histEntry.name : titleCase(name),
+      qty: qty || 1,
+      category,
+      checked: false,
+      addedAt: Date.now(),
+    };
+    items.push(item);
+    saveItems(); render();
+  }
+
+  function toggleItem(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.checked = !it.checked;
+    saveItems(); render();
+  }
+
+  function setQty(id, qty) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.qty = qty;
+    saveItems(); render();
+  }
+
+  function deleteItem(id) {
+    const idx = items.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const removed = [{ item: items[idx], index: idx }];
+    items = items.filter(x => x.id !== id);
+    saveItems(); render();
+    toastWithUndo(`${removed[0].item.name} verwijderd`, removed);
+  }
+
+  function clearChecked() {
+    const removed = items.map((item, index) => ({ item, index })).filter(r => r.item.checked);
+    if (!removed.length) return;
+    items = items.filter(x => !x.checked);
+    saveItems(); render();
+    toastWithUndo(`${removed.length} afgevinkte item${removed.length === 1 ? '' : 's'} gewist`, removed);
+  }
+
+  // Undo voor verwijder-acties: items met oorspronkelijke positie terugzetten
+  let undoState = null;
+  function toastWithUndo(msg, removed) {
+    undoState = removed;
+    const t = document.getElementById('toast');
+    t.innerHTML = `${escapeHtml(msg)}<button class="toast-undo" onclick="undoRemove()">Ongedaan maken</button>`;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.classList.remove('show'); undoState = null; }, 5000);
+  }
+  function undoRemove() {
+    if (undoState) {
+      undoState.sort((a, b) => a.index - b.index)
+        .forEach(({ item, index }) => items.splice(Math.min(index, items.length), 0, item));
+      saveItems(); render();
+    }
+    undoState = null;
+    clearTimeout(toast._t);
+    document.getElementById('toast').classList.remove('show');
+  }
+
+  function finishShopping() {
+    if (!items.length) { toast('Lijst is leeg'); return; }
+    const checked = items.filter(x => x.checked);
+    if (!checked.length) {
+      if (!confirm('Niets afgevinkt. Toch alles als gekocht markeren?')) return;
+      items.forEach(x => x.checked = true);
+    }
+    // boek alles afgevinkte in historie
+    const now = Date.now();
+    items.filter(x => x.checked).forEach(it => {
+      const norm = normalize(it.name);
+      const h = history[norm] || { name: it.name, category: it.category, count: 0, lastBought: 0 };
+      h.name = it.name;
+      h.category = it.category;
+      h.count += 1;
+      h.lastBought = now;
+      history[norm] = h;
+    });
+    saveHistory();
+    // verwijder afgevinkte uit lijst
+    items = items.filter(x => !x.checked);
+    saveItems(); render();
+    toast('🎉 Boodschappen geboekt!');
+  }
+
+  function openCategoryPicker(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    const grid = document.getElementById('cat-grid');
+    document.getElementById('modal-cat-sub').textContent = `Kies categorie voor "${it.name}"`;
+    grid.innerHTML = CATEGORIES.map(c =>
+      `<button class="cat-btn" onclick="setCategory('${id}','${c.id}')">
+         <span class="cat-emo">${c.emo}</span> ${c.name}
+       </button>`).join('');
+    document.getElementById('modal-cat').classList.add('open');
+  }
+  function setCategory(id, catId) {
+    const it = items.find(x => x.id === id);
+    if (!it) { closeCatModal(); return; }
+    it.category = catId;
+    // ook in historie bijwerken zodat het volgende keer goed gegokt wordt
+    const norm = normalize(it.name);
+    if (history[norm]) { history[norm].category = catId; saveHistory(); }
+    saveItems(); render();
+    closeCatModal();
+  }
+  function closeCatModal() { document.getElementById('modal-cat').classList.remove('open'); }
+
+  // ── RENDER ──
+  function render() {
+    renderList();
+    renderSuggestions();
+    renderActionbar();
+    renderHeaderSub();
+    renderWatchAlerts();
+    renderHamsterTips();
+    renderBudgetBar();
+  }
+
+  function renderHeaderSub() {
+    const open = items.filter(x => !x.checked).length;
+    const done = items.length - open;
+    const sub = document.getElementById('header-sub');
+    if (!items.length) sub.textContent = 'Lijst is leeg';
+    else if (!open)    sub.textContent = `${done} klaar — vink af of druk Klaar`;
+    else               sub.textContent = `${open} te halen${done ? ` · ${done} gepakt` : ''}`;
+  }
+
+  const UNIT_LABEL = { l: '/l', kg: '/kg', st: '/st' };
+  // Prijsvergelijking-block voor één item: goedkoopste winkel uitgelicht + andere winkels ernaast.
+  // Bekende A-merk producenten (subset, gericht op supermarkt-assortiment NL)
+  const AMERK_RE = new RegExp(
+    '\\b(' + [
+      'lays','croky','doritos','pringles','cheetos','bugles',
+      'coca.?cola','pepsi','fanta','sprite','7up','sourcy','rivella','innocent','tropicana',
+      'dr\\.?\\s*oetker','iglo','birds\\s*eye','calve','calv\\xe9','knorr','maggi','unox','hak','bonduelle','heinz',
+      'heineken','amstel','grolsch','jupiler','bavaria','leffe','corona','desperados',
+      'activia','danone','alpro','campina','melkunie','karvan\\s*cevitam','chocomel',
+      'senseo','douwe\\s*egberts','nescaf[e\\xe9]','pickwick','lipton',
+      'ariel','lenor','fairy','dreft','vanish','persil','robijn','dettol','domestos',
+      'gillette','dove','axe','nivea','head\\s*&?\\s*shoulders','pantene','andrelon',
+      'snickers','mars','bounty','twix','kitkat','m&m','oreo','liga','sultana',
+      'milka','ferrero','nutella','haribo','mentos',
+      'philadelphia','boursin','beemster','leerdammer',
+      'conimex','blue\\s*band','remia',
+      'whiskas','pedigree','purina',
+    ].join('|') + ')\\b', 'i'
+  );
+
+  // Detecteer of een match een huismerk is.
+  // • Naam begint met winkelnaam of bevat 'huismerk' → altijd huismerk
+  // • Lidl/Plus checkjebon-data: geen winkelnaam in naam → huismerk TENZIJ bekende A-merk
+  function isHuismerk(match) {
+    const n = normalize(match.p.name);
+    if (/^(ah|jumbo|plus|lidl|etos|kruidvat)\b/.test(n) || n.includes('huismerk')) return true;
+    if (match.storeId === 'lidl' || match.storeId === 'plus') {
+      return !AMERK_RE.test(n);
+    }
+    return false;
+  }
+
+  // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
+  // ── FOUT-RAPPORTAGE & BLACKLIST ──
+  // ── PRIJSGESCHIEDENIS ──
+  let priceHistory = {};
+
+  async function loadPriceHistory() {
+    try {
+      const res = await fetch('./data/price-history.json?v=' + Date.now());
+      if (res.ok) { priceHistory = await res.json(); render(); }
+    } catch {}
+  }
+
+  function getPriceKey(storeId, p) {
+    return `${storeId}:${p.id || p.name}`;
+  }
+
+  function getPriceTrend(storeId, p) {
+    const key = getPriceKey(storeId, p);
+    const rec = priceHistory[key];
+    if (!rec || rec.entries.length < 2) return null;
+    const entries = rec.entries;
+    const current = entries.at(-1)[1];
+    // Vergelijk met prijs van 7 dagen geleden (of vroegste beschikbare)
+    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const old = entries.find(([ts]) => ts <= week) || entries[0];
+    const oldPrice = old[1];
+    const diff = current - oldPrice;
+    const pct  = oldPrice > 0 ? diff / oldPrice : 0;
+    // Laagste prijs in 30 dagen?
+    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
+    const isLowest = recent.length >= 3 && current <= Math.min(...recent);
+    return { diff, pct, isLowest, oldPrice, current };
+  }
+
+  // ── PRIJSALERTS: gevolgde producten ──
+  const WATCH_KEY = 'boodschappen.watchlist';
+  let watchlist = loadJson(WATCH_KEY, []);  // [{ storeId, pid, name, priceAtAdd, addedAt }]
+  function saveWatchlist() { try { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); } catch {} }
+  function isWatched(storeId, p) {
+    const pid = String(p.id || p.name);
+    return watchlist.some(w => w.storeId === storeId && String(w.pid) === pid);
+  }
+  function toggleWatch(storeId, pid, name, price) {
+    const idx = watchlist.findIndex(w => w.storeId === storeId && String(w.pid) === String(pid));
+    if (idx >= 0) {
+      watchlist.splice(idx, 1);
+      toast('Product niet meer gevolgd');
+    } else {
+      watchlist.push({ storeId, pid, name, priceAtAdd: price || 0, addedAt: Date.now() });
+      toast('⭐ Je volgt dit product — je ziet het hier als de prijs daalt');
+    }
+    saveWatchlist();
+    render();
+  }
+  function renderWatchAlerts() {
+    const div = document.getElementById('watch-alerts');
+    if (!div) return;
+    if (!watchlist.length) { div.innerHTML = ''; return; }
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = watchlist.map(w => {
+      const store = STORE_BY_ID[w.storeId];
+      const safePid = escapeHtml(String(w.pid)).replace(/'/g, "\\'");
+      const unfollow = `<button class="watch-unfollow" title="Niet meer volgen" onclick="toggleWatch('${w.storeId}','${safePid}')">⭐</button>`;
+      const chip = `<span class="store-chip" style="--sc:${store?.color || '#888'}">${store?.name || w.storeId}</span>`;
+      const p = storeData[w.storeId]?.products?.find(x => String(x.id || x.name) === String(w.pid));
+      if (!p || typeof p.price !== 'number') {
+        return { alert: false, html: `<div class="watch-row missing">${chip}<span class="watch-name">${escapeHtml(w.name)}</span><span class="watch-status">nu niet gevonden</span>${unfollow}</div>` };
+      }
+      let eff = p.price, bonus = null;
+      if (store?.hasBonus && p.bonus && p.bonus.start && p.bonus.end && p.bonus.start <= today && today <= p.bonus.end) {
+        bonus = p.bonus;
+        if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+      }
+      const drop = w.priceAtAdd > 0 ? w.priceAtAdd - eff : 0;
+      const trend = getPriceTrend(w.storeId, p);
+      let badge = '';
+      if (bonus) badge = `<span class="bonus-badge">${escapeHtml(bonus.mechanism || 'bonus')}</span>`;
+      else if (drop > 0.01) badge = `<span class="watch-drop">↓ ${fmtPrice(drop)} gedaald</span>`;
+      else if (trend?.isLowest) badge = `<span class="watch-drop">🏷️ laagste in 30 dgn</span>`;
+      const alert = !!(bonus || drop > 0.01 || trend?.isLowest);
+      const was = (bonus || drop > 0.01) && w.priceAtAdd > 0 && w.priceAtAdd !== eff
+        ? `<span class="cmp-was">${fmtPrice(w.priceAtAdd)}</span>` : '';
+      return { alert, html: `<div class="watch-row${alert ? ' alert' : ''}">${chip}<span class="watch-name">${escapeHtml(p.name)}</span>${was}<span class="watch-price">${fmtPrice(eff)}</span>${badge}${unfollow}</div>` };
+    });
+    rows.sort((a, b) => b.alert - a.alert);
+    const alertCount = rows.filter(r => r.alert).length;
+    const title = alertCount
+      ? `📉 ${alertCount} prijsalert${alertCount === 1 ? '' : 's'} op gevolgde producten`
+      : '⭐ Gevolgde producten';
+    div.innerHTML = `
+      <div class="watch-block">
+        <div class="watch-title">${title}</div>
+        ${rows.map(r => r.html).join('')}
+      </div>`;
+  }
+
+  // ── NOTITIE PER ITEM ──
+  let noteItemId = null;
+  function openNoteEditor(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    noteItemId = id;
+    document.getElementById('note-modal-sub').textContent = it.name;
+    document.getElementById('note-input').value = it.note || '';
+    document.getElementById('modal-note').style.display = 'flex';
+    setTimeout(() => document.getElementById('note-input').focus(), 80);
+  }
+  function closeNoteEditor() {
+    document.getElementById('modal-note').style.display = 'none';
+    noteItemId = null;
+  }
+  function saveNote(val) {
+    const it = items.find(x => x.id === noteItemId);
+    if (!it) return;
+    it.note = val !== undefined ? val : (document.getElementById('note-input').value.trim());
+    saveItems();
+    render();
+    closeNoteEditor();
+  }
+
+  // ── BARCODE SCANNER ──
+  let barcodeStream = null;
+  let barcodeAnimFrame = null;
+
+  async function openBarcodeScanner() {
+    document.getElementById('modal-barcode').style.display = 'flex';
+    document.getElementById('barcode-result').innerHTML = '';
+    const readerDiv = document.getElementById('barcode-reader');
+
+    if (!('BarcodeDetector' in window)) {
+      readerDiv.innerHTML = `<div style="padding:16px;text-align:center;color:var(--slate-600);font-size:13px">
+        📱 Barcode scannen werkt alleen in Chrome/Edge op Android.<br><br>
+        Op iPhone: typ de naam van het product in het zoekvak.
+      </div>`;
+      return;
+    }
+
+    try {
+      barcodeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.createElement('video');
+      video.srcObject = barcodeStream;
+      video.setAttribute('playsinline', true);
+      video.play();
+      readerDiv.innerHTML = '';
+      readerDiv.appendChild(video);
+
+      const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128'] });
+
+      async function scanFrame() {
+        if (!barcodeStream) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            const barcode = codes[0].rawValue;
+            handleBarcodeDetected(barcode);
+            return;
+          }
+        } catch {}
+        barcodeAnimFrame = requestAnimationFrame(scanFrame);
+      }
+      video.addEventListener('playing', () => { barcodeAnimFrame = requestAnimationFrame(scanFrame); });
+    } catch (e) {
+      readerDiv.innerHTML = `<div style="padding:16px;text-align:center;color:var(--slate-600);font-size:13px">
+        Camera toegang geweigerd. Sta camera-toegang toe in je browser-instellingen.
+      </div>`;
+    }
+  }
+
+  function handleBarcodeDetected(barcode) {
+    closeBarcodeStream();
+    const readerDiv = document.getElementById('barcode-reader');
+    readerDiv.innerHTML = `<div style="padding:16px;text-align:center;font-size:24px">✓</div>`;
+
+    // Zoek barcode in alle winkeldata
+    const matches = [];
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data) continue;
+      const hit = data.products.find(p => p.id == barcode || p.ean == barcode);
+      if (hit) matches.push({ store, p: hit });
+    }
+
+    const resultDiv = document.getElementById('barcode-result');
+    if (!matches.length) {
+      resultDiv.innerHTML = `<div style="text-align:center;color:var(--slate-500);font-size:13px;padding:8px 0">
+        Barcode <strong>${escapeHtml(barcode)}</strong> niet gevonden in winkeldata.
+      </div>`;
+      return;
+    }
+
+    const name = matches[0].p.name;
+    const rows = matches.map(({ store, p }) => `
+      <div class="barcode-match-row">
+        <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+        <span class="barcode-match-name">${escapeHtml(p.name)}</span>
+        <span style="font-size:13px;font-weight:800">${fmtPrice(p.price)}</span>
+      </div>`).join('');
+    resultDiv.innerHTML = `
+      <div style="margin-bottom:10px">${rows}</div>
+      <button class="tips-config-btn" style="width:100%" onclick="quickAdd('${escapeHtml(name).replace(/'/g,"\\'")}');closeBarcodeScanner();toast('Toegevoegd')">
+        + Voeg toe aan lijst
+      </button>`;
+  }
+
+  function closeBarcodeStream() {
+    if (barcodeAnimFrame) { cancelAnimationFrame(barcodeAnimFrame); barcodeAnimFrame = null; }
+    if (barcodeStream) { barcodeStream.getTracks().forEach(t => t.stop()); barcodeStream = null; }
+  }
+
+  function closeBarcodeScanner() {
+    closeBarcodeStream();
+    document.getElementById('modal-barcode').style.display = 'none';
+  }
+
+  // ── BUDGET-TRACKER ──
+  const BUDGET_KEY = 'boodschappen.budget';
+  function getBudget() { try { return parseFloat(localStorage.getItem(BUDGET_KEY)) || 0; } catch { return 0; } }
+  function setBudget(v) { try { localStorage.setItem(BUDGET_KEY, v); } catch {} }
+
+  function getEstimatedTotal() {
+    let total = 0;
+    for (const it of items.filter(x => !x.checked)) {
+      const res = findMatches(it.name, it.category, it.matchOverrides);
+      if (res.cheapest) total += res.cheapest.eff * (it.qty || 1);
+    }
+    return total;
+  }
+
+  function renderBudgetBar() {
+    const div = document.getElementById('budget-bar');
+    if (!div) return;
+    const budget = getBudget();
+    if (!budget || !items.length) { div.innerHTML = ''; return; }
+    const spent = getEstimatedTotal();
+    const pct   = Math.min(spent / budget, 1);
+    const cls   = pct >= 1 ? 'over' : pct >= 0.8 ? 'warn' : 'ok';
+    const label = pct >= 1 ? `€${(spent - budget).toFixed(2).replace('.',',')} over budget`
+                           : `nog €${(budget - spent).toFixed(2).replace('.',',')} over`;
+    div.innerHTML = `
+      <div class="budget-bar">
+        <div class="budget-bar-top">
+          <span class="budget-bar-label">Budget</span>
+          <span class="budget-bar-amount ${cls}">${fmtPrice(spent)} / ${fmtPrice(budget)} · ${label}</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill ${cls}" style="width:${Math.round(pct*100)}%"></div>
+        </div>
+      </div>`;
+  }
+
+  function renderBudgetConfig() {
+    const div = document.getElementById('budget-config');
+    if (!div) return;
+    const budget = getBudget();
+    div.innerHTML = `
+      <div class="store-pref-card" style="margin-top:12px">
+        <div class="store-pref-label">💰 Weekbudget</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <span style="font-size:14px;font-weight:700;color:var(--slate-600)">€</span>
+          <input type="number" id="budget-input" min="0" step="5"
+            value="${budget || ''}" placeholder="bijv. 150"
+            style="flex:1;padding:8px 12px;border:1.5px solid var(--slate-200);border-radius:10px;font-size:15px;font-weight:700">
+          <button class="tips-config-btn" style="margin:0" onclick="saveBudget()">Opslaan</button>
+          ${budget ? `<button class="tips-config-btn" style="margin:0;background:var(--slate-400)" onclick="setBudget(0);renderBudgetConfig();renderBudgetBar();">Wissen</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function saveBudget() {
+    const v = parseFloat(document.getElementById('budget-input')?.value) || 0;
+    setBudget(v);
+    renderBudgetConfig();
+    renderBudgetBar();
+    toast(v ? `Budget ingesteld op ${fmtPrice(v)}` : 'Budget gewist');
+  }
+
+  // ── HAMSTEREN-RADAR ──
+  function getHamsterAdvice(storeId, p) {
+    const key = getPriceKey(storeId, p);
+    const rec = priceHistory[key];
+    if (!rec || rec.entries.length < 5) return null;
+    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = rec.entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
+    if (recent.length < 5) return null;
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const current = p.price;
+    const discount = (avg - current) / avg;
+    if (discount >= 0.15) return { avg, discount, saving: avg - current };
+    return null;
+  }
+
+  function renderHamsterTips() {
+    const div = document.getElementById('hamster-tips');
+    if (!div) return;
+    if (!Object.keys(priceHistory).length) { div.innerHTML = ''; return; }
+    // Zoek alle items op de lijst met een goede hamster-deal
+    const tips = [];
+    for (const it of items.filter(x => !x.checked)) {
+      for (const store of STORES) {
+        const m = findStoreMatch(store.id, it.name, it.category);
+        if (!m) continue;
+        const advice = getHamsterAdvice(store.id, m.p);
+        if (advice) tips.push({ item: it, match: m, store, advice });
+      }
+    }
+    if (!tips.length) { div.innerHTML = ''; return; }
+    const rows = tips.map(({ item, match, store, advice }) => `
+      <div class="hamster-row">
+        <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+        <div class="hamster-info">
+          <div class="hamster-name">${escapeHtml(item.name)}</div>
+          <div class="hamster-detail">${Math.round(advice.discount * 100)}% onder gemiddeld · normaal ${fmtPrice(advice.avg)}</div>
+        </div>
+        <span class="hamster-badge">Sla in!</span>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="hamster-block">
+        <div class="hamster-title">🐹 Goede moment om in te slaan</div>
+        ${rows}
+      </div>`;
+  }
+
+  let serverCorrections = { blacklist: {} }; // geladen vanuit data/corrections.json
+
+  async function loadServerCorrections() {
+    try {
+      const res = await fetch('./data/corrections.json?v=' + Date.now());
+      if (res.ok) serverCorrections = await res.json();
+    } catch {}
+  }
+
+  function loadBlacklist() {
+    const local = loadJson(BLACKLIST_KEY, {});
+    // Samenvoegen: lokale blacklist + server corrections
+    const merged = { ...serverCorrections.blacklist };
+    for (const [k, v] of Object.entries(local)) {
+      merged[k] = [...new Set([...(merged[k] || []), ...v])];
+    }
+    return merged;
+  }
+  function saveBlacklist(bl) { try { localStorage.setItem(BLACKLIST_KEY, JSON.stringify(bl)); } catch {} }
+
+  function isBlacklisted(itemNorm, productName) {
+    const bl = loadBlacklist();
+    return (bl[itemNorm] || []).includes(productName);
+  }
+
+  function blacklistMatch(itemNorm, productName, storeName) {
+    const bl = loadBlacklist();
+    bl[itemNorm] = [...new Set([...(bl[itemNorm] || []), productName])];
+    saveBlacklist(bl);
+    matchCache.clear();
+    render();
+    toast(`Gemeld — "${productName}" wordt niet meer getoond`);
+    // Stuur ook naar Worker als geconfigureerd
+    const workerUrl = getShareWorkerUrl();
+    if (workerUrl) {
+      fetch(`${workerUrl}/report`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-report-token': 'bheld-report-v1' },
+        body: JSON.stringify({ type: 'wrong-match', item: itemNorm, product: productName, store: storeName, reportedAt: Date.now() }),
+      }).catch(() => {});
+    }
+  }
+
+  function unblacklistMatch(itemNorm, productName) {
+    const bl = loadBlacklist();
+    bl[itemNorm] = (bl[itemNorm] || []).filter(p => p !== productName);
+    if (!bl[itemNorm].length) delete bl[itemNorm];
+    saveBlacklist(bl);
+    matchCache.clear();
+    render();
+    renderBlacklistSection();
+    toast('Blokkering opgeheven');
+  }
+
+  let activeReportMenu = null;
+  function openReportMenu(el, itemName, productName, storeName) {
+    closeReportMenu();
+    const itemNorm = normalize(itemName);
+    const menu = document.createElement('div');
+    menu.className = 'report-menu';
+    menu.innerHTML = `
+      <div class="report-menu-title">Wat klopt er niet?</div>
+      <button class="report-opt danger" onclick="blacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${productName.replace(/'/g,"\\'")}','${storeName.replace(/'/g,"\\'")}');closeReportMenu()">
+        ✗ Verkeerd product — niet meer tonen
+      </button>
+      <button class="report-opt" onclick="closeReportMenu()">
+        Annuleren
+      </button>`;
+    el.closest('.cmp-row').style.position = 'relative';
+    el.closest('.cmp-row').appendChild(menu);
+    activeReportMenu = menu;
+    setTimeout(() => document.addEventListener('click', closeReportMenu, { once: true }), 10);
+  }
+  function closeReportMenu() {
+    if (activeReportMenu) { activeReportMenu.remove(); activeReportMenu = null; }
+  }
+
+  function renderBlacklistSection() {
+    const div = document.getElementById('blacklist-section');
+    if (!div) return;
+    const bl = loadBlacklist();
+    const entries = Object.entries(bl).flatMap(([itemNorm, prods]) =>
+      prods.map(p => ({ itemNorm, product: p }))
+    );
+    if (!entries.length) { div.innerHTML = ''; return; }
+    const rows = entries.map(({ itemNorm, product }) => `
+      <div class="blacklist-card">
+        <div class="blacklist-info">
+          <div class="blacklist-name">${escapeHtml(itemNorm)}</div>
+          <div class="blacklist-product">Geblokkeerd: ${escapeHtml(product)}</div>
+        </div>
+        <button class="blacklist-undo" onclick="unblacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${product.replace(/'/g,"\\'")}')">Herstellen</button>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="store-pref-card" style="margin-top:12px">
+        <div class="store-pref-label">🚩 Gemelde fouten (${entries.length})</div>
+        ${rows}
+      </div>`;
+  }
+
+  function applyBrandPref(matches, pref) {
+    if (!pref) return matches;
+    const filtered = matches.filter(m => pref === 'huismerk' ? isHuismerk(m) : !isHuismerk(m));
+    return filtered.length ? filtered : matches; // altijd iets tonen
+  }
+
+  function setBrandPref(id, pref) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.brandPref = it.brandPref === pref ? null : pref; // toggle
+    saveItems(); render();
+  }
+
+  function renderPriceComparison(it) {
+    const res = findMatches(it.name, it.category, it.matchOverrides);
+    const { hasData, comparedByUnit } = res;
+    if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
+    if (!res.matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+
+    const matches = applyBrandPref(res.matches, it.brandPref);
+
+    // Herbereken cheapest na filter — gebruik dominante eenheid zodat één winkel
+    // zonder unit-data de per-kg/l vergelijking niet verstoort
+    const withUnit = matches.filter(m => m.unitPrice);
+    const unitCounts2 = {};
+    for (const m of withUnit) unitCounts2[m.unitPrice.unit] = (unitCounts2[m.unitPrice.unit] || 0) + 1;
+    const dominantUnit = Object.keys(unitCounts2).sort((a, b) => unitCounts2[b] - unitCounts2[a])[0];
+    const sameUnit = dominantUnit && withUnit.filter(m => m.unitPrice.unit === dominantUnit).length >= 2;
+    let cheapest;
+    if (sameUnit) {
+      const unitWinner = withUnit
+        .filter(m => m.unitPrice.unit === dominantUnit)
+        .reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a);
+      const absWinner = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+      cheapest = absWinner.eff < unitWinner.eff ? absWinner : unitWinner;
+    } else {
+      cheapest = matches.reduce((a, b) => b.eff < a.eff ? b : a);
+    }
+
+    // Sorteer-/vergelijksleutel: prijs-per-dominante-eenheid indien beschikbaar, anders absolute prijs.
+    const key = m => (sameUnit && m.unitPrice && m.unitPrice.unit === dominantUnit)
+      ? m.unitPrice.value : m.eff;
+
+    const prefStore = getPrefStore();
+    const sorted = [...matches].sort((a, b) => {
+      if (prefStore) {
+        const aFav = a.storeId === prefStore ? 0 : 1;
+        const bFav = b.storeId === prefStore ? 0 : 1;
+        if (aFav !== bFav) return aFav - bFav;
+      }
+      return key(a) - key(b);
+    });
+
+    // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
+    const hasHuis = res.matches.some(m => isHuismerk(m));
+    const hasAmerk = res.matches.some(m => !isHuismerk(m));
+    const safeId = it.id.replace(/'/g, "\\'");
+    const brandToggle = (hasHuis && hasAmerk) ? `
+      <div class="brand-toggle">
+        <span class="brand-chip${it.brandPref === 'amerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','amerk')">A-merk</span>
+        <span class="brand-chip${it.brandPref === 'huismerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','huismerk')">Huismerk</span>
+      </div>` : '';
+
+    // Verpakkingstype detecteren per match (canoniek: 'fles' | 'blik' | null)
+    function detectPackType(m) {
+      const src = (m.p.name + ' ' + (m.p.unit || '')).toLowerCase();
+      const wordMatch = src.match(/\b(blik(?:jes?)?|fles(?:jes?)?|pak(?:ken)?|karton|can|brik)\b/);
+      if (wordMatch) return /blik|can/.test(wordMatch[1]) ? 'blik' : 'fles';
+      const multiVol = src.match(/(\d+)\s*x\s*(\d+(?:[.,]\d+)?)\s*ml\b/i);
+      const singleVol = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*ml\b/);
+      const litres = src.match(/(?:^|\D)(\d+(?:[.,]\d+)?)\s*(?:l|liter)\b/);
+      if (multiVol) return parseFloat(multiVol[2].replace(',', '.')) <= 500 ? 'blik' : 'fles';
+      if (singleVol) return parseFloat(singleVol[1].replace(',', '.')) <= 500 ? 'blik' : 'fles';
+      if (litres) return 'fles';
+      return null;
+    }
+
+    function makeRow(m, cheapest, sameUnit, key) {
+      const store = STORE_BY_ID[m.storeId];
+      const isCheapest = m === cheapest;
+      const safeItem = escapeHtml(it.name).replace(/'/g,"\\'");
+      const safeProd = escapeHtml(m.p.name).replace(/'/g,"\\'");
+      const safeStore = escapeHtml(store.name).replace(/'/g,"\\'");
+      const saving = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
+        ? m.p.price - m.eff : 0;
+      const wasPrice = saving > 0 ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
+      const savingBadge = saving > 0.01 ? `<span class="bonus-saving">-${fmtPrice(saving)}</span>` : '';
+      const bonusBadge = m.activeBonus
+        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>${savingBadge}`
+        : (m.upcomingBonus ? `<span class="bonus-badge upcoming">vr: ${escapeHtml(m.upcomingBonus.mechanism || 'bonus')}</span>` : '');
+      const unitTag = m.unitPrice
+        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[m.unitPrice.unit] || ''}</span>`
+        : (sameUnit ? `<span class="cmp-unit cmp-unit-missing">?/${cheapest.unitPrice?.unit || 'l'}</span>` : '');
+      const hasCompUnit = sameUnit ? (m.unitPrice?.unit === dominantUnit) : true;
+      const canDiff = hasCompUnit;
+      const diff = canDiff ? key(m) - key(cheapest) : 0;
+      const diffTag = (!isCheapest && canDiff && diff > 0 && diff < Infinity)
+        ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
+      const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
+      const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
+      const isFav  = m.storeId === prefStore;
+      const trend  = getPriceTrend(m.storeId, m.p);
+      const trendTag = trend
+        ? trend.isLowest
+          ? `<span class="price-trend lowest" title="Laagste prijs in 30 dagen">🏷️</span>`
+          : trend.pct <= -0.05
+            ? `<span class="price-trend down" title="${Math.round(-trend.pct*100)}% goedkoper dan vorige week">↓</span>`
+            : trend.pct >= 0.05
+              ? `<span class="price-trend up" title="${Math.round(trend.pct*100)}% duurder dan vorige week">↑</span>`
+              : ''
+        : '';
+      const hasOv = it.matchOverrides && it.matchOverrides[m.storeId];
+      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : '', hasOv ? 'has-override' : ''].filter(Boolean).join(' ');
+      return `
+        <div class="${rowClass}" onclick="event.stopPropagation();togglePicker(this,'${safeId}','${escapeHtml(m.storeId)}')">
+          <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+          <span class="cmp-price">${fmtPrice(m.eff)}</span>
+          ${wasPrice}
+          ${bonusBadge}
+          ${unitTag}
+          <span class="cmp-product">${brandName}${unitStr}</span>
+          ${isCheapest ? '' : diffTag}
+          ${trendTag}
+          <button class="cmp-watch${isWatched(m.storeId, m.p) ? ' active' : ''}" title="${isWatched(m.storeId, m.p) ? 'Niet meer volgen' : 'Volg de prijs van dit product'}" onclick="event.stopPropagation();toggleWatch('${escapeHtml(m.storeId)}','${escapeHtml(String(m.p.id || m.p.name)).replace(/'/g,"\\'")}','${safeProd}',${typeof m.p.price === 'number' ? m.p.price : 0})">${isWatched(m.storeId, m.p) ? '⭐' : '☆'}</button>
+          <button class="cmp-flag" title="Fout melden" onclick="event.stopPropagation();openReportMenu(this,'${safeItem}','${safeProd}','${safeStore}')">🚩</button>
+        </div>`;
+    }
+
+    // Groepeer op verpakkingstype — alleen zinvol voor dranken, niet voor sauzen/houdbaar
+    const DRINK_CATS = new Set(['frisdranken', 'alcoholisch', 'koffie']);
+    const doPackGroup = DRINK_CATS.has(it.category);
+    const withPackType = sorted.map(m => ({ m, pack: doPackGroup ? detectPackType(m) : null }));
+    const packTypes = [...new Set(withPackType.map(x => x.pack).filter(Boolean))];
+    const multiPack = packTypes.length > 1;
+
+    const PACK_LABEL = { fles: '🍾 Fles', blik: '🥫 Blikje' };
+    let rows;
+    if (multiPack) {
+      // Groepen: eerst fles, dan blik, dan onbekend — elk gesorteerd op prijs
+      const order = ['fles', 'blik', null];
+      rows = order.flatMap(pt => {
+        const group = withPackType.filter(x => x.pack === pt).map(x => x.m);
+        if (!group.length) return [];
+        const header = pt ? `<div class="pack-group-header">${PACK_LABEL[pt]}</div>` : '';
+        return [header, ...group.map(m => makeRow(m, cheapest, sameUnit, key))];
+      }).join('');
+    } else {
+      rows = sorted.map(m => makeRow(m, cheapest, sameUnit, key)).join('');
+    }
+    // Deal-hoeveelheid tip: als je te weinig hebt voor een combinatiedeal
+    function parseDealMinQty(mechanism) {
+      if (!mechanism) return null;
+      const t = mechanism.toLowerCase();
+      let m = t.match(/^(\d+)\+(\d+)\s*gratis/);
+      if (m) return parseInt(m[1]) + parseInt(m[2]);
+      m = t.match(/^(\d+)\s*(?:voor|x)\s*[\d,]/);
+      if (m) return parseInt(m[1]);
+      m = t.match(/^(\d+)e halve prijs/);
+      if (m) return parseInt(m[1]);
+      return null;
+    }
+    const dealQtyTipHtml = (() => {
+      const activeDeal = matches.find(m => m.activeBonus?.mechanism);
+      if (!activeDeal) return '';
+      const minQty = parseDealMinQty(activeDeal.activeBonus.mechanism);
+      if (!minQty || it.qty >= minQty) return '';
+      const store = STORE_BY_ID[activeDeal.storeId];
+      const need = minQty - it.qty;
+      const safeId = it.id.replace(/'/g, "\\'");
+      const effPerItem = activeDeal.eff;
+      const totalPrice = effPerItem != null ? minQty * effPerItem : null;
+      const priceStr = totalPrice != null
+        ? ` · <strong>${fmtPrice(totalPrice)}</strong> voor ${minQty} stuks <span class="cmp-unit">(gem. ${fmtPrice(effPerItem)}/stuk)</span>`
+        : '';
+      return `<div class="deal-qty-tip">
+        🏷️ <strong>${store.name}</strong>: <em>${escapeHtml(activeDeal.activeBonus.mechanism)}</em>${priceStr}
+        — voeg nog <strong>${need}×</strong> toe om de deal te pakken
+        <button class="deal-qty-tip-btn" onclick="event.stopPropagation();setQty('${safeId}',${minQty})">+${need} toevoegen</button>
+      </div>`;
+    })();
+
+    // Aanbieding-tip: zoek vergelijkbaar product dat nu in bonus is en goedkoper
+    const bonusTip = findBonusAlternative(it.name, it.category, matches);
+    const bonusTipHtml = bonusTip ? `
+      <div class="bonus-tip" onclick="quickAdd('${escapeHtml(bonusTip.name).replace(/'/g,"\\'")}')">
+        💡 <strong>${escapeHtml(bonusTip.storeName)}</strong> heeft
+        <strong>${escapeHtml(bonusTip.name)}</strong> in aanbieding voor
+        <strong>${fmtPrice(bonusTip.price)}</strong>
+        ${bonusTip.mechanism ? `<span class="bonus-tip-mech">${escapeHtml(bonusTip.mechanism)}</span>` : ''}
+        <span class="bonus-tip-add">+ voeg toe</span>
+      </div>` : '';
+
+    // Volgende-week-advisor: toon tip als een match volgende week in aanbieding gaat
+    const FRESH_CATS = new Set(['groente', 'zuivel', 'bakkerij', 'vlees']);
+    const upcomingTipHtml = (() => {
+      if (FRESH_CATS.has(it.category)) return ''; // verse producten: geen bewaar-advies
+      const upcoming = matches
+        .filter(m => m.upcomingBonus)
+        .sort((a, b) => (a.upcomingBonus.bonusPrice ?? a.eff) - (b.upcomingBonus.bonusPrice ?? b.eff));
+      if (!upcoming.length) return '';
+      const best = upcoming[0];
+      const store = STORE_BY_ID[best.storeId];
+      const upPrice = typeof best.p.bonus_price === 'number' ? best.p.bonus_price : null;
+      const priceStr = upPrice != null ? ` voor ${fmtPrice(upPrice)}` : '';
+      const mechStr = best.upcomingBonus.mechanism ? ` (${escapeHtml(best.upcomingBonus.mechanism)})` : '';
+      const endStr = best.upcomingBonus.end ? ` t/m ${best.upcomingBonus.end.slice(5).replace('-', '/')}` : '';
+      return `<div class="upcoming-tip">
+        📅 <strong>Volgende week goedkoper bij ${escapeHtml(store.name)}</strong>${priceStr}${mechStr}${endStr} — bewaar dit voor volgende week!
+      </div>`;
+    })();
+
+    // Banner bovenaan voor elke winkel die actieve bonus heeft (gesorteerd: goedkoopst eerst)
+    const bonusMatches = sorted.filter(m => m.activeBonus);
+    const bonusBanner = bonusMatches.length ? bonusMatches.map(m => {
+      const store = STORE_BY_ID[m.storeId];
+      const mech = m.activeBonus.mechanism ? `<span class="banner-mech">${escapeHtml(m.activeBonus.mechanism)}</span>` : '';
+      const end = m.activeBonus.end ? ` t/m ${m.activeBonus.end.slice(5).replace('-','/')}` : '';
+      return `<div class="item-bonus-banner">🔥 In bonus bij ${escapeHtml(store.name)}${end} ${mech}</div>`;
+    }).join('') : '';
+
+    return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
+  }
+
+  function togglePicker(rowEl, itemId, storeId) {
+    const existing = rowEl.nextElementSibling;
+    if (existing && existing.classList.contains('pick-panel')) { existing.remove(); return; }
+    document.querySelectorAll('.pick-panel').forEach(p => p.remove());
+    const it = items.find(x => x.id === itemId);
+    if (!it) return;
+    const candidates = findStoreMatchCandidates(storeId, it.name, it.category, 6);
+    if (!candidates.length) return;
+    const currentOverride = it.matchOverrides && it.matchOverrides[storeId];
+    const currentAuto = findStoreMatch(storeId, it.name, it.category);
+    const panel = document.createElement('div');
+    panel.className = 'pick-panel';
+    panel.onclick = function(e) { e.stopPropagation(); };
+    const store = STORE_BY_ID[storeId];
+    const stripWords = new Set([
+      ...normWords(it.name),
+      ...(store ? [normalize(store.name), store.id] : []),
+      'biologisch','bio','plus','ah','jumbo','lidl',
+    ]);
+    function shortPickName(fullName, unit) {
+      let parts = fullName.replace(/\b(AH|Jumbo|PLUS|Lidl|Biologisch|BIO\+?)\b/gi, '').trim().split(/\s+/);
+      parts = parts.filter(function(w) { return !stripWords.has(normalize(w)); });
+      let short = parts.join(' ').replace(/^\s*[-·,]\s*/, '').trim();
+      if (unit && !short) { short = unit.replace(/\s+/g, ' ').trim(); }
+      return short || fullName;
+    }
+    let html = candidates.map(function(c) {
+      const isActive = currentOverride ? c.p.name === currentOverride : (currentAuto && c.p.name === currentAuto.p.name);
+      const up = c.unitPrice;
+      const upStr = up ? `<span class="pick-unit">${fmtPrice(up.value)}${UNIT_LABEL[up.unit]||''}</span>` : '';
+      const bonusStr = c.activeBonus ? `<span class="pick-bonus">${escapeHtml(c.activeBonus.mechanism || 'bonus')}</span>` : '';
+      const safePN = escapeHtml(c.p.name).replace(/'/g, "\\'");
+      const displayName = shortPickName(c.p.name, c.p.unit);
+      return `<div class="pick-row${isActive?' active':''}" onclick="setMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}','${safePN}')">
+        <span class="pick-name">${escapeHtml(displayName)}</span>
+        ${bonusStr}
+        <span class="pick-price">${fmtPrice(c.eff)}</span>
+        ${upStr}
+      </div>`;
+    }).join('');
+    if (currentOverride) {
+      html += `<button class="pick-auto" onclick="clearMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}')">↻ Automatisch</button>`;
+    }
+    panel.innerHTML = html;
+    rowEl.insertAdjacentElement('afterend', panel);
+  }
+
+  function setMatchOverride(itemId, storeId, productName) {
+    const it = items.find(x => x.id === itemId);
+    if (!it) return;
+    if (!it.matchOverrides) it.matchOverrides = {};
+    it.matchOverrides[storeId] = productName;
+    saveItems();
+    matchCache.clear();
+    renderList();
+  }
+
+  function clearMatchOverride(itemId, storeId) {
+    const it = items.find(x => x.id === itemId);
+    if (!it || !it.matchOverrides) return;
+    delete it.matchOverrides[storeId];
+    if (!Object.keys(it.matchOverrides).length) delete it.matchOverrides;
+    saveItems();
+    matchCache.clear();
+    renderList();
+  }
+
+  // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
+  function coffeeSubtype(name) {
+    const n = normalize(name);
+    if (/bonen/.test(n))                      return 'bonen';
+    if (/filter|gemalen/.test(n))             return 'filter';
+    if (/pad(s)?\b/.test(n))                  return 'pads';
+    if (/cup(s)?\b|nespresso|dolce gusto|tassimo/.test(n)) return 'cups';
+    if (/instant|oplos/.test(n))              return 'instant';
+    return null;
+  }
+
+  // Zoek een vergelijkbaar product dat nu in aanbieding is en goedkoper dan de huidige beste match.
+  // Geeft { name, storeName, price, mechanism } terug of null.
+  function findBonusAlternative(itemName, itemCategory, currentMatches) {
+    const today = new Date().toISOString().slice(0, 10);
+    const cheapestPrice = currentMatches.length ? Math.min(...currentMatches.map(m => m.eff)) : Infinity;
+    const itemWords = normWords(itemName);
+    // Pak de hoofd-stam: het langste niet-stopwoord (bijv. "tomaat" uit "trostomaten")
+    const stem = itemWords.reduce((a, b) => a.length >= b.length ? a : b, '');
+    if (stem.length < 4) return null;
+
+    // Koffie-subtype van het item zodat we geen cross-type suggesties doen
+    const itemCoffeeType = itemCategory === 'koffie' ? coffeeSubtype(itemName) : null;
+
+    const allowedCats = itemCategory ? (USER_CAT_TO_AH[itemCategory] || []) : [];
+
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data?.products) continue;
+      for (const p of data.products) {
+        if (!p.bonus?.start || !p.bonus?.end) continue;
+        if (p.bonus.start > today || today > p.bonus.end) continue;
+        const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : p.price;
+        if (typeof bonusPrice !== 'number') continue;
+        // Moet goedkoper zijn dan huidige beste
+        if (bonusPrice >= cheapestPrice * 0.85) continue;
+        // Moet hetzelfde hoofd-ingrediënt bevatten (stem-match op productnaam)
+        const pWords = normWords(p.name);
+        if (!pWords.some(pw => stemMatch(pw, stem))) continue;
+        // Koffie: subtype moet overeenkomen (bonen ≠ filter ≠ pads ≠ cups)
+        if (itemCoffeeType && coffeeSubtype(p.name) !== itemCoffeeType) continue;
+        // Mag niet al in de currentMatches zitten
+        if (currentMatches.some(m => m.storeId === store.id && m.p.name === p.name)) continue;
+        // Categorie-check als beschikbaar
+        if (allowedCats.length && p.category && !allowedCats.includes(p.category)) continue;
+        return {
+          name: p.name,
+          storeName: store.name,
+          price: bonusPrice,
+          mechanism: p.bonus.mechanism || null,
+        };
+      }
+    }
+    return null;
+  }
+
+  function renderPriceSummary() {
+    const el = document.getElementById('price-summary');
+    if (!el) return;
+    const activeItems = items.filter(x => !x.checked);
+    if (!activeItems.length) { el.innerHTML = ''; return; }
+
+    const route = buildRoute();
+    if (!route) { el.innerHTML = ''; return; }
+
+    const { singles, multi, found } = route;
+    const foundCount = found.length;
+    const totalCount = activeItems.length;
+
+    // Alleen winkels tonen waar ≥1 item gevonden is
+    const storesWithHits = singles.filter(s => s.hit > 0)
+      .sort((a, b) => a.total - b.total);
+    if (!storesWithHits.length) { el.innerHTML = ''; return; }
+
+    const cheapestSingle = storesWithHits[0];
+    const optimalTotal = multi;
+    const saving = cheapestSingle.total - optimalTotal;
+
+    const pillsHtml = storesWithHits.map(s => {
+      const isCheapest = s.store.id === cheapestSingle.store.id;
+      const missing = s.missingInStore > 0 ? `<span class="pill-missing">−${s.missingInStore}</span>` : '';
+      return `<span class="price-pill${isCheapest ? ' cheapest' : ''}">
+        <span class="pill-name">${s.store.name}</span>
+        ${fmtPrice(s.total)}${missing}
+      </span>`;
+    }).join('');
+
+    const optimalRow = saving > 0.01
+      ? `<div class="price-bar-optimal">
+           <span>Optimaal gesplitst: <strong>${fmtPrice(optimalTotal)}</strong></span>
+           <span class="save-badge">bespaar ${fmtPrice(saving)}</span>
+         </div>`
+      : `<div class="price-bar-optimal"><span>Optimaal: <strong>${fmtPrice(optimalTotal)}</strong></span></div>`;
+
+    const label = foundCount < totalCount
+      ? `${foundCount} van ${totalCount} items geprijsd`
+      : `${totalCount} item${totalCount === 1 ? '' : 's'}`;
+
+    el.innerHTML = `
+      <div class="price-bar">
+        <div class="price-bar-label">💰 Totaalprijs · ${label}</div>
+        <div class="price-bar-stores">${pillsHtml}</div>
+        ${optimalRow}
+      </div>`;
+  }
+
+  function renderList() {
+    const wrap = document.getElementById('list-wrap');
+    renderPriceSummary();
+    if (!items.length) {
+      wrap.innerHTML = `
+        <div class="empty">
+          <span class="empty-emoji">🛒</span>
+          <div class="empty-title">Lijst is leeg</div>
+          <div class="empty-sub">Typ hierboven een product, of kies uit 'Vaak gekocht'.</div>
+        </div>`;
+      return;
+    }
+    // groeperen per categorie, in vaste volgorde, afgevinkten onderaan binnen elke groep
+    // Items zonder geldige categorie vallen terug op 'houdbaar'
+    items.forEach(it => { if (!CAT_BY_ID[it.category]) it.category = 'houdbaar'; });
+    const byCat = {};
+    items.forEach(it => { (byCat[it.category] = byCat[it.category] || []).push(it); });
+    const order = CATEGORIES.map(c => c.id).filter(id => byCat[id]);
+    let html = '';
+    order.forEach(catId => {
+      const cat = CAT_BY_ID[catId];
+      const arr = byCat[catId].sort((a,b) => (a.checked - b.checked) || ((a.sortOrder ?? 9999) - (b.sortOrder ?? 9999)) || (a.addedAt - b.addedAt));
+      const open = arr.filter(x => !x.checked).length;
+      html += `
+        <div class="category-group">
+          <div class="category-header">
+            <span>${cat.emo}</span> ${cat.name}
+            <span class="category-count">${open}/${arr.length}</span>
+          </div>
+          ${arr.map(it => `
+            <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
+              <div class="check" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${it.checked}"></div>
+              <div class="item-body" onclick="openCategoryPicker('${it.id}')">
+                <div class="item-name">${escapeHtml(it.name)}</div>
+                ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
+                ${renderPriceComparison(it)}
+              </div>
+              ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
+              <button class="item-note-btn" onclick="event.stopPropagation();openNoteEditor('${it.id}')" title="Notitie toevoegen">✏️</button>
+              <button class="item-del" onclick="deleteItem('${it.id}')" aria-label="Verwijder">✕</button>
+            </div>`).join('')}
+        </div>`;
+    });
+    wrap.innerHTML = html;
+  }
+
+  // ── DRAG & DROP (LIJST) ──
+  let dragItem = null, dragEl = null, dragStartY = 0, longPressTimer = null;
+  function initDrag() {
+    const wrap = document.getElementById('list-wrap');
+    wrap.addEventListener('touchstart', onDragTouchStart, { passive: false });
+    wrap.addEventListener('touchmove', onDragTouchMove, { passive: false });
+    wrap.addEventListener('touchend', onDragTouchEnd);
+  }
+  function getItemEl(el) { return el?.closest?.('.item[data-id]'); }
+  function onDragTouchStart(e) {
+    const itemEl = getItemEl(e.target);
+    if (!itemEl) return;
+    if (e.target.closest('button, .check, .cmp-row, .pick-panel, input, select')) return;
+    dragStartY = e.touches[0].clientY;
+    const id = itemEl.dataset.id;
+    longPressTimer = setTimeout(() => {
+      dragItem = id;
+      dragEl = itemEl;
+      itemEl.classList.add('dragging');
+      navigator.vibrate?.(30);
+    }, 400);
+  }
+  function onDragTouchMove(e) {
+    if (longPressTimer && Math.abs(e.touches[0].clientY - dragStartY) > 10) {
+      clearTimeout(longPressTimer); longPressTimer = null;
+    }
+    if (!dragItem) return;
+    e.preventDefault();
+    const y = e.touches[0].clientY;
+    const els = document.querySelectorAll('.item[data-id]');
+    els.forEach(el => el.classList.remove('drag-over'));
+    for (const el of els) {
+      if (el.dataset.id === dragItem) continue;
+      const r = el.getBoundingClientRect();
+      if (y > r.top && y < r.bottom) { el.classList.add('drag-over'); break; }
+    }
+  }
+  function onDragTouchEnd() {
+    clearTimeout(longPressTimer); longPressTimer = null;
+    if (!dragItem) return;
+    const overEl = document.querySelector('.item.drag-over');
+    if (overEl && overEl.dataset.id !== dragItem) {
+      const fromIdx = items.findIndex(x => x.id === dragItem);
+      const toIdx = items.findIndex(x => x.id === overEl.dataset.id);
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const [moved] = items.splice(fromIdx, 1);
+        items.splice(toIdx, 0, moved);
+        items.forEach((it, i) => { it.sortOrder = i; });
+        saveItems(); matchCache.clear(); renderList();
+      }
+    }
+    document.querySelectorAll('.item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+    dragItem = null; dragEl = null;
+  }
+
+  // ── DRAG & DROP (ROUTE WINKELS) ──
+  const ROUTE_ORDER_KEY = 'boodschappen.routeStoreOrder';
+  function getRouteStoreOrder() { try { return JSON.parse(localStorage.getItem(ROUTE_ORDER_KEY)) || null; } catch { return null; } }
+  function setRouteStoreOrder(order) { try { localStorage.setItem(ROUTE_ORDER_KEY, JSON.stringify(order)); } catch {} }
+  function moveRouteStore(storeId, dir) {
+    const current = getRouteStoreOrder() || Object.keys(document.querySelectorAll('.route-store') ? [] : []);
+    let storeIds = current;
+    if (!storeIds || !storeIds.length) {
+      storeIds = [...document.querySelectorAll('.route-store[data-store-id]')].map(el => el.dataset.storeId);
+    }
+    const idx = storeIds.indexOf(storeId);
+    if (idx < 0) return;
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= storeIds.length) return;
+    [storeIds[idx], storeIds[newIdx]] = [storeIds[newIdx], storeIds[idx]];
+    setRouteStoreOrder(storeIds);
+    renderRoute();
+  }
+
+  // Geeft HTML terug voor VARIANTS-submenu's, autocomplete en "vaak gekocht" (zonder recepten).
+  function buildRestHTML(inp, onList) {
+    const variants = inp && VARIANTS[inp];
+    if (variants) {
+      if (variants.groups) {
+        const groupNames = Object.keys(variants.groups);
+        const picks = (variantPicks && variantPicks.term === inp) ? variantPicks.picks : {};
+        const hasPick = Object.keys(picks).length > 0;
+
+        // Stel samengestelde naam op: Merk eerst, dan de rest in definitievolgorde
+        function composeName() {
+          const order = ['Merk', ...groupNames.filter(g => g !== 'Merk')];
+          return order.filter(g => picks[g]).map(g => picks[g]).join(' ');
+        }
+
+        const composed = composeName();
+        const packs = PACKAGINGS[inp] || [];
+
+        let html = `<div class="suggestions-label">Welke soort ${escapeHtml(inp)}?</div>`;
+
+        if (hasPick) {
+          html += `<div class="variant-compose-bar">
+            <span class="variant-compose-name">${escapeHtml(composed)}</span>
+          </div>
+          <button class="variant-compose-add" onclick="quickAddComposed('${escapeHtml(inp)}')">+ Voeg toe aan lijst</button>`;
+        }
+
+        if (packs.length) {
+          html += `<div class="suggestions" style="margin-bottom:6px">
+            ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">📦 ${escapeHtml(p)}</span>`).join('')}
+          </div>`;
+        }
+
+        for (const g of groupNames) {
+          const items = variants.groups[g];
+          const picked = picks[g] || '';
+          html += `<div class="variant-group-row">
+            <span class="variant-group-label">${escapeHtml(g)}</span>
+            <select class="variant-select${picked ? ' has-value' : ''}"
+              onchange="toggleVariantPick('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g,"\\'")}',this.value)">
+              <option value="">${escapeHtml(g)} kiezen…</option>
+              ${items.map(v => `<option value="${escapeHtml(v)}"${v === picked ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+            </select>
+          </div>`;
+        }
+
+        html += `<div class="suggestions" style="margin-top:4px">
+          <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+          ${hasPick ? `<span class="chip chip-back" onclick="clearVariantPicks()">✕ Wis</span>` : ''}
+        </div>`;
+
+        return html;
+      }
+      if (Array.isArray(variants) && variants.length) {
+        const ranked = variants.filter(v => !onList.has(normalize(v)))
+          .map(v => ({ name: v, count: history[normalize(v)]?.count || 0 }))
+          .sort((a, b) => b.count - a.count);
+        if (ranked.length) return `
+          <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
+          <div class="suggestions">
+            ${ranked.map(v => `<span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+              ${escapeHtml(v.name)}${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
+            </span>`).join('')}
+            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+          </div>`;
+      }
+    }
+    if (inp) {
+      const results = [];
+      for (const key of Object.keys(VARIANTS)) {
+        if (onList.has(key)) continue;
+        const norm = normalize(key);
+        if (norm.includes(inp)) results.push({ label: titleCase(key), name: key, isVariantKey: true, histCount: history[key]?.count || 0, startsWith: norm.startsWith(inp) });
+      }
+      for (const [key, val] of Object.entries(VARIANTS)) {
+        if (val.groups) {
+          for (const [groupName, items] of Object.entries(val.groups)) {
+            for (const v of items) {
+              const norm = normalize(v);
+              if (!norm.includes(inp) || onList.has(norm)) continue;
+              // Dedupliceer per (naam, parentKey) — niet globaal, zodat "Calvé" voor
+              // zowel mayonaise als pindakaas apart verschijnt.
+              if (results.some(r => normalize(r.name) === norm && r.parentKey === key)) continue;
+              // Als deze naam al bestaat voor een ander parentKey: voeg context toe aan label
+              const dup = results.find(r => normalize(r.name) === norm && r.parentKey !== key);
+              if (dup && !dup.label.includes('(') && dup.parentKey) dup.label = `${dup.name} (${dup.parentKey})`;
+              const label = dup ? `${v} (${key})` : v;
+              results.push({ label, name: v, isVariantKey: false, parentKey: key, groupName, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+            }
+          }
+        } else {
+          const flat = Array.isArray(val) ? val : [];
+          for (const v of flat) {
+            const norm = normalize(v);
+            if (norm.includes(inp) && !onList.has(norm) && !results.some(r => normalize(r.name) === norm))
+              results.push({ label: v, name: v, isVariantKey: false, histCount: history[norm]?.count || 0, startsWith: norm.startsWith(inp) });
+          }
+        }
+      }
+      for (const [k, v] of Object.entries(history)) {
+        if (onList.has(k)) continue;
+        const norm = normalize(v.name);
+        if ((k.includes(inp) || norm.includes(inp)) && !results.some(r => normalize(r.name) === k))
+          results.push({ label: v.name, name: v.name, isVariantKey: false, histCount: v.count || 0, startsWith: k.startsWith(inp), category: v.category });
+      }
+      results.sort((a, b) => (b.startsWith - a.startsWith) || (b.isVariantKey - a.isVariantKey) || (b.histCount - a.histCount));
+      const shown = results.slice(0, 10);
+      if (!shown.length) return '';
+      return `
+        <div class="suggestions-label">Suggesties</div>
+        <div class="suggestions">
+          ${shown.map(r => {
+            const cat = r.category ? (CAT_BY_ID[r.category]?.emo || '📦') : (r.isVariantKey ? '🔍' : '📦');
+            const cnt = r.histCount ? `<span class="chip-cnt">×${r.histCount}</span>` : '';
+            const arrow = r.isVariantKey ? ` <span class="chip-cnt">→</span>` : '';
+            const safe = escapeHtml(r.name).replace(/'/g, "\\'");
+            const action = r.isVariantKey
+              ? `document.getElementById('add-input').value='${safe}';onInputChange()`
+              : r.parentKey
+                ? `selectVariantItem('${escapeHtml(r.parentKey).replace(/'/g,"\\'")}','${escapeHtml(r.groupName).replace(/'/g,"\\'")}','${safe}')`
+                : `quickAdd('${safe}')`;
+            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">${cat} ${escapeHtml(r.label)}${arrow}${cnt}</span>`;
+          }).join('')}
+        </div>`;
+    }
+    // Leeg veld: vaak gekocht
+    let entries = Object.entries(history).filter(([k]) => !onList.has(k)).map(([k, v]) => ({ key: k, ...v }));
+    const now = Date.now();
+    entries.forEach(e => { const d = (now - (e.lastBought || 0)) / 86400000; e._score = e.count * Math.max(0.3, 1 - d / 60); });
+    entries.sort((a, b) => b._score - a._score);
+    entries = entries.slice(0, 8);
+    if (!entries.length) return '';
+    return `
+      <div class="suggestions-label">Vaak gekocht</div>
+      <div class="suggestions">
+        ${entries.map(e => `<span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
+          ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}<span class="chip-cnt">×${e.count}</span>
+        </span>`).join('')}
+      </div>`;
+  }
+
+  function renderSuggestions() {
+    const wrap = document.getElementById('suggestions-wrap');
+    const inp = document.getElementById('add-input').value.trim().toLowerCase();
+    const onList = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+
+    // 0. Recepten: exacte/unieke match → volledige kaart; meerdere → chips bóven VARIANTS
+    // Uitzondering: als er ook een VARIANTS-key is voor deze invoer, toon dan eerst de variant-picker
+    if (inp && inp.length >= 3) {
+      const matching = Object.keys(RECIPES).filter(k => k.includes(inp) || inp.includes(k));
+      const hasVariant = !!VARIANTS[normalize(inp)]?.groups;
+      if (!hasVariant && matching.length === 1 && (matching[0] === inp || inp.includes(matching[0]))) {
+        const recipe = RECIPES[matching[0]];
+        const safe = matching[0].replace(/'/g, "\\'");
+        wrap.innerHTML = `
+          <div class="recipe-card">
+            <div class="recipe-title">${recipe.emo} ${titleCase(matching[0])}</div>
+            <div class="recipe-ingredients">${recipe.ingredients.map(i => `<span class="recipe-ing-chip">${escapeHtml(i)}</span>`).join('')}</div>
+            <button class="recipe-add-btn" onclick="addRecipe('${safe}')">+ Voeg alle ingrediënten toe</button>
+          </div>`;
+        return;
+      }
+      if (matching.length > 1) {
+        const recipeChips = matching.map(k => {
+          const r = RECIPES[k];
+          const safe = k.replace(/'/g, "\\'");
+          return `<span class="chip chip-group" onclick="document.getElementById('add-input').value='${safe}';onInputChange()">${r.emo} ${escapeHtml(titleCase(k))}</span>`;
+        }).join('');
+        wrap.innerHTML = `<div class="suggestions-label">Recepten</div><div class="suggestions">${recipeChips}</div>` + buildRestHTML(inp, onList);
+        return;
+      }
+    }
+
+    wrap.innerHTML = buildRestHTML(inp, onList);
+  }
+  function quickAdd(name) {
+    const norm = normalize(name);
+    const existing = items.find(it => normalize(it.name) === norm && !it.checked);
+    if (existing) {
+      items = items.filter(it => it !== existing);
+      saveItems(); render();
+      document.getElementById('add-input').value = '';
+      document.getElementById('qty-input').value = '';
+      activePackaging = null;
+      syncSubmitBtn();
+      renderSuggestions();
+      return;
+    }
+    addItem(name, 1);
+    document.getElementById('add-input').value = '';
+    document.getElementById('qty-input').value = '';
+    activePackaging = null;
+    syncSubmitBtn();
+    renderSuggestions();
+  }
+  function quickAddWithPack(name) {
+    quickAdd(activePackaging ? `${name} ${activePackaging}` : name);
+  }
+  function addRecipe(recipeKey) {
+    const recipe = RECIPES[recipeKey];
+    if (!recipe) return;
+    recipe.ingredients.forEach(ing => addItem(ing, 1));
+    document.getElementById('add-input').value = '';
+    document.getElementById('qty-input').value = '';
+    syncSubmitBtn();
+    renderSuggestions();
+    toast(`${recipe.emo} ${titleCase(recipeKey)} toegevoegd (${recipe.ingredients.length} ingrediënten)`);
+  }
+  function syncSubmitBtn() {
+    const inp = document.getElementById('add-input')?.value.trim() || '';
+    const btn = document.getElementById('add-submit-btn');
+    // Verberg hoofd-knop als variant-picker zijn eigen "Voeg toe" toont
+    const hasVariantBtn = variantPicks && Object.keys(variantPicks.picks || {}).length > 0;
+    if (btn) btn.classList.toggle('visible', inp.length > 0 && !hasVariantBtn);
+  }
+  function onInputChange() {
+    const inp = document.getElementById('add-input').value.trim().toLowerCase();
+    if (variantPicks && inp !== variantPicks.term) variantPicks = null;
+    syncSubmitBtn();
+    renderSuggestions();
+  }
+  let variantPicks = null;  // { term, picks: { Groep: 'Waarde' } }
+  let activePackaging = null;
+
+  function selectVariantItem(term, group, value) {
+    document.getElementById('add-input').value = term;
+    if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
+    variantPicks.picks[group] = value;
+    renderSuggestions();
+  }
+  function toggleVariantPick(term, group, value) {
+    if (!variantPicks || variantPicks.term !== term) variantPicks = { term, picks: {} };
+    if (!value || variantPicks.picks[group] === value) delete variantPicks.picks[group];
+    else variantPicks.picks[group] = value;
+    syncSubmitBtn();
+    renderSuggestions();
+  }
+  function clearVariantPicks() { variantPicks = null; renderSuggestions(); }
+  function quickAddComposed(baseTerm) {
+    if (!variantPicks || variantPicks.term !== baseTerm) return;
+    const variants = VARIANTS[baseTerm];
+    const groupNames = Object.keys(variants.groups);
+    const picks = variantPicks.picks;
+    const order = ['Merk', ...groupNames.filter(g => g !== 'Merk')];
+    const merk = picks['Merk'];
+    // Als geen Merk gekozen of Merk is 'Huismerk', voeg baseTerm als prefix toe zodat
+    // matching "Kind 120mg" vindt als "Paracetamol Kind 120mg" etc.
+    const merkIsUseful = merk && merk !== 'Huismerk';
+    // Groepen die niet in de zoeknaam mee moeten (beschrijvend, niet zoekbaar)
+    const SKIP_IN_NAME = new Set(['Gewicht']);
+    const parts = order.filter(g => picks[g] && (g !== 'Merk' || merkIsUseful) && !SKIP_IN_NAME.has(g)).map(g => picks[g]);
+    // Voeg baseTerm alleen toe als prefix wanneer:
+    // 1. Geen merk gekozen (of Huismerk)
+    // 2. De gekozen waarden bevatten de baseTerm nog niet
+    // 3. De gekozen waarden ZONDER baseTerm vinden geen enkel product
+    //    (bijv. "Spaghetti" vindt zelf producten → geen "Pasta" prefix nodig;
+    //     maar "Kind 120mg" vindt niets → "Paracetamol" prefix wél nodig)
+    const picksText = parts.join(' ').toLowerCase();
+    if (!merkIsUseful && !picksText.includes(baseTerm.toLowerCase())) {
+      parts.unshift(titleCase(baseTerm));
+    }
+    const name = parts.join(' ');
+    if (!name) return;
+    const finalName = activePackaging ? `${name} ${activePackaging}` : name;
+    variantPicks = null;
+    activePackaging = null;
+    quickAdd(finalName);
+  }
+  function setPackaging(p) { activePackaging = (activePackaging === p) ? null : p; renderSuggestions(); }
+
+  // Verpakking-opties per generieke term. Default: alleen bier.
+  const PACKAGINGS = {
+    bier:      ['Krat', '6-pack flesjes', 'Flesje', '6-pack blik', 'Tray blik', 'Blik'],
+    water:     ['Fles', '6-pack fles', 'Karton', 'Groot pak'],
+    sap:       ['Pak', 'Fles', 'Karton'],
+    wijn:      ['Fles', 'Bag-in-box', 'Karton'],
+  };
+
+  // Catalogus voor het Bladeren-menu — per categorie de meest gangbare NL boodschappen.
+  // Title-case zodat het direct als productnaam de lijst in kan.
+  const BROWSE_CATALOG = {
+    groente: { subgroups: [
+      { name: 'Groente', emo: '🥦', items: [
+        'Tomaat','Komkommer','Paprika','Wortel','Ui','Knoflook','Sla',
+        'Andijvie','Witlof','Kool','Spinazie','Broccoli','Bloemkool','Courgette','Aubergine','Prei',
+        'Pompoen','Venkel','Snijbonen','Sperziebonen','Asperges','Mais','Bosui',
+        'Aardappel','Zoete aardappel','Champignons','Radijs','Bieten','Spruitjes',
+        'Snoepgroente','Slamelange','Rauwkost','Taugé','Kiemgroenten',
+        'Gember','Peper',
+      ]},
+      { name: 'Fruit', emo: '🍎', items: [
+        'Appel','Peer','Banaan','Sinaasappel','Mandarijn','Citroen','Limoen','Kiwi',
+        'Aardbeien','Framboos','Blauwe bes','Bramen','Rode bessen','Cranberries',
+        'Meloen','Watermeloen','Ananas','Perzik','Nectarine','Pruim','Kersen',
+        'Avocado','Mango','Druiven','Passievrucht','Grapefruit','Vijgen','Abrikozen',
+        'Dadels','Kokos','Granaatappel','Jackfruit',
+        'Gedroogde vruchten','Fruit op sap','Appelmoes',
+      ]},
+      { name: 'Verpakte groente & mixen', emo: '🥘', items: [
+        'Wokgroenten','Roerbakgroenten','Soepgroenten',
+        'Nasi groente','Bami groente','Oven groente','Broccoli mix','Groentenmix',
+        'Groentepasta',
+      ]},
+      { name: 'Sappen & smoothies', emo: '🥤', items: [
+        'Verse sappen','Smoothie','Groentesap','Groentesmoothie','Vitamineshot','Gembershot','Knijpfruit',
+      ]},
+      { name: 'Verse kruiden', emo: '🌿', items: [
+        'Peterselie','Basilicum','Munt','Koriander','Tijm','Rozemarijn','Bieslook',
+        'Dragon','Salie','Oregano','Dille','Laurier',
+      ]},
+    ]},
+    zuivel: { subgroups: [
+      { name: 'Melk & dranken', emo: '🥛', items: [
+        'Melk','Plantaardige melk','Karnemelk','Chocolademelk','Koffiemelk','Drinkyoghurt','Kefir',
+      ]},
+      { name: 'Yoghurt & kwark', emo: '🍶', items: [
+        'Yoghurt','Kwark','Skyr','Probiotica','Griekse yoghurt',
+      ]},
+      { name: 'Room & boter', emo: '🧈', items: [
+        'Boter','Margarine','Slagroom','Room','Kookroom','Crème fraîche',
+      ]},
+      { name: 'Kaas', emo: '🧀', items: [
+        'Kaas','Smeerkaas','Mozzarella','Feta','Parmezaan','Geitenkaas','Brie','Camembert',
+        'Jong belegen','Belegen','Oude kaas','Hüttenkäse',
+      ]},
+      { name: 'Eieren', emo: '🥚', items: [
+        'Eieren','Vrije uitloop eieren','Bio eieren',
+      ]},
+      { name: 'Toetjes & dessert', emo: '🍮', items: [
+        'Vla','Pudding','Toetje','Panna cotta','Mousse',
+      ]},
+    ]},
+    bakkerij: { subgroups: [
+      { name: 'Brood', emo: '🍞', items: [
+        'Brood','Stokbrood','Baguette','Ciabatta','Focaccia',
+        'Bollen','Witte bollen','Bruine bollen','Pistolet','Broodje','Saucijzenbrood','Worstenbroodje','Hamburgerbroodje','Bagel','Pita','Naan','Wrap','Flatbread',
+      ]},
+      { name: 'Viennoiserie', emo: '🥐', items: [
+        'Croissant','Viennoiserie','Pain au chocolat','Rozijnenbol','Krentenbol','Appelflap',
+      ]},
+      { name: 'Crackers & beschuit', emo: '🫓', items: [
+        'Beschuit','Crackers','Knäckebröd','Rijstwafels',
+      ]},
+      { name: 'Bakken', emo: '🧁', items: [
+        'Bloem','Tarwebloem','Zelfrijzend bakmeel','Bakpoeder','Gist','Maïzena','Vanillesuiker',
+      ]},
+      { name: 'Zoetigheid', emo: '🍪', items: [
+        'Stroopwafel','Speculaas','Eierkoek','Boterkoek','Ontbijtkoek','Mueslireep','Daelmans','Lotus Biscoff','Liga','Sultana',
+      ]},
+    ]},
+    vlees: { subgroups: [
+      { name: 'Vers vlees', emo: '🥩', items: [
+        'Kip','Kipfilet','Kippendij','Varkensvlees','Rundvlees','Gehakt','Lamsvlees','Kalkoen',
+        'Eend','Hert','Wokkip','Wokrundvlees',
+      ]},
+      { name: 'Worst & spek', emo: '🌭', items: [
+        'Bacon','Spek','Spekjes','Worst','Rookworst','Knakworst','Braadworst','Hotdog','Cocktailworstjes',
+        'Sucuk',
+      ]},
+      { name: 'Vegan & vegetarisch', emo: '🌱', items: [
+        'Vleesvervanger','Vegetarische burger','Hamburger','Vegan gehakt','Vegetarisch gehakt',
+        'Tofu','Tempeh','Seitan','Falafel','Quorn','Jackfruit',
+        'Plantaardige spekjes','Vegetarische worst','Vegan worst',
+      ]},
+      { name: 'Vleeswaren & beleg', emo: '🥪', items: [
+        'Ham','Salami','Rookvlees','Filet Americain','Paté','Leverpastei','Kip spread',
+        'Ragout','Vegetarisch beleg','Beleg',
+      ]},
+      { name: 'Maaltijden vlees', emo: '🍲', items: [
+        'Ovenschotel','Hachee','Slavink','Gehaktbal',
+      ]},
+      { name: 'Verse vis', emo: '🐟', items: [
+        'Zalm','Kabeljauw','Pangasius','Haring','Zeebaars','Dorade','Tilapia','Zalmforel','Makreel',
+        'Kibbeling','Verse vis',
+      ]},
+      { name: 'Bewerkte vis', emo: '🐠', items: [
+        'Gerookte vis','Vissticks','Vissalade','Surimi','Vis in blik',
+        'Tonijn','Ansjovis','Sardines',
+      ]},
+      { name: 'Schaal- & schelpdieren', emo: '🦐', items: [
+        'Garnalen','Mosselen','Gemengde zeevruchten','Rivierkreeftjes',
+        'Coquilles','Kreeft','Langoustines','Oesters','Oktopus',
+        'Sushi','Kaviaar','Escargots',
+      ]},
+    ]},
+    diepvries: { subgroups: [
+      { name: 'Groente & fruit', emo: '🥦', items: [
+        'Diepvries groente','Diepvries fruit',
+      ]},
+      { name: 'Vlees & vis', emo: '🐟', items: [
+        'Diepvries vlees','Diepvries vis','Vissticks',
+      ]},
+      { name: 'Pizza & maaltijden', emo: '🍕', items: [
+        'Diepvries pizza','Verse pizza','Diepvries maaltijd','Diepvries snacks',
+      ]},
+      { name: 'Frites & snacks (oven/airfryer)', emo: '🌡️', items: [
+        'Friet oven','Kroket oven','Bitterballen oven','Loempia oven','Nasibal oven','Aardappelpartjes oven','Zoete aardappelfriet oven',
+      ]},
+      { name: 'Frites & snacks (frituur)', emo: '🍟', items: [
+        'Friet frituur','Kroket','Bitterballen','Loempia','Nasibal','Frikandel',
+      ]},
+      { name: 'IJs', emo: '🍦', items: [
+        'Ijs','IJslolly','IJsblokjes',
+      ]},
+    ]},
+    houdbaar: { subgroups: [
+      { name: 'Pasta, rijst & granen', emo: '🍝', items: [
+        'Pasta','Rijst','Noedels','Couscous','Quinoa','Bulgur','Polenta',
+      ]},
+      { name: 'Soepen & bouillon', emo: '🍜', items: [
+        'Soep','Bouillon','Tomatensoep','Erwtensoep','Groentesoep',
+      ]},
+      { name: 'Sauzen & condimenten', emo: '🫙', items: [
+        'Pastasaus','Pesto','Ketchup','Mayonaise','Mosterd','Sambal','Sojasaus',
+        'Barbecuesaus','Sweet chili saus','Teriyaki saus','Worcestersaus',
+        'Ketjap','Vissaus','Oestersaus',
+      ]},
+      { name: 'Blik & conserven', emo: '🥫', items: [
+        'Tomatenblokjes','Tomatenpuree','Passata',
+        'Bonen','Linzen','Kikkererwten','Olijven','Augurken','Kappertjes','Zilveruitjes',
+        'Tonijn in blik','Sardines','Ansjovis','Makreel in blik',
+      ]},
+      { name: 'Olie, azijn & kruiden', emo: '🫒', items: [
+        'Olijfolie','Zonnebloemolie','Olie','Azijn','Balsamico',
+        'Zout','Peper','Paprikapoeder','Komijn','Kerrie','Knoflookpoeder','Uienpoeder',
+        'Oregano','Kaneel','Nootmuskaat','Kurkuma','Chilipoeder',
+      ]},
+      { name: 'Ontbijt & beleg', emo: '🥣', items: [
+        'Muesli','Cornflakes','Havermout','Granola',
+        'Hagelslag','Vlokken','Muisjes','Pindakaas','Chocoladepasta','Jam','Honing',
+      ]},
+      { name: 'Bakken', emo: '🧁', items: [
+        'Suiker','Bloem','Bakpoeder','Vanillesuiker','Maïzena','Gist',
+      ]},
+      { name: 'Vegetarisch & vegan', emo: '🌱', items: [
+        'Vleesvervangers','Tofu','Tempeh','Hummus','Falafel','Plantaardige melk',
+      ]},
+    ]},
+    snacks: { subgroups: [
+      { name: 'Chips & zout', emo: '🥔', items: [
+        'Chips','Tortilla chips','Pringles','Popcorn','Rijstwafels','Crackers','Tuc',
+      ]},
+      { name: 'Noten & borrel', emo: '🥜', items: [
+        'Noten','Notenmix','Cashewnoten','Amandelen','Walnoten','Pistaches','Borrelnootjes','Pinda\'s',
+        'Olijven','Hummus','Salami borrel',
+      ]},
+      { name: 'Chocolade', emo: '🍫', items: [
+        'Chocolade','Snickers','Mars','Twix','Bounty','Kitkat','Oreo',
+      ]},
+      { name: 'Snoep & drop', emo: '🍬', items: [
+        'Drop','Wine gums','Snoep','Gummies','Lolly',
+      ]},
+      { name: 'Koek', emo: '🍪', items: [
+        'Stroopwafel','Speculaas','Daelmans','Lotus Biscoff','Liga','Sultana','Eierkoek',
+      ]},
+    ]},
+    frisdranken: { subgroups: [
+      { name: 'Water', emo: '💧', items: [
+        'Mineraalwater','Spa rood','Spa blauw','Bruisend water',
+      ]},
+      { name: 'Frisdrank', emo: '🥤', items: [
+        'Cola','Fanta','Sprite','7Up','Dubbelfris','Rivella','Aquarius',
+      ]},
+      { name: 'Sap', emo: '🍊', items: [
+        'Sinaasappelsap','Appelsap','Multivruchtensap','Tomatensap','Kokoswater','Kombucha',
+      ]},
+      { name: 'Ice tea & energy', emo: '⚡', items: [
+        'Ice tea','Energy drink','Red Bull',
+      ]},
+      { name: 'Siroop', emo: '🍹', items: [
+        'Vruchtensiroop','Karvan Cévitam',
+      ]},
+    ]},
+    koffie: { subgroups: [
+      { name: 'Koffie', emo: '☕', items: [
+        'Koffie','Koffiebonen','Filterkoffie','Koffiepads','Koffiecups','Instantkoffie',
+        'Espresso','Lungo','Cappuccino','Latte macchiato',
+      ]},
+      { name: 'Thee', emo: '🍵', items: [
+        'Thee','Groene thee','Rooibos','Kruidenthee','Pepermunthee','Gemberthee','Kamillethee','Earl Grey',
+        'Zwarte thee','Witte thee','Chai',
+      ]},
+    ]},
+    alcoholisch: { subgroups: [
+      { name: 'Bier', emo: '🍺', items: [
+        'Bier','Speciaalbier','Alcoholvrij bier','Radler',
+        'Pilsner','IPA','Witbier','Tripel','Stout',
+      ]},
+      { name: 'Wijn', emo: '🍷', items: [
+        'Wijn','Rode wijn','Witte wijn','Rosé','Prosecco','Cava','Champagne',
+      ]},
+      { name: 'Sterke drank', emo: '🥃', items: [
+        'Gin','Wodka','Whisky','Rum','Jenever','Tequila','Likeur','Cognac','Brandy',
+      ]},
+    ]},
+    drogist: { subgroups: [
+      { name: 'Haar & huid', emo: '🧴', items: [
+        'Shampoo','Conditioner','Douchegel','Bodylotion','Dagcrème',
+        'Zonnebrand','Aftersun','Make-up remover',
+      ]},
+      { name: 'Mondzorg', emo: '🦷', items: [
+        'Tandpasta','Tandenborstel','Flosdraad','Mondwater',
+      ]},
+      { name: 'Deodorant & verzorging', emo: '🧼', items: [
+        'Deodorant','Handzeep','Scheermesjes','Scheerschuim',
+      ]},
+      { name: 'Baby & vrouw', emo: '👶', items: [
+        'Maandverband','Tampons','Luiers','Babydoekjes','Babyvoeding',
+      ]},
+      { name: 'Gezondheid', emo: '💊', items: [
+        'Paracetamol','Ibuprofen','Pleisters','Vitaminen','Neusspray','Hoestdrank',
+        'Strepsils','Trachitol','Zuigtabletten','Keelspray',
+      ]},
+    ]},
+    maaltijden: { subgroups: [
+      { name: 'Ontbijt & brunch', emo: '🥞', items: [
+        'Pannenkoeken','Poffertjes','Wentelteefjes','Eiersalade','Roerei kant-en-klaar',
+      ]},
+      { name: 'Soepen', emo: '🍲', items: [
+        'Verse soep','Tomatensoep','Kippensoep','Groentesoep','Erwtensoep',
+        'Pompoensoep','Paprikasoep','Champignonsoep','Minestrone',
+      ]},
+      { name: 'Salades & wraps', emo: '🥗', items: [
+        'Salade','Maaltijdsalade kip','Caesar salade','Pasta salade','Coleslaw',
+        'Wrap','Shoarma wrap','Falafel wrap','Kip caesar wrap','Tonijn wrap',
+      ]},
+      { name: 'Stamppot & Hollands', emo: '🥔', items: [
+        'Stamppot','Boerenkool stamppot','Hutspot','Andijvie stamppot',
+        'Zuurkool stamppot','Hachee','Stoofvlees',
+      ]},
+      { name: 'Quiches & hartige taarten', emo: '🫓', items: [
+        'Quiche','Quiche Lorraine','Quiche spinazie feta','Hartige taart',
+        'Bladerdeeg taart','Tarte flambée',
+      ]},
+      { name: 'Sushi & Aziatisch', emo: '🍱', items: [
+        'Sushi','Pokébowl','Nasi goreng','Bami goreng','Wok maaltijd',
+        'Dim sum','Gyoza','Loempia',
+      ]},
+      { name: 'Wereldkeuken', emo: '🌍', items: [
+        'Curry','Tikka masala','Shoarma','Döner','Falafel',
+        'Burrito','Taco maaltijd','Paella','Moussaka','Lasagne',
+      ]},
+      { name: 'Maaltijdpakketten', emo: '📦', items: [
+        'Maaltijdpakket','HelloFresh','Marley Spoon',
+      ]},
+    ]},
+    huishouden: { subgroups: [
+      { name: 'Papier & folie', emo: '🧻', items: [
+        'Toiletpapier','Keukenpapier','Tissues','Aluminiumfolie','Vershoudfolie','Bakpapier','Vuilniszakken',
+      ]},
+      { name: 'Schoonmaakmiddelen', emo: '🧹', items: [
+        'Allesreiniger','Afwasmiddel','Vaatwastabletten','Wasmiddel','Wasverzachter','Vlekverwijderaar',
+        'Wc-reiniger','Badkamerreiniger','Ontkalker',
+      ]},
+      { name: 'Schoonmaakgerei', emo: '🧽', items: [
+        'Sponzen','Schuursponsje','Stofdoek','Mopvulling',
+      ]},
+      { name: 'Huisdier', emo: '🐾', items: [
+        'Kattenvoer','Hondenvoer','Kattensnacks','Hondensnacks','Kattenbakkorrels',
+      ]},
+      { name: 'Overig', emo: '🔋', items: [
+        'Batterijen','Kaarsen','Lucifers','Luchtverfrisser',
+      ]},
+    ]},
+  };
+
+  let browseCat = null;    // huidige geopende categorie in modal
+  let browseSubCat = null; // huidige sub-categorie (naam) binnen browseCat
+
+  function openBrowse() {
+    browseCat = null;
+    renderBrowse();
+    document.getElementById('modal-browse').classList.add('open');
+  }
+  function closeBrowse() {
+    document.getElementById('modal-browse').classList.remove('open');
+    browseCat = null;
+  }
+  function openBrowseCat(catId) { browseCat = catId; browseSubCat = null; renderBrowse(); }
+  function openBrowseSubCat(sub) { browseSubCat = sub; renderBrowse(); }
+  function backToBrowseHome() { browseCat = null; browseSubCat = null; renderBrowse(); }
+  function backToBrowseCat() { browseSubCat = null; renderBrowse(); }
+
+  function renderBrowse() {
+    const head = document.getElementById('browse-head');
+    const body = document.getElementById('browse-body');
+    if (!browseCat) {
+      head.innerHTML = `<span class="browse-title">📋 Door categorieën bladeren</span>`;
+      body.innerHTML = `<div class="browse-grid">${
+        CATEGORIES.filter(c => {
+          const e = BROWSE_CATALOG[c.id];
+          return e && (e.length || e.subgroups?.length);
+        }).map(c => {
+          const e = BROWSE_CATALOG[c.id];
+          const count = e.subgroups
+            ? e.subgroups.reduce((s, sg) => s + sg.items.length, 0)
+            : e.length;
+          return `
+          <button class="browse-cat" onclick="openBrowseCat('${c.id}')">
+            <span class="b-emo">${c.emo}</span><span class="b-name">${escapeHtml(c.name)}</span>
+            <span class="b-count">${count}</span>
+          </button>`;
+        }).join('')
+      }</div>`;
+      return;
+    }
+    const cat = CAT_BY_ID[browseCat];
+    const catalogEntry = BROWSE_CATALOG[browseCat];
+    // Sub-groepen niveau
+    if (catalogEntry && catalogEntry.subgroups && !browseSubCat) {
+      head.innerHTML = `
+        <button class="browse-back" onclick="backToBrowseHome()">← Categorieën</button>
+        <span class="browse-emo">${cat.emo}</span>
+        <span class="browse-title">${escapeHtml(cat.name)}</span>`;
+      body.innerHTML = `<div class="browse-grid">${
+        catalogEntry.subgroups.map(sg => `
+          <button class="browse-cat" onclick="openBrowseSubCat('${escapeHtml(sg.name).replace(/'/g,"\\'")}')">
+            <span class="b-emo">${sg.emo}</span><span class="b-name">${escapeHtml(sg.name)}</span>
+            <span class="b-count">${sg.items.length}</span>
+          </button>`).join('')
+      }</div>`;
+      return;
+    }
+    // Product-lijst (flat of via subgroep)
+    let products = [];
+    if (catalogEntry && catalogEntry.subgroups && browseSubCat) {
+      const sg = catalogEntry.subgroups.find(s => s.name === browseSubCat);
+      products = sg ? sg.items : [];
+    } else {
+      products = catalogEntry || [];
+    }
+    const onListNorms = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
+    head.innerHTML = `
+      <button class="browse-back" onclick="${browseSubCat ? 'backToBrowseCat()' : 'backToBrowseHome()'}">&larr; ${browseSubCat ? escapeHtml(cat.name) : 'Categorieën'}</button>
+      <span class="browse-emo">${cat.emo}</span>
+      <span class="browse-title">${escapeHtml(browseSubCat || cat.name)}</span>`;
+    body.innerHTML = `<div class="browse-products">${
+      products.map(name => {
+        const added = onListNorms.has(normalize(name));
+        return `<span class="browse-prod${added ? ' added' : ''}" onclick="browseAdd('${escapeHtml(name).replace(/'/g, "\\'")}', this)">${escapeHtml(name)}</span>`;
+      }).join('')
+    }</div>`;
+  }
+  function browseAdd(name, el) {
+    const key = normalize(name);
+    const variant = VARIANTS[key];
+    if (variant && variant.groups) {
+      // Heeft sub-groepen → sluit modal, vul input, toon variant-picker
+      closeBrowse();
+      const inp = document.getElementById('add-input');
+      inp.value = name;
+      inp.focus();
+      onInputChange();
+      return;
+    }
+    // Controleer of naam een sub-optie is van een VARIANTS-groep
+    const normName = normalize(name);
+    for (const [parentKey, val] of Object.entries(VARIANTS)) {
+      if (!val.groups) continue;
+      for (const [groupName, opts] of Object.entries(val.groups)) {
+        if (opts.some(o => normalize(o) === normName)) {
+          closeBrowse();
+          const inp = document.getElementById('add-input');
+          inp.value = parentKey;
+          inp.focus();
+          selectVariantItem(parentKey, groupName, name);
+          return;
+        }
+      }
+    }
+    addItem(name, 1);
+    if (el) el.classList.add('added');
+  }
+
+  function renderActionbar() {
+    const bar = document.getElementById('actionbar');
+    if (!items.length) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    const hasChecked = items.some(x => x.checked);
+    const clr = document.getElementById('ab-clear');
+    clr.classList.toggle('has-checked', hasChecked);
+  }
+
+  // ── OPGESLAGEN LIJSTEN ──
+  function loadSavedLists() { return loadJson(SAVED_LISTS_KEY, []); }
+  function saveSavedLists(lists) { try { localStorage.setItem(SAVED_LISTS_KEY, JSON.stringify(lists)); } catch(e){} }
+
+  function openSaveListModal() {
+    const inp = document.getElementById('save-list-name');
+    inp.value = '';
+    document.getElementById('modal-save-list').style.display = 'flex';
+    setTimeout(() => inp.focus(), 80);
+  }
+  function closeSaveListModal() {
+    document.getElementById('modal-save-list').style.display = 'none';
+  }
+  function saveCurrentList() {
+    const name = document.getElementById('save-list-name').value.trim();
+    if (!name) { document.getElementById('save-list-name').focus(); return; }
+    const lists = loadSavedLists();
+    lists.unshift({ name, items: items.map(i => ({ name: i.name, qty: i.qty, category: i.category })), savedAt: Date.now() });
+    saveSavedLists(lists);
+    closeSaveListModal();
+    toast('Lijst opgeslagen!');
+  }
+  function loadSavedList(idx) {
+    const lists = loadSavedLists();
+    const saved = lists[idx];
+    if (!saved) return;
+    items = saved.items.map(i => ({ ...i, checked: false, id: Date.now() + Math.random() }));
+    saveItems();
+    renderList();
+    updateActionBar();
+    showTab('lijst');
+    toast(`'${saved.name}' geladen`);
+  }
+  function deleteSavedList(idx) {
+    const lists = loadSavedLists();
+    lists.splice(idx, 1);
+    saveSavedLists(lists);
+    renderSavedLists();
+  }
+  function renderSavedLists() {
+    const sec = document.getElementById('saved-lists-section');
+    const lists = loadSavedLists();
+    if (!lists.length) { sec.innerHTML = ''; return; }
+    const rows = lists.map((l, i) => `
+      <div class="saved-list-card">
+        <div style="flex:1;min-width:0">
+          <div class="saved-list-name">${escapeHtml(l.name)}</div>
+          <div style="font-size:11px;color:var(--slate-400);margin-top:2px">${l.items.length} items · ${timeAgo(l.savedAt)}</div>
+        </div>
+        <button class="saved-list-btn load" onclick="loadSavedList(${i})">Laden</button>
+        <button class="saved-list-btn del" onclick="deleteSavedList(${i})">✕</button>
+      </div>`).join('');
+    sec.innerHTML = `
+      <div class="saved-lists-header"><span class="saved-lists-title">📋 Opgeslagen lijsten</span></div>
+      ${rows}`;
+  }
+
+  // ── SEIZOENSGEBONDEN SUGGESTIES ──
+  const SEASONAL = {
+    // maand 0-11
+    0:  { label: '❄️ Winterkost', items: ['Stamppot', 'Erwtensoep', 'Zuurkool', 'Boerenkool', 'Spruitjes', 'Knolselderij', 'Chocolademelk', 'Mandarijnen'] },
+    1:  { label: '❄️ Winterkost', items: ['Stamppot', 'Erwtensoep', 'Zuurkool', 'Boerenkool', 'Spruitjes', 'Mandarijnen', 'Pannenkoeken', 'Poffertjes'] },
+    2:  { label: '🌱 Lente-aanloop', items: ['Asperges', 'Radijs', 'Spinazie', 'Rucola', 'Aardbeien', 'Rabarber', 'Eieren', 'Zalm'] },
+    3:  { label: '🌷 Lentegroenten', items: ['Asperges', 'Aardbeien', 'Rabarber', 'Spinazie', 'Radijs', 'Lente-uitjes', 'Rucola', 'Eieren'] },
+    4:  { label: '🌞 Vroege zomer', items: ['Aardbeien', 'Asperges', 'Courgette', 'Paprika', 'BBQ-worst', 'Hamburgers', 'Brood voor BBQ', 'Salade'] },
+    5:  { label: '☀️ Zomer & BBQ', items: ['Aardbeien', 'Watermeloen', 'Ijs', 'BBQ-worst', 'Hamburgers', 'Maïskolf', 'Coleslaw', 'Frisdrank'] },
+    6:  { label: '☀️ Zomer & BBQ', items: ['Watermeloen', 'Ijs', 'BBQ-spareribs', 'Hamburgers', 'Mais', 'Frisdrank', 'Slagroom', 'Frambozen'] },
+    7:  { label: '🌻 Nazomer', items: ['Pruimen', 'Perziken', 'Frambozen', 'Paprika', 'Courgette', 'Ijs', 'Limonade', 'Bramen'] },
+    8:  { label: '🍂 Vroeg najaar', items: ['Pruimen', 'Appels', 'Peren', 'Pompoen', 'Wilde paddenstoelen', 'Walnoten', 'Rode kool', 'Soep'] },
+    9:  { label: '🎃 Herfst', items: ['Pompoen', 'Appels', 'Peren', 'Wilde paddenstoelen', 'Kastanjes', 'Rode kool', 'Soep', 'Stamppot'] },
+    10: { label: '🍂 Late herfst', items: ['Stamppot', 'Boerenkool', 'Spruitjes', 'Appels', 'Mandarijnen', 'Speculaas', 'Soep', 'Paddenstoelen'] },
+    11: { label: '🎄 December', items: ['Mandarijnen', 'Speculaas', 'Oliebollen', 'Kerstkrans', 'Chocoladeletter', 'Stamppot', 'Oesters', 'Champagne'] },
+  };
+  function renderSeasonal() {
+    const div = document.getElementById('seasonal-wrap');
+    if (!div) return;
+    const month = new Date().getMonth();
+    const season = SEASONAL[month];
+    if (!season) { div.innerHTML = ''; return; }
+    const onList = new Set(items.map(x => normalize(x.name)));
+    const chips = season.items
+      .filter(n => !onList.has(normalize(n)))
+      .map(n => {
+        const safe = escapeHtml(n).replace(/'/g, "\\'");
+        return `<button class="seasonal-chip" onclick="quickAdd('${safe}'); toast('${safe} toegevoegd'); this.remove();">${escapeHtml(n)}</button>`;
+      }).join('');
+    div.innerHTML = chips ? `
+      <div class="seasonal-block">
+        <div class="seasonal-title">${season.label} — seizoenstips</div>
+        <div class="seasonal-chips">${chips}</div>
+      </div>` : '';
+  }
+
+  // ── VERGETEN-DETECTIE ──
+  function renderForgottenSection(wrap) {
+    if (!items.length) return '';
+    const onListNorms = new Set(items.map(x => normalize(x.name)));
+    const SIX_WEEKS = 42 * 86400000;
+    const forgotten = Object.values(history)
+      .filter(e => e.count >= 3 && e.lastBought && (Date.now() - e.lastBought) < SIX_WEEKS && !onListNorms.has(normalize(e.name)))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+    if (!forgotten.length) return '';
+    const chips = forgotten.map(e => {
+      const safe = escapeHtml(e.name).replace(/'/g, "\\'");
+      return `<button class="hist-add" style="font-size:12px;padding:6px 10px;" onclick="quickAdd('${safe}'); this.closest('.forgotten-chip').remove(); toast('Toegevoegd');">${escapeHtml(e.name)}</button>`;
+    }).map(btn => `<div class="forgotten-chip">${btn}</div>`).join('');
+    return `
+      <div class="forgotten-block">
+        <div class="forgotten-title">🤔 Ben je dit vergeten?</div>
+        <div class="forgotten-chips">${chips}</div>
+      </div>`;
+  }
+
+  // ── HISTORIE TAB ──
+  function renderHistory() {
+    const wrap = document.getElementById('hist-wrap');
+    const q = normalize(document.getElementById('hist-search').value);
+    let entries = Object.entries(history).map(([k,v]) => ({ key:k, ...v }));
+    if (q) entries = entries.filter(e => e.key.includes(q) || normalize(e.name).includes(q));
+    entries.sort((a,b) => b.count - a.count || (b.lastBought||0) - (a.lastBought||0));
+    if (!entries.length) {
+      wrap.innerHTML = `
+        <div class="empty">
+          <span class="empty-emoji">⭐</span>
+          <div class="empty-title">Nog geen historie</div>
+          <div class="empty-sub">Druk 'Klaar' onderaan om gekochte boodschappen op te slaan. Daarna staan ze hier als suggestie.</div>
+        </div>`;
+      return;
+    }
+    // groeperen per categorie
+    const byCat = {};
+    entries.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
+    const order = CATEGORIES.map(c => c.id).filter(id => byCat[id]);
+    let html = '';
+    order.forEach(catId => {
+      const cat = CAT_BY_ID[catId];
+      const arr = byCat[catId];
+      html += `<div class="category-header" style="margin-top:14px"><span>${cat.emo}</span> ${cat.name}<span class="category-count">${arr.length}</span></div>`;
+      arr.forEach(e => {
+        const last = e.lastBought ? timeAgo(e.lastBought) : '';
+        const safeName = escapeHtml(e.name).replace(/'/g, "\\'");
+        html += `
+          <div class="hist-item">
+            <div class="hist-info">
+              <div class="hist-name">${escapeHtml(e.name)}</div>
+              <div class="hist-meta">${e.count}× gekocht${last ? ' · laatst ' + last : ''}</div>
+            </div>
+            <button class="hist-add" onclick="quickAdd('${safeName}'); toast('Toegevoegd');">+ Op lijst</button>
+            <button class="hist-del" title="Verwijder uit historie" onclick="deleteHistoryItem('${safeName}')">✕</button>
+          </div>`;
+      });
+    });
+    wrap.innerHTML = renderForgottenSection() + html;
+  }
+  function deleteHistoryItem(name) {
+    const key = normalize(name);
+    delete history[key];
+    saveHistory();
+    renderHistory();
+  }
+
+  function timeAgo(ts) {
+    const d = (Date.now() - ts) / 86400000;
+    if (d < 1)  return 'vandaag';
+    if (d < 2)  return 'gisteren';
+    if (d < 7)  return Math.floor(d) + ' dagen geleden';
+    if (d < 30) return Math.floor(d/7) + ' wk geleden';
+    if (d < 365) return Math.floor(d/30) + ' mnd geleden';
+    return Math.floor(d/365) + ' jr geleden';
+  }
+
+  function showTab(tab) {
+    if (tab !== 'route') exitShopMode();
+    for (const t of ['lijst','route','tips','hist']) {
+      document.getElementById('tab-' + t).classList.toggle('active', tab===t);
+      document.getElementById('view-' + t).style.display = tab===t ? 'block' : 'none';
+    }
+    document.getElementById('view-settings').style.display = tab==='settings' ? 'block' : 'none';
+    document.getElementById('settings-btn').classList.toggle('active', tab==='settings');
+    document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
+    if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
+    if (tab === 'route') { renderRouteFilter(); renderRoute(); }
+    if (tab === 'tips')  { renderTipsConfig(); }
+    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); }
+  }
+
+  // ── AI TIPS ──
+  const AI_URL_KEY = 'boodschappen.aiUrl';
+  const AI_URL_DEFAULT = 'https://boodschappen-ai.jerome-67a.workers.dev';
+
+  function getAIUrl() { try { return localStorage.getItem(AI_URL_KEY) || AI_URL_DEFAULT; } catch { return AI_URL_DEFAULT; } }
+  function setAIUrl(url) {
+    try { localStorage.setItem(AI_URL_KEY, url.replace(/\/$/, '')); } catch {}
+    renderTipsConfig();
+  }
+
+  // ── WINKEL-VOORKEUR ──
+  const PREF_STORE_KEY = 'boodschappen.prefStore';
+  function getPrefStore() { try { return localStorage.getItem(PREF_STORE_KEY) || ''; } catch { return ''; } }
+  function setPrefStore(id) {
+    try {
+      if (getPrefStore() === id) localStorage.removeItem(PREF_STORE_KEY); // toggle off
+      else localStorage.setItem(PREF_STORE_KEY, id);
+    } catch {}
+    renderStorePref();
+    render(); // herrender prijzen
+  }
+  function renderStorePref() {
+    const sec = document.getElementById('store-pref-section');
+    if (!sec) return;
+    const pref = getPrefStore();
+    const chips = STORES.map(s => `
+      <button class="store-pref-chip${pref === s.id ? ' active' : ''}" onclick="setPrefStore('${s.id}')" style="${pref === s.id ? '--sc:'+s.color+';border-color:'+s.color : ''}">
+        ${s.name}
+      </button>`).join('');
+    sec.innerHTML = `
+      <div class="store-pref-card">
+        <div class="store-pref-label">⭐ Mijn vaste winkel</div>
+        <div class="store-pref-chips">
+          <button class="store-pref-chip none${!pref ? ' active' : ''}" onclick="setPrefStore('')">Geen voorkeur</button>
+          ${chips}
+        </div>
+      </div>`;
+  }
+
+  function renderShareWorkerConfig() {
+    const div = document.getElementById('share-worker-config');
+    if (!div) return;
+    const url = getShareWorkerUrl();
+    div.innerHTML = `
+      <div class="tips-config" style="margin-top:0">
+        <strong>📤 Deellijst Worker${url ? ' ✓' : ''}</strong><br>
+        ${url
+          ? `Worker actief: <code style="font-size:11px;word-break:break-all">${escapeHtml(url)}</code><br><br>`
+          : 'Zet de Deellijst Worker in om lijsten live te delen met anderen. Volg de instructies in <code>share-worker/</code> in de repo.<br><br>'}
+        <input class="tips-config-input" id="share-worker-url-input" type="url"
+               placeholder="https://boodschappen-share.xxx.workers.dev"
+               value="${escapeHtml(url)}">
+        <button class="tips-config-btn" onclick="saveShareWorkerUrl()">Opslaan</button>
+        ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="clearShareWorkerUrl()">Wissen</button>` : ''}
+      </div>`;
+  }
+  // ── THEMA (licht/donker) ──
+  const THEME_KEY = 'boodschappen.theme';
+  function getTheme() { try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch { return 'auto'; } }
+  function setTheme(t) {
+    try { localStorage.setItem(THEME_KEY, t); } catch {}
+    applyTheme();
+    renderThemeConfig();
+  }
+  const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme() {
+    const t = getTheme();
+    const dark = t === 'dark' || (t === 'auto' && darkMQ.matches);
+    document.documentElement.classList.toggle('dark', dark);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = dark ? '#0B1220' : '#059669';
+  }
+  darkMQ.addEventListener('change', () => { if (getTheme() === 'auto') applyTheme(); });
+  applyTheme();
+  function renderThemeConfig() {
+    const div = document.getElementById('theme-config');
+    if (!div) return;
+    const t = getTheme();
+    const opts = [['auto','🌗 Auto'],['light','☀️ Licht'],['dark','🌙 Donker']];
+    div.innerHTML = `
+      <div class="store-pref-card">
+        <div class="store-pref-label">🎨 Thema</div>
+        <div class="store-pref-chips">
+          ${opts.map(([id,label]) => `<button class="store-pref-chip${t===id?' active':''}" onclick="setTheme('${id}')">${label}</button>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function renderAIConfig() {
+    const div = document.getElementById('ai-config');
+    if (!div) return;
+    const url = getAIUrl();
+    div.innerHTML = `
+      <div class="tips-config" style="margin-top:0">
+        <strong>🤖 AI Worker${url ? ' ✓' : ''}</strong><br>
+        ${url
+          ? `Worker actief: <code style="font-size:11px;word-break:break-all">${escapeHtml(url)}</code><br><br>`
+          : 'Zet de AI Worker in voor recepten en slimme suggesties op de Tips-tab. Volg de instructies in <code>worker/</code> in de repo.<br><br>'}
+        <input class="tips-config-input" id="ai-url-settings-input" type="url"
+               placeholder="https://boodschappen-ai.xxx.workers.dev"
+               value="${escapeHtml(url)}">
+        <button class="tips-config-btn" onclick="saveAIUrlFromSettings()">Opslaan</button>
+      </div>`;
+  }
+  function saveAIUrlFromSettings() {
+    const v = (document.getElementById('ai-url-settings-input')?.value || '').trim();
+    if (!v) return;
+    setAIUrl(v);
+    renderAIConfig();
+    toast('AI Worker opgeslagen!');
+  }
+
+  function saveShareWorkerUrl() {
+    const v = (document.getElementById('share-worker-url-input')?.value || '').trim();
+    setShareWorkerUrl(v);
+    renderShareWorkerConfig();
+    toast(v ? 'Deellijst Worker opgeslagen!' : 'URL gewist');
+  }
+  function clearShareWorkerUrl() {
+    setShareWorkerUrl('');
+    renderShareWorkerConfig();
+    toast('Deellijst Worker URL gewist');
+  }
+
+  function renderTipsConfig() {
+    const out = document.getElementById('tips-output');
+    if (getAIUrl()) return; // alles oké, leeg output-area
+    out.innerHTML = `
+      <div class="tips-config">
+        <strong>🔌 Eenmalige setup nodig</strong><br>
+        AI-suggesties draaien via een Cloudflare Worker die ik je laat deployen.
+        Plak hier de URL van jouw Worker (eindigt op <code>.workers.dev</code>) zodra die online staat:
+        <input class="tips-config-input" id="ai-url-input" type="text" placeholder="https://boodschappen-ai.xxx.workers.dev" value="${escapeHtml(getAIUrl())}">
+        <button class="tips-config-btn" onclick="saveAIUrl()">Opslaan</button>
+      </div>`;
+  }
+  function saveAIUrl() {
+    const v = document.getElementById('ai-url-input').value.trim();
+    if (!v) return;
+    setAIUrl(v);
+    document.getElementById('tips-output').innerHTML = `<div class="tips-result"><div class="tips-result-header">✓ Setup klaar</div><p>Klik een van de knoppen hierboven om een suggestie te krijgen.</p></div>`;
+  }
+
+  // Markdown-light → HTML (alleen wat de AI-prompt produceert: **bold**, kopjes, lijsten)
+  function mdToHtml(s) {
+    let h = escapeHtml(s).trim();
+    // **bold**
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // kop-regels die met emoji + bold beginnen → h3
+    const lines = h.split('\n');
+    const out = [];
+    let inList = false;
+    for (const ln of lines) {
+      if (!ln.trim()) { if (inList) { out.push('</ul>'); inList = false; } out.push(''); continue; }
+      if (/^- /.test(ln)) {
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push('<li>' + ln.slice(2) + '</li>');
+      } else if (/^<strong>.+<\/strong>$/.test(ln.trim())) {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push('<h3>' + ln.replace(/<\/?strong>/g, '') + '</h3>');
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push('<p>' + ln + '</p>');
+      }
+    }
+    if (inList) out.push('</ul>');
+    return out.join('\n');
+  }
+
+  async function askAI(mode) {
+    const url = getAIUrl();
+    const out = document.getElementById('tips-output');
+    if (!url) { renderTipsConfig(); return; }
+
+    const labels = {
+      recept:   'Recept-ideeën zoeken',
+      vergeten: 'Checken wat je vergeet',
+      weekmenu: 'Weekmenu samenstellen',
+      deals:    'Deal-combinaties zoeken',
+    };
+    out.innerHTML = `<div class="tips-loading"><span class="tips-spin"></span> ${labels[mode]}…</div>`;
+
+    // Verzamel context
+    const list = items.filter(x => !x.checked).map(it => ({ name: it.name, qty: it.qty, category: it.category }));
+    const histTop = Object.entries(history)
+      .map(([k, v]) => ({ key: k, name: v.name, count: v.count, lastBought: v.lastBought, category: v.category }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 40);
+    const today = new Date().toISOString().slice(0, 10);
+    const deals = [];
+    for (const store of STORES) {
+      const data = storeData[store.id];
+      if (!data || !data.products) continue;
+      for (const p of data.products) {
+        if (!p.bonus || !p.bonus.start || !p.bonus.end) continue;
+        if (p.bonus.start > today || today > p.bonus.end) continue;
+        // Structurele "altijd-aan" kortingen (eindigen in 2999) zijn geen
+        // week-aanbieding — daar wil de AI niet over praten
+        if (p.bonus.infinite || p.bonus.end > '2030-01-01') continue;
+        const savings = (typeof p.price === 'number' && typeof p.bonus_price === 'number' && p.bonus_price < p.price)
+          ? +(p.price - p.bonus_price).toFixed(2) : null;
+        deals.push({
+          store: store.name,
+          name: p.name,
+          mechanism: p.bonus.mechanism || 'aanbieding',
+          price_now: p.bonus_price ?? p.price,
+          price_was: p.price,
+          savings,
+          conditional: !!p.bonus.conditional,
+          ends: p.bonus.end,
+        });
+      }
+    }
+    // Beste aanbiedingen bovenaan: grootste besparing eerst
+    deals.sort((a, b) => (b.savings || 0) - (a.savings || 0));
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode, list, history: histTop, deals: deals.slice(0, 60) }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        out.innerHTML = `<div class="tips-error">⚠ ${escapeHtml(data.error || ('HTTP ' + res.status))}${data.detail ? '<br><small>' + escapeHtml(data.detail) + '</small>' : ''}</div>`;
+        return;
+      }
+      out.innerHTML = `
+        <div class="tips-result">
+          <div class="tips-result-header">💡 ${escapeHtml(labels[mode])}</div>
+          ${mdToHtml(data.text || '(geen antwoord)')}
+        </div>`;
+      // Bij recepten: knop onder elke ingrediëntenlijst om alles op de lijst te zetten
+      if (mode === 'recept' || mode === 'weekmenu') {
+        out.querySelectorAll('.tips-result ul').forEach(ul => {
+          const b = document.createElement('button');
+          b.className = 'tips-add-ings';
+          b.textContent = '➕ Zet deze ingrediënten op de lijst';
+          b.onclick = () => addIngredientsFromTips(b);
+          ul.after(b);
+        });
+      }
+    } catch (e) {
+      out.innerHTML = `<div class="tips-error">⚠ Verbinding mislukt: ${escapeHtml(String(e))}</div>`;
+    }
+  }
+
+  // Ingrediënt-regel uit AI-antwoord opschonen: hoeveelheden en haakjes eraf
+  function cleanIngredient(s) {
+    return s.replace(/\(.*?\)/g, '')
+            .replace(/^[\d.,½¼¾]+\s*(g|gr|gram|kg|ml|cl|dl|l|liter|el|tl|eetlepels?|theelepels?|snufjes?|blikjes?|blik|zakjes?|takjes?|teentjes?|plakjes?|bosjes?|stuks?|x)?\.?\s*/i, '')
+            .replace(/[.;,]\s*$/, '')
+            .trim();
+  }
+  function addIngredientsFromTips(btn) {
+    const ul = btn.previousElementSibling;
+    if (!ul) return;
+    const names = [...ul.querySelectorAll('li')]
+      .map(li => cleanIngredient(li.textContent))
+      .filter(s => s.length > 1 && s.length < 40);
+    if (!names.length) { toast('Geen ingrediënten gevonden in deze lijst'); return; }
+    names.forEach(n => addItem(n, 1));
+    btn.textContent = `✓ ${names.length} ingrediënt${names.length === 1 ? '' : 'en'} toegevoegd`;
+    btn.disabled = true;
+    toast(`${names.length} ingrediënten op je lijst gezet`);
+  }
+
+  // ── ROUTE PLANNER ──
+  // Bepaal voor de boodschappenlijst: goedkoopste winkel per item + advies multi-store vs single-store.
+  // Jouw regel: als single-store maximaal 3% duurder is dan optimale split → één winkel (scheelt rondrijden).
+  const SINGLE_STORE_THRESHOLD = 0.03;
+
+  // ── ROUTE WINKEL-FILTER ──
+  const ROUTE_STORES_KEY = 'boodschappen.routeStores';
+  function getRouteStores() {
+    try {
+      const v = localStorage.getItem(ROUTE_STORES_KEY);
+      if (v) return new Set(JSON.parse(v));
+    } catch {}
+    return new Set(STORES.map(s => s.id)); // default: alles aan
+  }
+  function toggleRouteStore(id) {
+    const sel = getRouteStores();
+    if (sel.has(id)) { if (sel.size > 1) sel.delete(id); } // altijd min. 1
+    else sel.add(id);
+    try { localStorage.setItem(ROUTE_STORES_KEY, JSON.stringify([...sel])); } catch {}
+    renderRouteFilter();
+    renderRoute();
+  }
+  function renderRouteFilter() {
+    const div = document.getElementById('route-store-filter');
+    if (!div) return;
+    const sel = getRouteStores();
+    const chips = STORES.map(s => `
+      <button class="route-filter-chip${sel.has(s.id) ? ' on' : ''}" onclick="toggleRouteStore('${s.id}')"
+              style="${sel.has(s.id) ? 'border-color:'+s.color+';color:'+s.color : ''}">${s.name}</button>`).join('');
+    div.innerHTML = `<div class="route-filter"><span class="route-filter-label">Winkels:</span>${chips}</div>`;
+  }
+
+  function buildRoute() {
+    const active = items.filter(i => !i.checked);
+    if (!active.length) return null;
+
+    const selStores = getRouteStores();
+    const activeStores = STORES.filter(s => selStores.has(s.id));
+
+    const allPlans = active.map(it => ({ item: it, ...findMatches(it.name, it.category, it.matchOverrides) }));
+    // Filter matches op geselecteerde winkels
+    const itemPlans = allPlans.map(p => ({
+      ...p,
+      matches: p.matches.filter(m => selStores.has(m.storeId)),
+      cheapest: p.matches.filter(m => selStores.has(m.storeId)).reduce((a, b) => b.eff < a.eff ? b : a, p.matches.filter(m => selStores.has(m.storeId))[0]),
+    })).map(p => ({ ...p, hasData: p.matches.length > 0 }));
+
+    const missing = itemPlans.filter(p => !p.matches.length).map(p => p.item);
+    const found   = itemPlans.filter(p => p.matches.length);
+
+    // Multi-store optimum (per item naar goedkoopste winkel)
+    let multi = 0;
+    const byStore = {};
+    for (const p of found) {
+      if (!p.cheapest) continue;
+      const qty = p.item.qty || 1;
+      multi += p.cheapest.eff * qty;
+      (byStore[p.cheapest.storeId] ||= []).push({ item: p.item, match: p.cheapest });
+    }
+
+    // Per-winkel totaal als je daar ALLES haalt (en bij hoeveel items je dan misloopt)
+    const singles = activeStores.map(store => {
+      let total = 0, hit = 0;
+      const rows = [];
+      for (const p of found) {
+        const m = p.matches.find(x => x.storeId === store.id);
+        if (m) { total += m.eff * (p.item.qty || 1); hit++; rows.push({ item: p.item, match: m }); }
+      }
+      return { store, total, hit, missingInStore: found.length - hit, rows };
+    });
+
+    // Beste single-store: meest items, dan goedkoopst
+    const completeSingles = singles.filter(s => s.missingInStore === 0).sort((a, b) => a.total - b.total);
+    const bestSingle = completeSingles[0] || singles.slice().sort((a, b) => b.hit - a.hit || a.total - b.total)[0];
+
+    // Advies
+    let advice;
+    if (Object.keys(byStore).length <= 1) {
+      // Al maar één winkel nodig
+      const storeId = Object.keys(byStore)[0] || bestSingle?.store.id;
+      advice = { type: 'single', storeId, total: multi, savedVsSplit: 0 };
+    } else if (bestSingle && bestSingle.missingInStore === 0) {
+      const extra = bestSingle.total - multi;
+      const pct = multi > 0 ? extra / multi : 0;
+      if (pct <= SINGLE_STORE_THRESHOLD) {
+        advice = { type: 'single', storeId: bestSingle.store.id, total: bestSingle.total, savedVsSplit: -extra, almostSame: true };
+      } else {
+        advice = { type: 'multi', total: multi, savedVsSingle: extra, vsStoreId: bestSingle.store.id, vsStoreTotal: bestSingle.total };
+      }
+    } else {
+      advice = { type: 'multi', total: multi, savedVsSingle: 0 };
+    }
+
+    return { itemPlans, found, missing, multi, byStore, singles, bestSingle, advice };
+  }
+
+  function renderRoute() {
+    const wrap = document.getElementById('route-wrap');
+    const route = buildRoute();
+    if (!route) {
+      wrap.innerHTML = `<div class="route-empty">
+        <span class="empty-emoji" style="font-size:48px;">🗺️</span>
+        <div class="empty-title">Geen items op je lijst</div>
+        <div class="empty-sub">Voeg eerst boodschappen toe om een route te zien.</div>
+      </div>`;
+      return;
+    }
+    const { found, missing, advice, byStore } = route;
+
+    // Vergelijkingstabel: alle winkels gesorteerd op totaalprijs
+    const { singles } = route;
+    const sortedSingles = [...singles].filter(s => s.hit > 0).sort((a, b) => a.total - b.total);
+    const bestSingleTotal = sortedSingles[0]?.total || 0;
+    const compareTableHtml = sortedSingles.length >= 2 ? `
+      <div class="route-compare-table">
+        ${sortedSingles.map((s, i) => {
+          const diff = s.total - bestSingleTotal;
+          const isBest = i === 0 && s.missingInStore === 0;
+          const missingNote = s.missingInStore > 0 ? ` · ${s.missingInStore} niet gevonden` : '';
+          return `<div class="route-compare-row${isBest ? ' best' : ''}">
+            <span class="route-compare-store">${isBest ? '✓ ' : ''}${s.store.name}</span>
+            <span class="route-compare-items">${s.hit}/${found.length}${missingNote}</span>
+            <span class="route-compare-price">${fmtPrice(s.total)}</span>
+            <span class="route-compare-diff">${diff > 0.005 ? `+${fmtPrice(diff)}` : ''}</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+
+    // Advies-kaart bovenaan
+    let recHtml = '';
+    if (advice.type === 'single') {
+      const store = STORE_BY_ID[advice.storeId];
+      const second = sortedSingles.find(s => s.store.id !== advice.storeId && s.missingInStore === 0);
+      const savingVsSecond = second ? second.total - advice.total : 0;
+      const savingText = savingVsSecond > 0.05
+        ? `${fmtPrice(savingVsSecond)} goedkoper dan ${second.store.name}`
+        : advice.almostSame ? 'Bijna dezelfde prijs als splitsen — scheelt rondrijden.' : 'Eén winkel doet het.';
+      recHtml = `
+        <div class="route-rec single">
+          <div class="route-rec-label">Aanbeveling</div>
+          <div class="route-rec-title">Ga naar ${store ? store.name : '?'}</div>
+          <div class="route-rec-sub">${savingText}</div>
+          <div class="route-rec-totals">
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
+          </div>
+          ${compareTableHtml}
+        </div>`;
+    } else {
+      const storeCount = Object.keys(byStore).length;
+      const vsStore = STORE_BY_ID[advice.vsStoreId];
+      const savingText = advice.savedVsSingle > 0.05
+        ? `${fmtPrice(advice.savedVsSingle)} goedkoper dan alles bij ${vsStore?.name || '?'} (${fmtPrice(advice.vsStoreTotal)} vs ${fmtPrice(advice.total)})`
+        : 'Niet alles is bij één winkel beschikbaar.';
+      recHtml = `
+        <div class="route-rec">
+          <div class="route-rec-label">Aanbeveling</div>
+          <div class="route-rec-title">Splits over ${storeCount} winkel${storeCount === 1 ? '' : 's'}</div>
+          <div class="route-rec-sub">${savingText}</div>
+          <div class="route-rec-totals">
+            <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
+          </div>
+          ${compareTableHtml}
+        </div>`;
+    }
+
+    // Per-winkel sectie. Bij "single store" advies tonen we alléén die winkel met alle items;
+    // bij "multi" tonen we de optimale verdeling.
+    let storesHtml = '';
+    if (advice.type === 'single') {
+      const single = route.singles.find(s => s.store.id === advice.storeId);
+      storesHtml = renderStoreSection(single.store, single.rows, single.total);
+    } else {
+      const defaultOrder = Object.keys(byStore).sort((a, b) =>
+        byStore[b].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0) -
+        byStore[a].reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0)
+      );
+      const savedOrder = getRouteStoreOrder();
+      const orderedIds = savedOrder
+        ? [...savedOrder.filter(id => byStore[id]), ...defaultOrder.filter(id => !savedOrder.includes(id))]
+        : defaultOrder;
+      storesHtml = orderedIds.map(id => {
+        const store = STORE_BY_ID[id];
+        const rows = byStore[id];
+        const total = rows.reduce((s, r) => s + r.match.eff * (r.item.qty || 1), 0);
+        return renderStoreSection(store, rows, total, orderedIds.length > 1);
+      }).join('');
+    }
+
+    // Geen-match sectie
+    let missingHtml = '';
+    if (missing.length) {
+      missingHtml = `
+        <div class="route-missing">
+          <div class="route-missing-title">⚠ ${missing.length} item${missing.length === 1 ? '' : 's'} nergens gevonden</div>
+          ${missing.map(it => {
+            const safeId = it.id.replace(/'/g, "\\'");
+            return `<div class="route-missing-item route-item${it.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">${it.checked ? '✓' : ''}</span>
+              ${escapeHtml(it.name)}${it.qty > 1 ? ` (${it.qty}×)` : ''}
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    const checkedItems = items.filter(x => x.checked);
+    let checkedHtml = '';
+    if (checkedItems.length) {
+      checkedHtml = `
+        <div class="route-store" style="opacity:.5">
+          <div class="route-store-head">
+            <span class="route-store-name" style="background:var(--slate-400)">✓</span>
+            <span class="route-store-count">Afgevinkt (${checkedItems.length})</span>
+          </div>
+          ${checkedItems.map(it => {
+            const safeId = it.id.replace(/'/g, "\\'");
+            return `<div class="route-item checked" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">✓</span>
+              <div style="flex:1;min-width:0;">
+                <div class="route-item-name">${escapeHtml(it.name)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    wrap.innerHTML = recHtml + storesHtml + missingHtml + checkedHtml;
+    updateShopBtn();
+  }
+
+  function toggleRouteItem(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.checked = !it.checked;
+    if (navigator.vibrate) navigator.vibrate(it.checked ? 30 : 10);
+    saveItems();
+    renderRoute();
+    renderList();
+    renderPriceSummary();
+    renderHeaderSub();
+    renderActionbar();
+  }
+
+  // ── WINKELMODUS ──
+  let shopMode = false;
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    // Wake lock vervalt als de app naar de achtergrond gaat — opnieuw aanvragen
+    if (shopMode && document.visibilityState === 'visible') requestWakeLock();
+  });
+  function toggleShopMode() {
+    shopMode = !shopMode;
+    document.body.classList.toggle('shopmode', shopMode);
+    if (shopMode) {
+      requestWakeLock();
+      window.scrollTo({ top: 0 });
+    } else if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+    updateShopBtn();
+  }
+  function exitShopMode() { if (shopMode) toggleShopMode(); }
+  function updateShopBtn() {
+    const btn = document.getElementById('shopmode-btn');
+    if (!btn) return;
+    if (!shopMode) { btn.textContent = '🛍️ Start winkelmodus'; return; }
+    const total = items.length;
+    const done = items.filter(x => x.checked).length;
+    btn.textContent = done >= total && total > 0
+      ? '🎉 Alles gehad — tik om te stoppen'
+      : `✓ ${done}/${total} afgevinkt — tik om te stoppen`;
+  }
+
+  function renderStoreSection(store, rows, total, showReorder) {
+    const reorderBtns = showReorder ? `
+      <span class="route-reorder">
+        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',-1)">▲</button>
+        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',1)">▼</button>
+      </span>` : '';
+    return `
+      <div class="route-store" data-store-id="${store.id}">
+        <div class="route-store-head">
+          <span class="route-store-name" style="background:${store.color}">${store.name}</span>
+          <span class="route-store-count">${rows.length} item${rows.length === 1 ? '' : 's'}</span>
+          <span class="route-store-total">${fmtPrice(total)}</span>
+          ${reorderBtns}
+        </div>
+        ${rows.map(({ item, match }) => {
+          const qty = item.qty || 1;
+          const lineTotal = match.eff * qty;
+          const bonus = match.activeBonus
+            ? `<span class="route-item-bonus">${escapeHtml(match.activeBonus.mechanism || 'bonus')}</span>` : '';
+          const unitP = match.unitPrice
+            ? `<span class="route-item-unitprice">${fmtPrice(match.unitPrice.value)}${UNIT_LABEL[match.unitPrice.unit] || ''}</span>` : '';
+          const wasPrice = match.activeBonus && match.p.price && match.eff < match.p.price
+            ? `<span class="cmp-was" style="font-size:10px">${fmtPrice(match.p.price)}</span> ` : '';
+          const safeId = item.id.replace(/'/g, "\\'");
+          return `
+            <div class="route-item${item.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+              <span class="route-item-check">${item.checked ? '✓' : ''}</span>
+              ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : ''}
+              <div style="flex:1; min-width:0;">
+                <div class="route-item-name">${escapeHtml(item.name)}</div>
+                <div class="route-item-detail">${escapeHtml(match.p.name)}${match.p.unit ? ' · ' + escapeHtml(match.p.unit) : ''}${unitP}</div>
+              </div>
+              ${bonus}
+              <span class="route-item-price">${wasPrice}${fmtPrice(lineTotal)}</span>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // ── SW + INIT ──
+  if ('serviceWorker' in navigator) {
+    // Herlaad eenmalig zodra een nieuwe service worker de controle overneemt,
+    // zodat devices die op een oude (kapotte) cache vastzaten direct bijwerken.
+    let swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swReloaded) return;
+      swReloaded = true;
+      window.location.reload();
+    });
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        // Forceer een update-check bij elke start en periodiek.
+        reg.update().catch(() => {});
+        setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+      }).catch(() => {});
+    });
+  }
+
+  render();
+  renderShareBar();
+  loadStores();
+  initDrag();
+  // Op desktop meteen in het invoerveld; op touch niet (toetsenbord zou opspringen)
+  if (matchMedia('(pointer: fine)').matches) document.getElementById('add-input').focus();
