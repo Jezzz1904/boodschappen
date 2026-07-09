@@ -16,17 +16,39 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
     :root {
-      --green-50:#ECFDF5; --green-100:#D1FAE5; --green-500:#10B981; --green-600:#059669; --green-700:#047857;
+      --green-50:#ECFDF5; --green-100:#D1FAE5; --green-200:#A7F3D0; --green-300:#6EE7B7; --green-400:#34D399;
+      --green-500:#10B981; --green-600:#059669; --green-700:#047857; --green-800:#065F46;
       --amber-400:#FBBF24; --amber-500:#F59E0B;
       --rose-500:#EF4444;
-      --slate-50:#F8FAFC; --slate-200:#E2E8F0; --slate-400:#94A3B8; --slate-600:#475569; --slate-800:#1E293B; --slate-900:#0F172A;
-    }
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background:
+      --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0; --slate-300:#CBD5E1; --slate-400:#94A3B8;
+      --slate-500:#64748B; --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B; --slate-900:#0F172A;
+      --card:#FFFFFF;
+      --card-glass:rgba(255,255,255,.7);
+      --toast-bg:#0F172A; --toast-text:#FFFFFF;
+      --body-bg:
         radial-gradient(circle at 0% 0%, rgba(16,185,129,.18), transparent 50%),
         radial-gradient(circle at 100% 100%, rgba(251,191,36,.12), transparent 55%),
         linear-gradient(180deg, #F0FDF4 0%, #ECFDF5 60%, #F0FDF4 100%);
+    }
+    html.dark {
+      /* Slate-schaal gespiegeld: hoge nummers = lichte tekst, lage = donkere vlakken */
+      --slate-50:#243146; --slate-100:#2C3A52; --slate-200:#334155; --slate-300:#3E4C63; --slate-400:#7C8DA6;
+      --slate-500:#94A3B8; --slate-600:#A9B7CB; --slate-700:#C3CEDE; --slate-800:#E2E8F0; --slate-900:#F1F5F9;
+      /* Groentinten: vlakken donker, accenten juist lichter voor leesbaarheid */
+      --green-50:#0B2B22; --green-100:#14402F; --green-200:#1C5540;
+      --green-600:#10B981; --green-700:#34D399; --green-800:#6EE7B7;
+      --card:#1E293B;
+      --card-glass:rgba(30,41,59,.75);
+      --toast-bg:#334155; --toast-text:#FFFFFF;
+      --body-bg:
+        radial-gradient(circle at 0% 0%, rgba(16,185,129,.10), transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(251,191,36,.05), transparent 55%),
+        linear-gradient(180deg, #0B1220 0%, #0F1B2D 60%, #0B1220 100%);
+      color-scheme: dark;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--body-bg);
       background-attachment: fixed;
       min-height: 100%;
       color: var(--slate-900);
@@ -48,11 +70,24 @@
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
     .header .sub { font-size: 12px; color: var(--slate-600); font-weight: 600; }
+    .header .settings-btn {
+      margin-left:auto; width:40px; height:40px; border-radius:12px;
+      border:1.5px solid var(--green-100); background:var(--card-glass);
+      font-size:18px; line-height:1; cursor:pointer; transition: all .15s;
+    }
+    .header .settings-btn.active {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      border-color:transparent; box-shadow:0 3px 10px rgba(5,150,105,.3);
+    }
+    .settings-title {
+      font-size: 17px; font-weight: 900; color: var(--slate-900);
+      margin: 2px 2px 12px; letter-spacing: -.3px;
+    }
 
     /* TABS */
     .tabs {
       display:grid; grid-template-columns: 1fr 1fr;
-      background: rgba(255,255,255,.7);
+      background: var(--card-glass);
       border:1.5px solid var(--green-100);
       border-radius:14px; padding:4px; gap:4px;
       margin-bottom:14px;
@@ -72,7 +107,7 @@
     /* Totaalprijs-balk op lijst-tab */
     #price-summary { margin: 0 0 12px; }
     .budget-bar {
-      background:white; border-radius:14px; padding:12px 14px;
+      background:var(--card); border-radius:14px; padding:12px 14px;
       box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:10px;
     }
     .budget-bar-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
@@ -91,7 +126,7 @@
     .budget-fill.warn { background: linear-gradient(90deg, #F59E0B, #D97706); }
     .budget-fill.over { background: linear-gradient(90deg, #EF4444, #DC2626); }
     .price-bar {
-      background: white;
+      background: var(--card);
       border-radius: 14px;
       padding: 12px 14px;
       box-shadow: 0 2px 8px rgba(0,0,0,.07);
@@ -109,7 +144,7 @@
       border: 2px solid transparent;
     }
     .price-pill.cheapest {
-      background: #ecfdf5; color: var(--green-700);
+      background: var(--green-50); color: var(--green-700);
       border-color: var(--green-500);
     }
     .price-pill .pill-name { font-weight: 600; opacity: .75; font-size: 11px; }
@@ -121,7 +156,7 @@
     }
     .price-bar-optimal strong { color: var(--green-600); font-size: 14px; }
     .price-bar-optimal .save-badge {
-      font-size: 11px; background: #dcfce7; color: var(--green-700);
+      font-size: 11px; background: var(--green-100); color: var(--green-700);
       padding: 2px 7px; border-radius: 10px; font-weight: 700;
     }
 
@@ -162,7 +197,7 @@
     .variant-select {
       width: 100%; padding: 10px 12px; font-size: 14px; font-weight: 600;
       border: 1.5px solid var(--green-200); border-radius: 10px;
-      background: white; color: var(--slate-700);
+      background: var(--card); color: var(--slate-700);
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' fill='none' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 12px center;
@@ -223,7 +258,7 @@
     .recipe-ingredients { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
     .recipe-ing-chip {
       font-size: 12px; font-weight: 600; padding: 3px 9px;
-      background: white; border-radius: 20px; color: var(--slate-700);
+      background: var(--card); border-radius: 20px; color: var(--slate-700);
       border: 1px solid #fcd34d;
     }
     .recipe-add-btn {
@@ -240,7 +275,7 @@
     .route-filter-label { font-size:11px; font-weight:800; color:var(--slate-400); text-transform:uppercase; letter-spacing:.5px; margin-right:2px; }
     .route-filter-chip {
       padding:6px 12px; border-radius:99px; border:2px solid var(--slate-200);
-      background:white; font-size:12px; font-weight:700; cursor:pointer; color:var(--slate-500);
+      background:var(--card); font-size:12px; font-weight:700; cursor:pointer; color:var(--slate-500);
       transition:all .15s; opacity:.55;
     }
     .route-filter-chip.on { border-color: var(--green-500); background: var(--green-50); color: var(--green-700); opacity:1; }
@@ -275,7 +310,7 @@
     .route-item-unitprice { font-size:10px; color:var(--slate-400); margin-left:4px; }
 
     .route-store {
-      background:white; border:1.5px solid var(--slate-200); border-radius:16px;
+      background:var(--card); border:1.5px solid var(--slate-200); border-radius:16px;
       padding:14px; margin-bottom:12px;
       box-shadow:0 2px 10px rgba(15,23,42,.04);
     }
@@ -308,7 +343,7 @@
       width:22px; height:22px; flex-shrink:0;
       border:2px solid var(--green-300); border-radius:6px;
       display:flex; align-items:center; justify-content:center;
-      font-size:12px; color:white; background:white;
+      font-size:12px; color:white; background:var(--card);
       transition: background .12s, border-color .12s;
     }
     .route-item.checked .route-item-check { background:var(--green-500); border-color:var(--green-500); }
@@ -331,6 +366,35 @@
       text-transform:uppercase; flex-shrink:0;
     }
 
+    /* WINKELMODUS — grote letters, hoog contrast, scherm blijft aan */
+    .shopmode-btn {
+      width:100%; padding:13px; border-radius:14px; margin-bottom:10px;
+      border:1.5px solid var(--green-100); background:var(--card);
+      font-size:15px; font-weight:800; color:var(--green-700); cursor:pointer;
+      transition: all .15s;
+    }
+    body.shopmode .shopmode-btn {
+      position:sticky; top:8px; z-index:20;
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border-color:transparent;
+      box-shadow:0 6px 18px rgba(5,150,105,.35);
+      font-size:16px;
+    }
+    body.shopmode .header, body.shopmode .tabs { display:none; }
+    body.shopmode .route-rec, body.shopmode #route-store-filter { display:none; }
+    body.shopmode { padding-top:8px; }
+    body.shopmode .route-item { padding:14px 2px; gap:12px; }
+    body.shopmode .route-item-name { font-size:19px; font-weight:800; }
+    body.shopmode .route-item-detail { font-size:13px; white-space:normal; }
+    body.shopmode .route-item-check {
+      width:32px; height:32px; border-radius:9px; border-width:2.5px; font-size:19px;
+    }
+    body.shopmode .route-item-price { font-size:17px; }
+    body.shopmode .route-item-qty { width:32px; height:32px; font-size:15px; }
+    body.shopmode .route-store { padding:16px; }
+    body.shopmode .route-store-name { font-size:16px; }
+    body.shopmode .route-store-total { font-size:16px; }
+
     .route-missing {
       background: rgba(239,68,68,.06); border:1.5px dashed rgba(239,68,68,.25);
       border-radius:14px; padding:12px;
@@ -345,7 +409,7 @@
     /* Delen */
     .share-bar {
       display:flex; align-items:center; gap:8px; padding:8px 12px;
-      background:white; border:1.5px solid var(--green-100); border-radius:14px;
+      background:var(--card); border:1.5px solid var(--green-100); border-radius:14px;
       margin-bottom:10px; box-shadow:0 2px 6px rgba(15,23,42,.04);
     }
     .share-bar.active { border-color: var(--green-500); background: var(--green-50); }
@@ -379,7 +443,7 @@
     .tips-grid { display:grid; gap:10px; margin-bottom:16px; }
     .tips-btn {
       display:flex; align-items:center; gap:14px;
-      background:white; border:1.5px solid var(--green-100); border-radius:16px;
+      background:var(--card); border:1.5px solid var(--green-100); border-radius:16px;
       padding:14px 16px; text-align:left; cursor:pointer;
       box-shadow:0 2px 8px rgba(15,23,42,.04);
       transition: transform .12s, border-color .15s;
@@ -393,7 +457,7 @@
 
     #tips-output { margin-top:8px; }
     .tips-result {
-      background:white; border:1.5px solid var(--green-100); border-radius:18px;
+      background:var(--card); border:1.5px solid var(--green-100); border-radius:18px;
       padding:18px; box-shadow:0 6px 20px rgba(15,23,42,.06);
       font-size:14px; line-height:1.5; color: var(--slate-800);
     }
@@ -406,6 +470,13 @@
     .tips-result strong { color: var(--slate-900); }
     .tips-result ul { margin: 4px 0 10px 18px; }
     .tips-result li { margin-bottom: 3px; }
+    .tips-add-ings {
+      display:block; margin: -4px 0 12px; padding: 7px 12px;
+      background: var(--green-50); color: var(--green-700);
+      border: 1.5px solid var(--green-200); border-radius: 10px;
+      font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .tips-add-ings:disabled { opacity:.6; cursor:default; }
     .tips-result-header {
       display:flex; align-items:center; gap:8px;
       font-size:11px; text-transform:uppercase; letter-spacing:1.5px;
@@ -413,7 +484,7 @@
     }
     .tips-loading {
       display:flex; align-items:center; gap:10px;
-      background:white; border:1.5px solid var(--green-100); border-radius:16px;
+      background:var(--card); border:1.5px solid var(--green-100); border-radius:16px;
       padding:16px; color: var(--slate-600); font-weight:600;
     }
     .tips-spin {
@@ -437,7 +508,7 @@
       width:100%; padding:10px 12px; margin-top:8px;
       border:1.5px solid var(--slate-200); border-radius:10px;
       font-size:13px; font-family: ui-monospace, monospace;
-      background:white; outline:none;
+      background:var(--card); outline:none;
     }
     .tips-config-input:focus { border-color: var(--green-500); }
     .tips-config-btn {
@@ -447,14 +518,14 @@
       font-size:13px; font-weight:800; cursor:pointer;
     }
     .store-pref-card {
-      background:white; border-radius:14px; padding:14px 16px;
+      background:var(--card); border-radius:14px; padding:14px 16px;
       border:1.5px solid var(--slate-100);
     }
     .store-pref-label { font-size:13px; font-weight:800; color:var(--slate-500); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
     .store-pref-chips { display:flex; gap:8px; flex-wrap:wrap; }
     .store-pref-chip {
       padding: 8px 14px; border-radius:99px; border:2px solid var(--slate-200);
-      background:white; font-size:13px; font-weight:700; cursor:pointer;
+      background:var(--card); font-size:13px; font-weight:700; cursor:pointer;
       color:var(--slate-600); transition:all .15s;
     }
     .store-pref-chip.active { border-color: var(--green-500); background: var(--green-50); color: var(--green-700); }
@@ -464,7 +535,7 @@
 
     /* INPUT KAART */
     .add-card {
-      background:white; border:1.5px solid var(--green-100); border-radius:18px;
+      background:var(--card); border:1.5px solid var(--green-100); border-radius:18px;
       padding:12px; box-shadow: 0 6px 24px rgba(15,23,42,.06);
       margin-bottom:14px;
     }
@@ -481,14 +552,14 @@
       outline:none; transition: border-color .15s, background .15s;
       min-width:0;
     }
-    .add-input:focus { border-color: var(--green-500); background:white; }
+    .add-input:focus { border-color: var(--green-500); background:var(--card); }
     .add-input::placeholder { color: var(--slate-400); font-weight:500; }
     .qty-input {
       width:56px; padding:14px 6px; font-size:16px; font-weight:700; text-align:center;
       border:2px solid var(--slate-200); border-radius:12px;
       background: var(--slate-50); color: var(--slate-900); outline:none;
     }
-    .qty-input:focus { border-color: var(--green-500); background:white; }
+    .qty-input:focus { border-color: var(--green-500); background:var(--card); }
     .add-btn {
       padding:14px 18px; border:none; border-radius:12px;
       background: linear-gradient(135deg, var(--green-500), var(--green-600));
@@ -532,7 +603,7 @@
     .chip:hover { background: var(--green-100); }
     .chip .chip-cnt { font-size:10px; color: var(--green-600); opacity:.7; }
     .chip.variant-chip {
-      background: white;
+      background: var(--card);
       border:1.5px solid var(--green-500);
       color: var(--green-700);
     }
@@ -613,7 +684,7 @@
     .browse-cat .b-emo { font-size:20px; flex-shrink:0; }
     .browse-cat .b-count {
       font-size:11px; font-weight:700; color: var(--green-700);
-      background: white; padding:2px 7px; border-radius:99px;
+      background: var(--card); padding:2px 7px; border-radius:99px;
       margin-left:auto; flex-shrink:0;
     }
     .browse-products {
@@ -622,7 +693,7 @@
       padding: 2px;
     }
     .browse-prod {
-      background: white; border:1.5px solid var(--slate-200);
+      background: var(--card); border:1.5px solid var(--slate-200);
       color: var(--slate-800); border-radius:99px;
       padding: 7px 13px; font-size:13.5px; font-weight:700;
       cursor:pointer; user-select:none;
@@ -658,7 +729,7 @@
 
     .item {
       display:flex; align-items:center; gap:12px;
-      background:white; border:1.5px solid var(--slate-200); border-radius:14px;
+      background:var(--card); border:1.5px solid var(--slate-200); border-radius:14px;
       padding: 12px 14px; margin-bottom:8px;
       box-shadow: 0 2px 8px rgba(15,23,42,.04);
       transition: transform .15s, box-shadow .15s;
@@ -678,7 +749,7 @@
     .item.checked .item-name { text-decoration: line-through; color: var(--slate-600); }
     .check {
       width:28px; height:28px; border-radius:10px;
-      border:2.5px solid var(--slate-200); background:white;
+      border:2.5px solid var(--slate-200); background:var(--card);
       flex-shrink:0; cursor:pointer; position:relative;
       transition: all .12s;
     }
@@ -730,9 +801,9 @@
     .cmp-row.best .cmp-price { color: var(--green-700); font-weight:900; }
     .cmp-row:not(.best) { opacity:.7; }
     .cmp-row:not(.best) .cmp-price { color: var(--slate-600); font-weight:700; }
-    .cmp-row.in-bonus { border-left-color: #F59E0B; border-left-width:4px; opacity:1; background:linear-gradient(90deg,#FFFBEB,white); }
+    .cmp-row.in-bonus { border-left-color: #F59E0B; border-left-width:4px; opacity:1; background:linear-gradient(90deg,#FFFBEB,var(--card)); }
     .cmp-row.in-bonus .cmp-price { color: #B45309; font-size:15px; }
-    .bonus-saving { font-size:10px; font-weight:800; color:#15803D; background:#DCFCE7; padding:1px 6px; border-radius:99px; white-space:nowrap; }
+    .bonus-saving { font-size:10px; font-weight:800; color:var(--green-700); background:var(--green-100); padding:1px 6px; border-radius:99px; white-space:nowrap; }
     .item-bonus-banner {
       display:flex; align-items:center; gap:6px;
       background: linear-gradient(135deg, #FEF3C7, #FDE68A);
@@ -774,9 +845,36 @@
       font-size:13px; opacity:.3; flex-shrink:0; line-height:1;
     }
     .cmp-flag:active { opacity:1; }
+    .cmp-watch {
+      background:none; border:none; cursor:pointer; padding:2px 2px;
+      font-size:13px; opacity:.35; flex-shrink:0; line-height:1;
+    }
+    .cmp-watch.active { opacity:1; }
+
+    /* GEVOLGDE PRODUCTEN (prijsalerts) */
+    .watch-block {
+      background:var(--card); border:1.5px solid var(--green-100);
+      border-radius:14px; padding:12px 14px; margin-bottom:10px;
+    }
+    .watch-title { font-size:13px; font-weight:800; color:var(--green-700); margin-bottom:6px; }
+    .watch-row { display:flex; align-items:center; gap:7px; padding:5px 0; font-size:12.5px; }
+    .watch-row:not(:last-child) { border-bottom:1px solid var(--slate-50); }
+    .watch-row.alert .watch-price { color:var(--green-600); font-weight:900; }
+    .watch-name {
+      flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;
+      white-space:nowrap; font-weight:600; color:var(--slate-700);
+    }
+    .watch-price { font-weight:800; flex-shrink:0; }
+    .watch-drop {
+      font-size:10px; font-weight:800; color:var(--green-700);
+      background:var(--green-100); padding:1px 6px; border-radius:99px;
+      white-space:nowrap; flex-shrink:0;
+    }
+    .watch-status { font-size:11px; color:var(--slate-400); font-style:italic; flex-shrink:0; }
+    .watch-unfollow { background:none; border:none; cursor:pointer; font-size:14px; padding:2px 4px; flex-shrink:0; }
     .report-menu {
       position:absolute; right:8px; z-index:200;
-      background:white; border-radius:12px; padding:6px;
+      background:var(--card); border-radius:12px; padding:6px;
       box-shadow:0 4px 20px rgba(0,0,0,.15); border:1.5px solid var(--slate-100);
       display:flex; flex-direction:column; gap:4px; min-width:200px;
     }
@@ -789,7 +887,7 @@
     .report-opt.danger { color:var(--rose-500); }
     .report-opt.cancel { color:var(--slate-400); font-weight:600; }
     .blacklist-card {
-      background:white; border-radius:12px; padding:10px 12px;
+      background:var(--card); border-radius:12px; padding:10px 12px;
       border:1.5px solid #FEE2E2; margin-bottom:6px;
       display:flex; align-items:center; gap:8px;
     }
@@ -834,7 +932,7 @@
     /* HISTORIE TAB */
     .hist-item {
       display:flex; align-items:center; gap:12px;
-      background:white; border:1.5px solid var(--slate-200); border-radius:14px;
+      background:var(--card); border:1.5px solid var(--slate-200); border-radius:14px;
       padding: 10px 12px; margin-bottom:8px;
     }
     .hist-info { flex:1; min-width:0; }
@@ -848,7 +946,7 @@
     }
     .hist-add:active { transform:scale(.94); }
     .seasonal-block {
-      background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+      background: linear-gradient(135deg, var(--green-50), var(--green-100));
       border:1.5px solid var(--green-100); border-radius:14px;
       padding:12px 14px; margin-bottom:14px;
     }
@@ -856,7 +954,7 @@
     .seasonal-chips { display:flex; flex-wrap:wrap; gap:6px; }
     .seasonal-chip {
       padding:6px 12px; border-radius:99px;
-      background:white; border:1.5px solid var(--green-200);
+      background:var(--card); border:1.5px solid var(--green-200);
       font-size:12px; font-weight:700; color:var(--green-700); cursor:pointer;
     }
     .seasonal-chip:active { background:var(--green-100); }
@@ -890,7 +988,7 @@
     .hist-search {
       width:100%; padding:12px 14px; font-size:15px; font-weight:600;
       border:2px solid var(--slate-200); border-radius:12px;
-      background: white; outline:none; margin-bottom:12px;
+      background: var(--card); outline:none; margin-bottom:12px;
     }
     .hist-search:focus { border-color: var(--green-500); }
 
@@ -915,13 +1013,13 @@
     }
     .ab-btn:active { transform: scale(.97); }
     .ab-clear {
-      background: white; color: var(--slate-600);
+      background: var(--card); color: var(--slate-600);
       border:1.5px solid var(--slate-200);
     }
     .ab-clear.has-checked { color: var(--rose-500); border-color: #FECACA; }
     .ab-save, .ab-share {
       flex:0 0 auto; padding: 14px 16px;
-      background: white; color: var(--green-600);
+      background: var(--card); color: var(--green-600);
       border:1.5px solid var(--green-200);
       font-size:18px;
     }
@@ -937,7 +1035,7 @@
     }
     .saved-lists-title { font-size:13px; font-weight:800; color:var(--slate-500); text-transform:uppercase; letter-spacing:.5px; }
     .saved-list-card {
-      background:white; border-radius:14px; padding:12px 14px;
+      background:var(--card); border-radius:14px; padding:12px 14px;
       margin-bottom:8px; border:1.5px solid var(--slate-100);
       display:flex; align-items:center; gap:10px;
     }
@@ -975,7 +1073,7 @@
     }
     .modal-bg.open { display:flex; }
     .modal {
-      background:white; border-radius: 22px 22px 22px 22px;
+      background:var(--card); border-radius: 22px 22px 22px 22px;
       width:100%; max-width: 520px;
       padding: 20px; max-height: 80vh; overflow-y:auto;
       box-shadow: 0 -8px 32px rgba(0,0,0,.2);
@@ -1011,7 +1109,7 @@
     .toast {
       position: fixed; left:50%; bottom: 100px;
       transform: translateX(-50%) translateY(20px);
-      background: var(--slate-900); color:white;
+      background: var(--toast-bg); color:var(--toast-text);
       padding: 10px 16px; border-radius: 99px;
       font-size:13px; font-weight:700;
       opacity:0; pointer-events:none;
@@ -1019,8 +1117,42 @@
       z-index: 30;
       box-shadow: 0 8px 24px rgba(0,0,0,.25);
     }
-    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); pointer-events:auto; }
+    .toast .toast-undo {
+      background:none; border:none; margin-left:12px; padding:0;
+      color:var(--green-400); font-size:13px; font-weight:800;
+      cursor:pointer; text-decoration:underline;
+    }
+
+    /* DARK MODE — overrides voor hardcoded pasteltinten */
+    html.dark .deal-qty-tip,
+    html.dark .upcoming-tip { background:#12263F; border-color:#1E3A5F; }
+    html.dark .bonus-tip { background:#2E2810; border-color:#5C4D14; }
+    html.dark .bonus-tip:active { background:#3A340F; }
+    html.dark .brand-chip.active { background:#16305B; color:#93C5FD; }
+    html.dark .recipe-card { background:#2A2410; border-color:#5C4D14; }
+    html.dark .recipe-ing-chip { border-color:#5C4D14; }
+    html.dark .pick-row .pick-bonus { background:#4A3A10; color:#FCD34D; }
+    html.dark .cmp-row.in-bonus { background:linear-gradient(90deg,#2E2810,var(--card)); }
+    html.dark .cmp-row.in-bonus .cmp-price { color:#F59E0B; }
+    html.dark .item-bonus-banner { background:#3A2F0B; border-color:#705E14; color:#FDE68A; }
+    html.dark .blacklist-card { border-color:#7F1D1D; }
+    html.dark .hamster-block { background:#33200E; border-color:#7C2D12; }
+    html.dark .hamster-title { color:#FDBA74; }
+    html.dark .forgotten-block { background:#2E2810; border-color:#5C4D14; }
+    html.dark .forgotten-title { color:#FDE68A; }
+    html.dark .stale-banner { background:#3A2F0B; border-color:#705E14; color:#FDE68A; }
+    html.dark .price-trend.down { color:#4ADE80; }
   </style>
+  <script>
+    // Thema vóór eerste paint toepassen (voorkomt witte flits bij donker thema)
+    (function() {
+      let t; try { t = localStorage.getItem('boodschappen.theme') || 'auto'; } catch { t = 'auto'; }
+      if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -1030,6 +1162,7 @@
       <h1>Boodschappenheld</h1>
       <div class="sub" id="header-sub">Klaar om te shoppen</div>
     </div>
+    <button class="settings-btn" id="settings-btn" onclick="showTab('settings')" aria-label="Instellingen" title="Instellingen">⚙️</button>
   </div>
 
   <div class="tabs tabs-4">
@@ -1061,12 +1194,14 @@
     <div id="stale-banner"></div>
     <div id="budget-bar"></div>
     <div id="price-summary"></div>
+    <div id="watch-alerts"></div>
     <div id="hamster-tips"></div>
     <div id="list-wrap"></div>
   </div>
 
   <!-- TAB: ROUTE -->
   <div id="view-route" style="display:none">
+    <button class="shopmode-btn" id="shopmode-btn" onclick="toggleShopMode()">🛍️ Start winkelmodus</button>
     <div id="route-store-filter"></div>
     <div id="route-wrap"></div>
   </div>
@@ -1104,10 +1239,6 @@
       </button>
     </div>
     <div id="tips-output"></div>
-    <div id="store-pref-section" style="margin-top:16px"></div>
-    <div id="budget-config"></div>
-    <div id="blacklist-section"></div>
-    <div id="share-worker-config" style="margin-top:12px"></div>
   </div>
 
   <!-- TAB: HISTORIE -->
@@ -1118,6 +1249,17 @@
            placeholder="🔍 Zoeken in jouw producten..."
            autocomplete="off" oninput="renderHistory()">
     <div id="hist-wrap"></div>
+  </div>
+
+  <!-- VIEW: INSTELLINGEN (via ⚙️ in header) -->
+  <div id="view-settings" style="display:none">
+    <div class="settings-title">⚙️ Instellingen</div>
+    <div id="theme-config"></div>
+    <div id="store-pref-section"></div>
+    <div id="budget-config"></div>
+    <div id="blacklist-section"></div>
+    <div id="share-worker-config" style="margin-top:12px"></div>
+    <div id="ai-config" style="margin-top:12px"></div>
   </div>
 
   <!-- ACTIE-BALK -->
@@ -3486,7 +3628,7 @@
 
   async function shareCreate() {
     const base = getShareWorkerUrl();
-    if (!base) throw new Error('Stel eerst de deellijst-Worker URL in bij Instellingen (Tips-tab).');
+    if (!base) throw new Error('Stel eerst de deellijst-Worker URL in bij Instellingen (⚙️).');
     const res = await fetch(`${base}/share`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -3624,7 +3766,7 @@
 
   function handleShareBtn() {
     if (!getShareWorkerUrl()) {
-      showTab('tips');
+      showTab('settings');
       setTimeout(() => document.getElementById('share-worker-config')?.scrollIntoView({ behavior: 'smooth' }), 100);
       toast('Stel eerst de Deellijst Worker URL in');
       return;
@@ -3723,6 +3865,20 @@
     const qtyInput = document.getElementById('qty-input');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
+    // Multi-add: "melk, brood, kaas" → drie items tegelijk
+    if (name.includes(',')) {
+      const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length > 1) {
+        parts.forEach(p => addItem(p, 1));
+        input.value = '';
+        qtyInput.value = '';
+        syncSubmitBtn();
+        input.focus();
+        renderSuggestions();
+        toast(`${parts.length} items toegevoegd`);
+        return;
+      }
+    }
     // Als de invoer exact een variant-suboptie is → open variant-picker
     const normInp = normalize(name);
     for (const [key, val] of Object.entries(VARIANTS)) {
@@ -3781,15 +3937,41 @@
   }
 
   function deleteItem(id) {
+    const idx = items.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const removed = [{ item: items[idx], index: idx }];
     items = items.filter(x => x.id !== id);
     saveItems(); render();
+    toastWithUndo(`${removed[0].item.name} verwijderd`, removed);
   }
 
   function clearChecked() {
-    const before = items.length;
+    const removed = items.map((item, index) => ({ item, index })).filter(r => r.item.checked);
+    if (!removed.length) return;
     items = items.filter(x => !x.checked);
     saveItems(); render();
-    if (before !== items.length) toast('Afgevinkte items gewist');
+    toastWithUndo(`${removed.length} afgevinkte item${removed.length === 1 ? '' : 's'} gewist`, removed);
+  }
+
+  // Undo voor verwijder-acties: items met oorspronkelijke positie terugzetten
+  let undoState = null;
+  function toastWithUndo(msg, removed) {
+    undoState = removed;
+    const t = document.getElementById('toast');
+    t.innerHTML = `${escapeHtml(msg)}<button class="toast-undo" onclick="undoRemove()">Ongedaan maken</button>`;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.classList.remove('show'); undoState = null; }, 5000);
+  }
+  function undoRemove() {
+    if (undoState) {
+      undoState.sort((a, b) => a.index - b.index)
+        .forEach(({ item, index }) => items.splice(Math.min(index, items.length), 0, item));
+      saveItems(); render();
+    }
+    undoState = null;
+    clearTimeout(toast._t);
+    document.getElementById('toast').classList.remove('show');
   }
 
   function finishShopping() {
@@ -3846,6 +4028,7 @@
     renderSuggestions();
     renderActionbar();
     renderHeaderSub();
+    renderWatchAlerts();
     renderHamsterTips();
     renderBudgetBar();
   }
@@ -3925,6 +4108,68 @@
     const recent = entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
     const isLowest = recent.length >= 3 && current <= Math.min(...recent);
     return { diff, pct, isLowest, oldPrice, current };
+  }
+
+  // ── PRIJSALERTS: gevolgde producten ──
+  const WATCH_KEY = 'boodschappen.watchlist';
+  let watchlist = loadJson(WATCH_KEY, []);  // [{ storeId, pid, name, priceAtAdd, addedAt }]
+  function saveWatchlist() { try { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); } catch {} }
+  function isWatched(storeId, p) {
+    const pid = String(p.id || p.name);
+    return watchlist.some(w => w.storeId === storeId && String(w.pid) === pid);
+  }
+  function toggleWatch(storeId, pid, name, price) {
+    const idx = watchlist.findIndex(w => w.storeId === storeId && String(w.pid) === String(pid));
+    if (idx >= 0) {
+      watchlist.splice(idx, 1);
+      toast('Product niet meer gevolgd');
+    } else {
+      watchlist.push({ storeId, pid, name, priceAtAdd: price || 0, addedAt: Date.now() });
+      toast('⭐ Je volgt dit product — je ziet het hier als de prijs daalt');
+    }
+    saveWatchlist();
+    render();
+  }
+  function renderWatchAlerts() {
+    const div = document.getElementById('watch-alerts');
+    if (!div) return;
+    if (!watchlist.length) { div.innerHTML = ''; return; }
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = watchlist.map(w => {
+      const store = STORE_BY_ID[w.storeId];
+      const safePid = escapeHtml(String(w.pid)).replace(/'/g, "\\'");
+      const unfollow = `<button class="watch-unfollow" title="Niet meer volgen" onclick="toggleWatch('${w.storeId}','${safePid}')">⭐</button>`;
+      const chip = `<span class="store-chip" style="--sc:${store?.color || '#888'}">${store?.name || w.storeId}</span>`;
+      const p = storeData[w.storeId]?.products?.find(x => String(x.id || x.name) === String(w.pid));
+      if (!p || typeof p.price !== 'number') {
+        return { alert: false, html: `<div class="watch-row missing">${chip}<span class="watch-name">${escapeHtml(w.name)}</span><span class="watch-status">nu niet gevonden</span>${unfollow}</div>` };
+      }
+      let eff = p.price, bonus = null;
+      if (store?.hasBonus && p.bonus && p.bonus.start && p.bonus.end && p.bonus.start <= today && today <= p.bonus.end) {
+        bonus = p.bonus;
+        if (typeof p.bonus_price === 'number') eff = p.bonus_price;
+      }
+      const drop = w.priceAtAdd > 0 ? w.priceAtAdd - eff : 0;
+      const trend = getPriceTrend(w.storeId, p);
+      let badge = '';
+      if (bonus) badge = `<span class="bonus-badge">${escapeHtml(bonus.mechanism || 'bonus')}</span>`;
+      else if (drop > 0.01) badge = `<span class="watch-drop">↓ ${fmtPrice(drop)} gedaald</span>`;
+      else if (trend?.isLowest) badge = `<span class="watch-drop">🏷️ laagste in 30 dgn</span>`;
+      const alert = !!(bonus || drop > 0.01 || trend?.isLowest);
+      const was = (bonus || drop > 0.01) && w.priceAtAdd > 0 && w.priceAtAdd !== eff
+        ? `<span class="cmp-was">${fmtPrice(w.priceAtAdd)}</span>` : '';
+      return { alert, html: `<div class="watch-row${alert ? ' alert' : ''}">${chip}<span class="watch-name">${escapeHtml(p.name)}</span>${was}<span class="watch-price">${fmtPrice(eff)}</span>${badge}${unfollow}</div>` };
+    });
+    rows.sort((a, b) => b.alert - a.alert);
+    const alertCount = rows.filter(r => r.alert).length;
+    const title = alertCount
+      ? `📉 ${alertCount} prijsalert${alertCount === 1 ? '' : 's'} op gevolgde producten`
+      : '⭐ Gevolgde producten';
+    div.innerHTML = `
+      <div class="watch-block">
+        <div class="watch-title">${title}</div>
+        ${rows.map(r => r.html).join('')}
+      </div>`;
   }
 
   // ── NOTITIE PER ITEM ──
@@ -4376,6 +4621,7 @@
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
           ${trendTag}
+          <button class="cmp-watch${isWatched(m.storeId, m.p) ? ' active' : ''}" title="${isWatched(m.storeId, m.p) ? 'Niet meer volgen' : 'Volg de prijs van dit product'}" onclick="event.stopPropagation();toggleWatch('${escapeHtml(m.storeId)}','${escapeHtml(String(m.p.id || m.p.name)).replace(/'/g,"\\'")}','${safeProd}',${typeof m.p.price === 'number' ? m.p.price : 0})">${isWatched(m.storeId, m.p) ? '⭐' : '☆'}</button>
           <button class="cmp-flag" title="Fout melden" onclick="event.stopPropagation();openReportMenu(this,'${safeItem}','${safeProd}','${safeStore}')">🚩</button>
         </div>`;
     }
@@ -5624,18 +5870,18 @@
   }
 
   function showTab(tab) {
-    document.getElementById('tab-lijst').classList.toggle('active', tab==='lijst');
-    document.getElementById('tab-route').classList.toggle('active', tab==='route');
-    document.getElementById('tab-tips').classList.toggle('active', tab==='tips');
-    document.getElementById('tab-hist').classList.toggle('active', tab==='hist');
-    document.getElementById('view-lijst').style.display = tab==='lijst'  ? 'block' : 'none';
-    document.getElementById('view-route').style.display = tab==='route' ? 'block' : 'none';
-    document.getElementById('view-tips').style.display  = tab==='tips'  ? 'block' : 'none';
-    document.getElementById('view-hist').style.display  = tab==='hist'  ? 'block' : 'none';
+    if (tab !== 'route') exitShopMode();
+    for (const t of ['lijst','route','tips','hist']) {
+      document.getElementById('tab-' + t).classList.toggle('active', tab===t);
+      document.getElementById('view-' + t).style.display = tab===t ? 'block' : 'none';
+    }
+    document.getElementById('view-settings').style.display = tab==='settings' ? 'block' : 'none';
+    document.getElementById('settings-btn').classList.toggle('active', tab==='settings');
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
-    if (tab === 'tips')  { renderTipsConfig(); renderStorePref(); renderBudgetConfig(); renderBlacklistSection(); renderShareWorkerConfig(); }
+    if (tab === 'tips')  { renderTipsConfig(); }
+    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); }
   }
 
   // ── AI TIPS ──
@@ -5694,6 +5940,62 @@
         ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="clearShareWorkerUrl()">Wissen</button>` : ''}
       </div>`;
   }
+  // ── THEMA (licht/donker) ──
+  const THEME_KEY = 'boodschappen.theme';
+  function getTheme() { try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch { return 'auto'; } }
+  function setTheme(t) {
+    try { localStorage.setItem(THEME_KEY, t); } catch {}
+    applyTheme();
+    renderThemeConfig();
+  }
+  const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme() {
+    const t = getTheme();
+    const dark = t === 'dark' || (t === 'auto' && darkMQ.matches);
+    document.documentElement.classList.toggle('dark', dark);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = dark ? '#0B1220' : '#059669';
+  }
+  darkMQ.addEventListener('change', () => { if (getTheme() === 'auto') applyTheme(); });
+  applyTheme();
+  function renderThemeConfig() {
+    const div = document.getElementById('theme-config');
+    if (!div) return;
+    const t = getTheme();
+    const opts = [['auto','🌗 Auto'],['light','☀️ Licht'],['dark','🌙 Donker']];
+    div.innerHTML = `
+      <div class="store-pref-card">
+        <div class="store-pref-label">🎨 Thema</div>
+        <div class="store-pref-chips">
+          ${opts.map(([id,label]) => `<button class="store-pref-chip${t===id?' active':''}" onclick="setTheme('${id}')">${label}</button>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function renderAIConfig() {
+    const div = document.getElementById('ai-config');
+    if (!div) return;
+    const url = getAIUrl();
+    div.innerHTML = `
+      <div class="tips-config" style="margin-top:0">
+        <strong>🤖 AI Worker${url ? ' ✓' : ''}</strong><br>
+        ${url
+          ? `Worker actief: <code style="font-size:11px;word-break:break-all">${escapeHtml(url)}</code><br><br>`
+          : 'Zet de AI Worker in voor recepten en slimme suggesties op de Tips-tab. Volg de instructies in <code>worker/</code> in de repo.<br><br>'}
+        <input class="tips-config-input" id="ai-url-settings-input" type="url"
+               placeholder="https://boodschappen-ai.xxx.workers.dev"
+               value="${escapeHtml(url)}">
+        <button class="tips-config-btn" onclick="saveAIUrlFromSettings()">Opslaan</button>
+      </div>`;
+  }
+  function saveAIUrlFromSettings() {
+    const v = (document.getElementById('ai-url-settings-input')?.value || '').trim();
+    if (!v) return;
+    setAIUrl(v);
+    renderAIConfig();
+    toast('AI Worker opgeslagen!');
+  }
+
   function saveShareWorkerUrl() {
     const v = (document.getElementById('share-worker-url-input')?.value || '').trim();
     setShareWorkerUrl(v);
@@ -5814,9 +6116,39 @@
           <div class="tips-result-header">💡 ${escapeHtml(labels[mode])}</div>
           ${mdToHtml(data.text || '(geen antwoord)')}
         </div>`;
+      // Bij recepten: knop onder elke ingrediëntenlijst om alles op de lijst te zetten
+      if (mode === 'recept' || mode === 'weekmenu') {
+        out.querySelectorAll('.tips-result ul').forEach(ul => {
+          const b = document.createElement('button');
+          b.className = 'tips-add-ings';
+          b.textContent = '➕ Zet deze ingrediënten op de lijst';
+          b.onclick = () => addIngredientsFromTips(b);
+          ul.after(b);
+        });
+      }
     } catch (e) {
       out.innerHTML = `<div class="tips-error">⚠ Verbinding mislukt: ${escapeHtml(String(e))}</div>`;
     }
+  }
+
+  // Ingrediënt-regel uit AI-antwoord opschonen: hoeveelheden en haakjes eraf
+  function cleanIngredient(s) {
+    return s.replace(/\(.*?\)/g, '')
+            .replace(/^[\d.,½¼¾]+\s*(g|gr|gram|kg|ml|cl|dl|l|liter|el|tl|eetlepels?|theelepels?|snufjes?|blikjes?|blik|zakjes?|takjes?|teentjes?|plakjes?|bosjes?|stuks?|x)?\.?\s*/i, '')
+            .replace(/[.;,]\s*$/, '')
+            .trim();
+  }
+  function addIngredientsFromTips(btn) {
+    const ul = btn.previousElementSibling;
+    if (!ul) return;
+    const names = [...ul.querySelectorAll('li')]
+      .map(li => cleanIngredient(li.textContent))
+      .filter(s => s.length > 1 && s.length < 40);
+    if (!names.length) { toast('Geen ingrediënten gevonden in deze lijst'); return; }
+    names.forEach(n => addItem(n, 1));
+    btn.textContent = `✓ ${names.length} ingrediënt${names.length === 1 ? '' : 'en'} toegevoegd`;
+    btn.disabled = true;
+    toast(`${names.length} ingrediënten op je lijst gezet`);
   }
 
   // ── ROUTE PLANNER ──
@@ -6045,18 +6377,54 @@
     }
 
     wrap.innerHTML = recHtml + storesHtml + missingHtml + checkedHtml;
+    updateShopBtn();
   }
 
   function toggleRouteItem(id) {
     const it = items.find(x => x.id === id);
     if (!it) return;
     it.checked = !it.checked;
+    if (navigator.vibrate) navigator.vibrate(it.checked ? 30 : 10);
     saveItems();
     renderRoute();
     renderList();
     renderPriceSummary();
     renderHeaderSub();
     renderActionbar();
+  }
+
+  // ── WINKELMODUS ──
+  let shopMode = false;
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    // Wake lock vervalt als de app naar de achtergrond gaat — opnieuw aanvragen
+    if (shopMode && document.visibilityState === 'visible') requestWakeLock();
+  });
+  function toggleShopMode() {
+    shopMode = !shopMode;
+    document.body.classList.toggle('shopmode', shopMode);
+    if (shopMode) {
+      requestWakeLock();
+      window.scrollTo({ top: 0 });
+    } else if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+    updateShopBtn();
+  }
+  function exitShopMode() { if (shopMode) toggleShopMode(); }
+  function updateShopBtn() {
+    const btn = document.getElementById('shopmode-btn');
+    if (!btn) return;
+    if (!shopMode) { btn.textContent = '🛍️ Start winkelmodus'; return; }
+    const total = items.length;
+    const done = items.filter(x => x.checked).length;
+    btn.textContent = done >= total && total > 0
+      ? '🎉 Alles gehad — tik om te stoppen'
+      : `✓ ${done}/${total} afgevinkt — tik om te stoppen`;
   }
 
   function renderStoreSection(store, rows, total, showReorder) {
@@ -6121,6 +6489,8 @@
   renderShareBar();
   loadStores();
   initDrag();
+  // Op desktop meteen in het invoerveld; op touch niet (toetsenbord zou opspringen)
+  if (matchMedia('(pointer: fine)').matches) document.getElementById('add-input').focus();
 </script>
 </body>
 </html>
