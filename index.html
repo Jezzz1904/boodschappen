@@ -152,6 +152,21 @@
     </div>
   </div>
 
+  <!-- MODAL KASSABON-CHECK -->
+  <div class="modal-bg" id="modal-receipt" onclick="if(event.target===this) closeReceiptCheck()">
+    <div class="modal">
+      <div class="modal-title">🧾 Kassabon-check</div>
+      <div class="modal-sub">Voorspeld totaal: <strong id="receipt-predicted"></strong> — wat stond er op de bon?</div>
+      <input class="modal-save-input" id="receipt-input" type="text" inputmode="decimal"
+             placeholder="bijv. 42,50" onkeydown="if(event.key==='Enter') saveReceiptCheck()">
+      <div id="receipt-history"></div>
+      <div class="modal-save-actions">
+        <button class="modal-save-btn secondary" onclick="closeReceiptCheck()">Overslaan</button>
+        <button class="modal-save-btn primary" onclick="saveReceiptCheck()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL NOTITIE -->
   <div class="modal-bg" id="modal-note" onclick="if(event.target===this) closeNoteEditor()">
     <div class="modal">

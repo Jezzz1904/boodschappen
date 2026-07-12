@@ -2658,10 +2658,63 @@
       history[norm] = h;
     });
     saveHistory();
+    // Voorspeld totaal van de gekochte items (goedkoopste match per item)
+    let predicted = 0, priced = 0;
+    const boughtCount = items.filter(x => x.checked).length;
+    items.filter(x => x.checked).forEach(it => {
+      const { cheapest } = findMatches(it.name, it.category, it.matchOverrides);
+      if (cheapest) { predicted += cheapest.eff * (it.qty || 1); priced++; }
+    });
     // verwijder afgevinkte uit lijst
     items = items.filter(x => !x.checked);
     saveItems(); render();
+    if (priced > 0) openReceiptCheck(predicted, boughtCount);
+    else toast('🎉 Boodschappen geboekt!');
+  }
+
+  // ── KASSABON-CHECK ──
+  const RECEIPTS_KEY = 'boodschappen.receipts';
+  let pendingReceipt = null;
+  function openReceiptCheck(predicted, itemCount) {
+    pendingReceipt = { predicted, itemCount };
+    document.getElementById('receipt-predicted').textContent = fmtPrice(predicted);
+    const hist = loadJson(RECEIPTS_KEY, []);
+    const rows = hist.slice(-5).reverse().map(r => {
+      const d = new Date(r.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+      const diff = r.actual - r.predicted;
+      const color = Math.abs(diff) < 0.5 ? '' : diff > 0 ? ' style="color:var(--rose-500)"' : ' style="color:var(--green-600)"';
+      return `<div class="receipt-hist-row"><span>${d} · ${r.items} items</span><span>${fmtPrice(r.actual)}</span><span${color}>${diff >= 0 ? '+' : ''}${fmtPrice(diff)}</span></div>`;
+    }).join('');
+    document.getElementById('receipt-history').innerHTML = rows
+      ? `<div class="receipt-hist-title">Eerdere bonnen (verschil met voorspelling)</div>${rows}` : '';
+    const inp = document.getElementById('receipt-input');
+    inp.value = '';
+    document.getElementById('modal-receipt').classList.add('open');
+    setTimeout(() => inp.focus(), 100);
+  }
+  function closeReceiptCheck() {
+    pendingReceipt = null;
+    document.getElementById('modal-receipt').classList.remove('open');
     toast('🎉 Boodschappen geboekt!');
+  }
+  function saveReceiptCheck() {
+    const v = parseFloat((document.getElementById('receipt-input').value || '').replace(',', '.'));
+    if (!pendingReceipt || !isFinite(v) || v <= 0) { closeReceiptCheck(); return; }
+    const rec = {
+      date: Date.now(),
+      predicted: +pendingReceipt.predicted.toFixed(2),
+      actual: +v.toFixed(2),
+      items: pendingReceipt.itemCount,
+    };
+    const hist = loadJson(RECEIPTS_KEY, []);
+    hist.push(rec);
+    try { localStorage.setItem(RECEIPTS_KEY, JSON.stringify(hist.slice(-50))); } catch {}
+    pendingReceipt = null;
+    document.getElementById('modal-receipt').classList.remove('open');
+    const diff = rec.actual - rec.predicted;
+    if (Math.abs(diff) < 0.05) toast('🎯 Bon klopt precies met de voorspelling!');
+    else if (diff > 0) toast(`Bon was ${fmtPrice(diff)} duurder dan voorspeld`);
+    else toast(`💚 Bon was ${fmtPrice(-diff)} goedkoper dan voorspeld`);
   }
 
   function openCategoryPicker(id) {

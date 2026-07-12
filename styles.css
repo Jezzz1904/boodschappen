@@ -1128,3 +1128,13 @@
     html.dark .forgotten-title { color:#FDE68A; }
     html.dark .stale-banner { background:#3A2F0B; border-color:#705E14; color:#FDE68A; }
     html.dark .price-trend.down { color:#4ADE80; }
+
+    /* KASSABON-CHECK */
+    .receipt-hist-title {
+      font-size:11px; font-weight:800; color:var(--slate-400);
+      text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px;
+    }
+    .receipt-hist-row {
+      display:flex; justify-content:space-between; gap:8px;
+      font-size:12.5px; font-weight:600; color:var(--slate-600); padding:3px 0;
+    }
