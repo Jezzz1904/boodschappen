@@ -1138,3 +1138,38 @@
       display:flex; justify-content:space-between; gap:8px;
       font-size:12.5px; font-weight:600; color:var(--slate-600); padding:3px 0;
     }
+
+    /* HANDMATIGE WINKELS (Kruidvat/Etos) */
+    .settings-subtitle {
+      font-size: 13px; font-weight: 800; color: var(--slate-600);
+      margin: 16px 2px 6px;
+    }
+    .manual-store-card {
+      background:var(--card); border:1.5px solid var(--slate-200); border-radius:14px;
+      padding:12px 14px; margin-bottom:10px;
+    }
+    .manual-store-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .manual-store-count { font-size:11px; color:var(--slate-400); font-weight:700; }
+    .manual-store-empty { font-size:12px; color:var(--slate-400); font-style:italic; padding:6px 0; }
+    .manual-prod-row {
+      display:flex; align-items:center; gap:8px; padding:6px 0;
+      border-bottom:1px solid var(--slate-50);
+    }
+    .manual-prod-row.stale .manual-prod-meta { color:var(--rose-500); }
+    .manual-prod-info { flex:1; min-width:0; }
+    .manual-prod-name { font-size:13px; font-weight:700; color:var(--slate-700); }
+    .manual-prod-meta { font-size:10.5px; color:var(--slate-400); }
+    .manual-prod-price {
+      width:64px; padding:6px 8px; border:1.5px solid var(--slate-200); border-radius:8px;
+      font-size:13px; font-weight:700; text-align:right; background:var(--card); color:var(--slate-900);
+    }
+    .manual-prod-del { background:none; border:none; color:var(--slate-400); font-size:15px; cursor:pointer; padding:2px 4px; }
+    .manual-prod-del:active { color:var(--rose-500); }
+    .manual-add-row { display:flex; gap:6px; margin-top:8px; }
+    .manual-add-name { flex:1; min-width:0; padding:8px 10px; border:1.5px solid var(--slate-200); border-radius:8px; font-size:13px; background:var(--card); color:var(--slate-900); }
+    .manual-add-price { width:60px; padding:8px 8px; border:1.5px solid var(--slate-200); border-radius:8px; font-size:13px; background:var(--card); color:var(--slate-900); }
+    .manual-add-btn {
+      background: linear-gradient(135deg, var(--green-500), var(--green-600));
+      color:white; border:none; border-radius:8px; padding:8px 12px;
+      font-size:12px; font-weight:800; cursor:pointer; white-space:nowrap;
+    }

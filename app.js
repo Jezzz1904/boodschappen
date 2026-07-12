@@ -78,8 +78,13 @@
     { id:'jumbo', name:'Jumbo', file:'./data/jumbo.json', hasCategory:false, hasBonus:true,  color:'#EAB308' },
     { id:'plus',  name:'Plus',  file:'./data/plus.json',  hasCategory:false, hasBonus:true,  color:'#E11D48' },
     { id:'lidl',  name:'Lidl',  file:'./data/lidl.json',  hasCategory:false, hasBonus:true,  color:'#1E40AF' },
+    // Handmatige winkels: Kruidvat/Etos blokkeren scraping (Akamai). Prijzen worden
+    // door de gebruiker zelf ingevoerd via Instellingen en lokaal opgeslagen.
+    { id:'kruidvat', name:'Kruidvat', hasCategory:false, hasBonus:false, color:'#E4032E', manual:true },
+    { id:'etos',      name:'Etos',     hasCategory:false, hasBonus:false, color:'#E6007E', manual:true },
   ];
   const STORE_BY_ID = Object.fromEntries(STORES.map(s => [s.id, s]));
+  const MANUAL_STORES = STORES.filter(s => s.manual);
 
   // IndexedDB cache voor winkeldata (localStorage was te klein: 5MB vs ~10MB data)
   const idb = (() => {
@@ -1859,11 +1864,14 @@
   }
 
   async function loadStores() {
+    // Handmatige winkels (Kruidvat/Etos) hebben geen scraper — laad direct uit localStorage.
+    MANUAL_STORES.forEach(store => setStoreData(store.id, loadManualStoreData(store.id)));
+    const scrapedStores = STORES.filter(s => !s.manual);
     // Per winkel: eerst cache uit IndexedDB (snel), dan vers ophalen op achtergrond.
     let anyCache = false;
     let cacheStale = false;
     const now = Date.now();
-    await Promise.all(STORES.map(async store => {
+    await Promise.all(scrapedStores.map(async store => {
       try {
         const cached = await idb.get(store.id);
         if (cached && Array.isArray(cached.products)) {
@@ -1879,7 +1887,7 @@
     render();
     if (anyCache && cacheStale) renderStaleBanner(true, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
     // Vers ophalen (parallel)
-    const results = await Promise.all(STORES.map(async store => {
+    const results = await Promise.all(scrapedStores.map(async store => {
       try {
         const res = await fetch(store.file, { cache: 'no-cache' });
         if (!res.ok) { console.error(`[data] ${store.id}: HTTP ${res.status}`); return false; }
@@ -1903,6 +1911,92 @@
     for (const store of STORES) {
       try { localStorage.removeItem('boodschappen.data.' + store.id); } catch {}
     }
+  }
+
+  // ── HANDMATIGE WINKELS (Kruidvat/Etos) ──
+  function manualStoreKey(storeId) { return 'boodschappen.manual.' + storeId; }
+  function loadManualStoreData(storeId) {
+    const products = loadJson(manualStoreKey(storeId), []);
+    return { products, scraped_at: null };
+  }
+  function saveManualStoreProducts(storeId, products) {
+    try { localStorage.setItem(manualStoreKey(storeId), JSON.stringify(products)); } catch {}
+    setStoreData(storeId, { products, scraped_at: null });
+    render();
+  }
+  function addManualProduct(storeId, name, price, unit) {
+    name = (name || '').trim();
+    const priceNum = parseFloat(String(price).replace(',', '.'));
+    if (!name || !isFinite(priceNum) || priceNum <= 0) { toast('Vul een naam en geldige prijs in'); return; }
+    const products = (storeData[storeId]?.products || []).slice();
+    const id = 'm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    products.push({ id, name, price: priceNum, unit: (unit || '').trim() || undefined, checkedAt: Date.now() });
+    saveManualStoreProducts(storeId, products);
+    renderManualStoreSection();
+    toast(`${name} toegevoegd bij ${STORE_BY_ID[storeId]?.name}`);
+  }
+  function updateManualProduct(storeId, pid, price) {
+    const priceNum = parseFloat(String(price).replace(',', '.'));
+    if (!isFinite(priceNum) || priceNum <= 0) return;
+    const products = (storeData[storeId]?.products || []).map(p =>
+      String(p.id) === String(pid) ? { ...p, price: priceNum, checkedAt: Date.now() } : p);
+    saveManualStoreProducts(storeId, products);
+    renderManualStoreSection();
+    toast('Prijs bijgewerkt');
+  }
+  function deleteManualProduct(storeId, pid) {
+    const products = (storeData[storeId]?.products || []).filter(p => String(p.id) !== String(pid));
+    saveManualStoreProducts(storeId, products);
+    renderManualStoreSection();
+  }
+  function fmtCheckedAt(ts) {
+    if (!ts) return 'onbekend';
+    const days = Math.floor((Date.now() - ts) / 86400000);
+    if (days <= 0) return 'vandaag';
+    if (days === 1) return 'gisteren';
+    if (days < 30) return `${days} dagen geleden`;
+    return new Date(ts).toLocaleDateString('nl-NL', { day:'numeric', month:'short' });
+  }
+  function renderManualStoreSection() {
+    const div = document.getElementById('manual-store-section');
+    if (!div) return;
+    div.innerHTML = MANUAL_STORES.map(store => {
+      const products = (storeData[store.id]?.products || []).slice().sort((a, b) => a.name.localeCompare(b.name));
+      const rows = products.map(p => {
+        const safePid = escapeHtml(String(p.id)).replace(/'/g, "\\'");
+        const stale = p.checkedAt && (Date.now() - p.checkedAt) > 60 * 86400000;
+        return `
+          <div class="manual-prod-row${stale ? ' stale' : ''}">
+            <div class="manual-prod-info">
+              <div class="manual-prod-name">${escapeHtml(p.name)}</div>
+              <div class="manual-prod-meta">gecheckt: ${fmtCheckedAt(p.checkedAt)}</div>
+            </div>
+            <input type="text" inputmode="decimal" class="manual-prod-price" value="${p.price.toFixed(2)}"
+                   onchange="updateManualProduct('${store.id}','${safePid}',this.value)">
+            <button class="manual-prod-del" onclick="deleteManualProduct('${store.id}','${safePid}')">✕</button>
+          </div>`;
+      }).join('');
+      return `
+        <div class="manual-store-card">
+          <div class="manual-store-head">
+            <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+            <span class="manual-store-count">${products.length} product${products.length === 1 ? '' : 'en'}</span>
+          </div>
+          ${rows || '<div class="manual-store-empty">Nog geen producten toegevoegd.</div>'}
+          <div class="manual-add-row">
+            <input type="text" class="manual-add-name" id="manual-add-name-${store.id}" placeholder="Productnaam">
+            <input type="text" inputmode="decimal" class="manual-add-price" id="manual-add-price-${store.id}" placeholder="€">
+            <button class="manual-add-btn" onclick="submitManualProduct('${store.id}')">+ Toevoegen</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  function submitManualProduct(storeId) {
+    const nameEl = document.getElementById('manual-add-name-' + storeId);
+    const priceEl = document.getElementById('manual-add-price-' + storeId);
+    addManualProduct(storeId, nameEl.value, priceEl.value);
+    nameEl.value = ''; priceEl.value = '';
+    nameEl.focus();
   }
 
   // Laad server-correcties parallel met winkeldata
@@ -4599,7 +4693,7 @@
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
     if (tab === 'tips')  { renderTipsConfig(); }
-    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); }
+    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderManualStoreSection(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); }
   }
 
   // ── AI TIPS ──
