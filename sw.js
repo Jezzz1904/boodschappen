@@ -1,4 +1,4 @@
-const CACHE = 'boodschappen-v32';
+const CACHE = 'boodschappen-v33';
 const STATIC = ['./manifest.json', './logo.svg', './styles.css', './app.js'];
 
 self.addEventListener('install', e => {
@@ -49,5 +49,30 @@ self.addEventListener('fetch', e => {
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;
     }))
+  );
+});
+
+// ── PUSH-MELDINGEN (prijsalerts) ──
+self.addEventListener('push', e => {
+  let data = { title: '📉 Prijsalert', body: 'Een gevolgd product is in prijs veranderd.', url: '/' };
+  try { if (e.data) data = { ...data, ...e.data.json() }; } catch {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './logo.svg',
+      badge: './logo.svg',
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      for (const c of clients) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
   );
 });

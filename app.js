@@ -2941,6 +2941,7 @@
     }
     saveWatchlist();
     render();
+    syncPushWatchlist();
   }
   function renderWatchAlerts() {
     const div = document.getElementById('watch-alerts');
@@ -4693,7 +4694,7 @@
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
     if (tab === 'route') { renderRouteFilter(); renderRoute(); }
     if (tab === 'tips')  { renderTipsConfig(); }
-    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderManualStoreSection(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); }
+    if (tab === 'settings') { renderThemeConfig(); renderStorePref(); renderBudgetConfig(); renderManualStoreSection(); renderBlacklistSection(); renderShareWorkerConfig(); renderAIConfig(); renderPushConfig(); }
   }
 
   // ── AI TIPS ──
@@ -4806,6 +4807,102 @@
     setAIUrl(v);
     renderAIConfig();
     toast('AI Worker opgeslagen!');
+  }
+
+  // ── PUSH-MELDINGEN (worker-URL + abonnement) ──
+  const PUSH_URL_KEY = 'boodschappen.pushUrl';
+  const PUSH_ENDPOINT_KEY = 'boodschappen.pushEndpoint'; // laatst bekende subscription.endpoint
+  function getPushUrl() { try { return localStorage.getItem(PUSH_URL_KEY) || ''; } catch { return ''; } }
+  function setPushUrl(url) { try { localStorage.setItem(PUSH_URL_KEY, url.replace(/\/$/, '')); } catch {} }
+  function pushSupported() {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+  function b64urlToUint8Array(b64url) {
+    const pad = '='.repeat((4 - b64url.length % 4) % 4);
+    const base64 = (b64url + pad).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+  async function isPushSubscribed() {
+    if (!pushSupported()) return false;
+    const reg = await navigator.serviceWorker.ready;
+    return !!(await reg.pushManager.getSubscription());
+  }
+  async function subscribeToPush() {
+    const workerUrl = getPushUrl();
+    if (!workerUrl) { toast('Vul eerst de Push Worker URL in'); return; }
+    if (!pushSupported()) { toast('Push-meldingen worden niet ondersteund op dit toestel'); return; }
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { toast('Toestemming voor meldingen geweigerd'); renderPushConfig(); return; }
+      const { key } = await (await fetch(workerUrl + '/vapid-public-key')).json();
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64urlToUint8Array(key) });
+      const subJson = sub.toJSON();
+      try { localStorage.setItem(PUSH_ENDPOINT_KEY, subJson.endpoint); } catch {}
+      await fetch(workerUrl + '/subscribe', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ subscription: subJson, watchlist }),
+      });
+      toast('🔔 Push-meldingen aangezet');
+    } catch (e) {
+      toast('Aanmelden mislukt: ' + (e.message || e));
+    }
+    renderPushConfig();
+  }
+  async function unsubscribeFromPush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      const workerUrl = getPushUrl();
+      if (sub && workerUrl) {
+        await fetch(workerUrl + '/unsubscribe', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(() => {});
+        await sub.unsubscribe();
+      }
+      try { localStorage.removeItem(PUSH_ENDPOINT_KEY); } catch {}
+      toast('Push-meldingen uitgezet');
+    } catch (e) { toast('Uitschrijven mislukt: ' + (e.message || e)); }
+    renderPushConfig();
+  }
+  // Ververs de gevolgde-producten-lijst op de worker zodra de watchlist wijzigt (indien geabonneerd)
+  function syncPushWatchlist() {
+    const workerUrl = getPushUrl();
+    let endpoint; try { endpoint = localStorage.getItem(PUSH_ENDPOINT_KEY); } catch { endpoint = null; }
+    if (!workerUrl || !endpoint) return;
+    fetch(workerUrl + '/sync-watchlist', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ endpoint, watchlist }),
+    }).catch(() => {});
+  }
+  async function renderPushConfig() {
+    const div = document.getElementById('push-config');
+    if (!div) return;
+    const url = getPushUrl();
+    const subscribed = await isPushSubscribed();
+    const actionBtn = !url ? ''
+      : subscribed
+        ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="unsubscribeFromPush()">Uitzetten</button>`
+        : `<button class="tips-config-btn" style="margin-left:6px" onclick="subscribeToPush()">🔔 Aanzetten</button>`;
+    div.innerHTML = `
+      <div class="tips-config" style="margin-top:0">
+        <strong>🔔 Push-meldingen${subscribed ? ' ✓ aan' : ''}</strong><br>
+        ${url
+          ? `Worker actief: <code style="font-size:11px;word-break:break-all">${escapeHtml(url)}</code><br><br>`
+          : 'Zet de Push Worker in om meldingen te krijgen bij prijsdalingen op gevolgde producten. Volg de instructies in <code>push-worker/</code> in de repo.<br><br>'}
+        <input class="tips-config-input" id="push-url-input" type="url"
+               placeholder="https://boodschappen-push.xxx.workers.dev"
+               value="${escapeHtml(url)}">
+        <button class="tips-config-btn" onclick="savePushUrl()">Opslaan</button>${actionBtn}
+      </div>`;
+  }
+  function savePushUrl() {
+    const v = (document.getElementById('push-url-input')?.value || '').trim();
+    setPushUrl(v);
+    renderPushConfig();
+    toast(v ? 'Push Worker opgeslagen!' : 'URL gewist');
   }
 
   function saveShareWorkerUrl() {
