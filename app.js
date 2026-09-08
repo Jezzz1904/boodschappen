@@ -2471,15 +2471,9 @@
           <button class="share-btn"${act('share-copy', { url })}>📤</button>
         </div>`;
     } else {
-      el.innerHTML = `
-        <div class="share-bar" style="flex-direction:column;gap:8px;align-items:stretch">
-          <button class="share-btn" style="width:100%;padding:10px;font-size:14px"${act('share-start')}>📤 Deel lijst met iemand</button>
-          <div class="share-join">
-            <input id="share-code-input" placeholder="Code van iemand anders invoeren" maxlength="80"
-              ${act('share-code')} data-on="input keydown">
-            <button class="share-btn secondary"${act('share-join')}>Verbinden</button>
-          </div>
-        </div>`;
+      // Niet delen? Dan neemt de balk geen ruimte in. Delen start je met 📤 in
+      // de actiebalk; een code van iemand anders voer je in bij Instellingen.
+      el.innerHTML = '';
     }
   }
 
@@ -2668,6 +2662,9 @@
     'setqty':    el => setQty(itemIdOf(el), Number(el.dataset.qty)),
     'brand':     el => setBrandPref(itemIdOf(el), el.dataset.brand),
     'quickadd':  el => quickAdd(el.dataset.name),
+    'expand':    el => { const id = itemIdOf(el); if (!id) return;
+                         expandedItems.has(id) ? expandedItems.delete(id) : expandedItems.add(id);
+                         patchItemPrices(id); },
     // Prijsvergelijking
     'pick-open': el => togglePicker(el, itemIdOf(el), el.dataset.store),
     'pick-set':  el => setMatchOverride(el.dataset.item, el.dataset.store, el.dataset.pname),
@@ -3463,11 +3460,12 @@
     saveItems(); render();
   }
 
-  function renderPriceComparison(it) {
+  // Gedeelde match-berekening voor de ingeklapte en de uitgeklapte weergave.
+  // Geeft null terug als er (nog) geen prijzen zijn; `reason` zegt waarom.
+  function matchView(it) {
     const res = findMatches(it.name, it.category, it.matchOverrides);
-    const { hasData, comparedByUnit } = res;
-    if (!hasData) return '<div class="item-meta">Prijzen laden…</div>';
-    if (!res.matches.length) return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    if (!res.hasData) return { reason: 'loading' };
+    if (!res.matches.length) return { reason: 'nomatch' };
 
     const matches = applyBrandPref(res.matches, it.brandPref);
 
@@ -3502,6 +3500,78 @@
       }
       return key(a) - key(b);
     });
+
+    return { res, matches, sorted, cheapest, sameUnit, dominantUnit, key, prefStore,
+             comparedByUnit: res.comparedByUnit };
+  }
+
+  // Welke items tonen alle winkels. Bewust niet opgeslagen: het is een
+  // kijkstand, geen instelling — bij een nieuwe sessie begin je weer compact.
+  const expandedItems = new Set();
+
+  function renderItemPrices(it) {
+    return expandedItems.has(it.id) ? renderPriceComparison(it) : renderPriceLite(it);
+  }
+
+  // Werkt alleen het prijsblok van één item bij (het duurste stuk render).
+  function patchItemPrices(id) {
+    const it = items.find(x => x.id === id);
+    const holder = itemNode(id)?.querySelector('.item-prices');
+    if (!it || !holder) { render(); return; }
+    holder.innerHTML = renderItemPrices(it);
+  }
+
+  // Ingeklapt: de goedkoopste winkel, plus je voorkeurswinkel (of anders de
+  // op één na goedkoopste) zodat er altijd iets te vergelijken valt.
+  function renderPriceLite(it) {
+    const v = matchView(it);
+    if (v.reason === 'loading') return '<div class="item-meta">Prijzen laden…</div>';
+    if (v.reason === 'nomatch')  return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    const { matches, cheapest, sameUnit, dominantUnit, key, prefStore } = v;
+
+    const others = matches.filter(m => m !== cheapest).sort((a, b) => key(a) - key(b));
+    const prefMatch = prefStore ? others.find(m => m.storeId === prefStore) : null;
+    const second = prefMatch || others[0] || null;
+
+    const line = (m, isBest) => {
+      const store = STORE_BY_ID[m.storeId];
+      const up = (sameUnit && m.unitPrice && m.unitPrice.unit === dominantUnit)
+        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[dominantUnit] || ''}</span>` : '';
+      const bonus = m.activeBonus
+        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>` : '';
+      const diff = !isBest && m.eff > cheapest.eff
+        ? `<span class="cmp-diff">+${fmtPrice(m.eff - cheapest.eff)}</span>` : '';
+      const fav = m.storeId === prefStore ? ' is-fav' : '';
+      return `
+        <div class="cmp-lite${isBest ? ' best' : ''}${fav}${m.activeBonus ? ' in-bonus' : ''}">
+          <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+          <span class="cmp-price">${fmtPrice(m.eff)}</span>
+          ${bonus}${up}${diff}
+          <span class="cmp-product">${escapeHtml(m.p.name)}</span>
+        </div>`;
+    };
+
+    const rest = matches.length - (second ? 2 : 1);
+    const meer = rest > 0 ? `<span class="cmp-more">+${rest}</span>` : '';
+
+    // Het hele blok is de knop: zo hoeft het pijltje zelf geen 44px hoog te
+    // zijn en blijft de rij compact, terwijl het trefvlak juist groot is.
+    return `
+      <div class="cmp cmp-lite-wrap"${act('expand')} role="button" tabindex="0"
+           aria-expanded="false" aria-label="Toon alle winkelprijzen">
+        <div class="cmp-lite-rows">
+          ${line(cheapest, true)}
+          ${second ? line(second, false) : ''}
+        </div>
+        <span class="cmp-expand">${meer}<span class="cmp-chevron">⌄</span></span>
+      </div>`;
+  }
+
+  function renderPriceComparison(it) {
+    const v = matchView(it);
+    if (v.reason === 'loading') return '<div class="item-meta">Prijzen laden…</div>';
+    if (v.reason === 'nomatch')  return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    const { res, matches, sorted, cheapest, sameUnit, dominantUnit, key, prefStore } = v;
 
     // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
     const hasHuis = res.matches.some(m => isHuismerk(m));
@@ -3665,7 +3735,8 @@
       return `<div class="item-bonus-banner">🔥 In bonus bij ${escapeHtml(store.name)}${end} ${mech}</div>`;
     }).join('') : '';
 
-    return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
+    const collapse = `<button class="cmp-collapse"${act('expand')} aria-expanded="true">Minder tonen <span class="cmp-chevron up">⌄</span></button>`;
+    return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}${collapse}</div>`;
   }
 
   function togglePicker(rowEl, itemId, storeId) {
@@ -3813,32 +3884,25 @@
     const optimalTotal = multi;
     const saving = cheapestSingle.total - optimalTotal;
 
-    const pillsHtml = storesWithHits.map(s => {
-      const isCheapest = s.store.id === cheapestSingle.store.id;
-      const missing = s.missingInStore > 0 ? `<span class="pill-missing">−${s.missingInStore}</span>` : '';
-      return `<span class="price-pill${isCheapest ? ' cheapest' : ''}">
-        <span class="pill-name">${s.store.name}</span>
-        ${fmtPrice(s.total)}${missing}
-      </span>`;
-    }).join('');
-
-    const optimalRow = saving > 0.01
-      ? `<div class="price-bar-optimal">
-           <span>Optimaal gesplitst: <strong>${fmtPrice(optimalTotal)}</strong></span>
-           <span class="save-badge">bespaar ${fmtPrice(saving)}</span>
-         </div>`
-      : `<div class="price-bar-optimal"><span>Optimaal: <strong>${fmtPrice(optimalTotal)}</strong></span></div>`;
-
     const label = foundCount < totalCount
       ? `${foundCount} van ${totalCount} items geprijsd`
       : `${totalCount} item${totalCount === 1 ? '' : 's'}`;
 
+    // Compact: één regel met het goedkoopste totaal en wat splitsen oplevert.
+    // De volledige uitsplitsing per winkel staat in de Route-tab, waar hij
+    // beter tot zijn recht komt — deze balk linkt erheen.
+    const saveTag = saving > 0.01
+      ? `<span class="save-badge">bespaar ${fmtPrice(saving)}</span>` : '';
     el.innerHTML = `
-      <div class="price-bar">
-        <div class="price-bar-label">💰 Totaalprijs · ${label}</div>
-        <div class="price-bar-stores">${pillsHtml}</div>
-        ${optimalRow}
-      </div>`;
+      <button class="price-bar"${act('tab', { tab: 'route' })}>
+        <span class="price-bar-store">
+          <span class="store-chip" style="--sc:${cheapestSingle.store.color}">${cheapestSingle.store.name}</span>
+          <strong>${fmtPrice(cheapestSingle.total)}</strong>
+        </span>
+        <span class="price-bar-label">${label}</span>
+        ${saveTag}
+        <span class="price-bar-go">Route ›</span>
+      </button>`;
   }
 
   // Volgorde binnen een categorie: afgevinkt onderaan, daarna handmatige
@@ -3963,7 +4027,7 @@
               <div class="item-body"${act('cat')}>
                 <div class="item-name">${escapeHtml(it.name)}</div>
                 ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
-                ${renderPriceComparison(it)}
+                <div class="item-prices">${renderItemPrices(it)}</div>
               </div>
               ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
               <button class="item-note-btn"${act('note')} title="Notitie toevoegen">✏️</button>
@@ -3974,13 +4038,25 @@
     wrap.innerHTML = html;
   }
 
-  // ── DRAG & DROP (LIJST) ──
+  // ── DRAG & DROP (LIJST) + SWIPE ──
+  // Drie gebaren op dezelfde rij, die elkaar niet in de weg mogen zitten:
+  //   verticaal slepen  → na 400 ms indrukken (bestaand)
+  //   horizontaal vegen → zodra de beweging duidelijk horizontaal is
+  //   tikken            → als er nauwelijks bewogen is (delegatie handelt af)
+  // De veeg wint pas als |dx| groter is dan |dy|; tot die tijd blijft de
+  // long-press staan. De knoppen ✏️ en ✕ blijven zichtbaar, dus wie het
+  // gebaar niet kent verliest niets.
+  const SWIPE_START = 12;   // px voordat we het een veeg noemen
+  const SWIPE_COMMIT = 90;  // px voordat de actie afgaat
   let dragItem = null, dragEl = null, dragStartY = 0, longPressTimer = null;
+  let swipeEl = null, swipeStartX = 0, swipeDx = 0;
+
   function initDrag() {
     const wrap = document.getElementById('list-wrap');
     wrap.addEventListener('touchstart', onDragTouchStart, { passive: false });
     wrap.addEventListener('touchmove', onDragTouchMove, { passive: false });
     wrap.addEventListener('touchend', onDragTouchEnd);
+    wrap.addEventListener('touchcancel', onDragTouchEnd);
   }
   function getItemEl(el) { return el?.closest?.('.item[data-id]'); }
   function onDragTouchStart(e) {
@@ -3988,6 +4064,8 @@
     if (!itemEl) return;
     if (e.target.closest('button, .check, .cmp-row, .pick-panel, input, select')) return;
     dragStartY = e.touches[0].clientY;
+    swipeStartX = e.touches[0].clientX;
+    swipeDx = 0;
     const id = itemEl.dataset.id;
     longPressTimer = setTimeout(() => {
       dragItem = id;
@@ -3997,7 +4075,25 @@
     }, 400);
   }
   function onDragTouchMove(e) {
-    if (longPressTimer && Math.abs(e.touches[0].clientY - dragStartY) > 10) {
+    const dy = e.touches[0].clientY - dragStartY;
+    const dx = e.touches[0].clientX - swipeStartX;
+
+    // Duidelijk horizontaal en nog niet aan het slepen? Dan is het een veeg.
+    if (!dragItem && !swipeEl && Math.abs(dx) > SWIPE_START && Math.abs(dx) > Math.abs(dy)) {
+      clearTimeout(longPressTimer); longPressTimer = null;
+      swipeEl = getItemEl(e.target);
+      swipeEl?.classList.add('swiping');
+    }
+    if (swipeEl) {
+      e.preventDefault();
+      swipeDx = dx;
+      swipeEl.style.transform = `translateX(${dx}px)`;
+      swipeEl.classList.toggle('swipe-del', dx <= -SWIPE_COMMIT);
+      swipeEl.classList.toggle('swipe-check', dx >= SWIPE_COMMIT);
+      return;
+    }
+
+    if (longPressTimer && Math.abs(dy) > 10) {
       clearTimeout(longPressTimer); longPressTimer = null;
     }
     if (!dragItem) return;
@@ -4013,6 +4109,17 @@
   }
   function onDragTouchEnd() {
     clearTimeout(longPressTimer); longPressTimer = null;
+
+    if (swipeEl) {
+      const el = swipeEl, dx = swipeDx, id = el.dataset.id;
+      swipeEl = null; swipeDx = 0;
+      el.classList.remove('swiping', 'swipe-del', 'swipe-check');
+      el.style.transform = '';
+      if (dx <= -SWIPE_COMMIT)      { navigator.vibrate?.(20); deleteItem(id); }
+      else if (dx >= SWIPE_COMMIT)  { navigator.vibrate?.(20); toggleItem(id); }
+      return;
+    }
+
     if (!dragItem) return;
     const overEl = document.querySelector('.item.drag-over');
     if (overEl && overEl.dataset.id !== dragItem) {
@@ -4968,7 +5075,17 @@
                value="${escapeHtml(url)}">
         <button class="tips-config-btn"${act('shareurl-save')}>Opslaan</button>
         ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" ${act('shareurl-clear')}>Wissen</button>` : ''}
-      </div>`;
+      </div>
+      ${url && !shareCode ? `
+      <div class="tips-config">
+        <strong>🔗 Meedoen met andermans lijst</strong><br>
+        Voer de code in die je van iemand hebt gekregen.<br><br>
+        <div class="share-join">
+          <input id="share-code-input" placeholder="Code van iemand anders" maxlength="80"
+            ${act('share-code')} data-on="input keydown">
+          <button class="share-btn secondary"${act('share-join')}>Verbinden</button>
+        </div>
+      </div>` : ''}`;
   }
   // ── THEMA (licht/donker) ──
   const THEME_KEY = 'boodschappen.theme';

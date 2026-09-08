@@ -44,13 +44,15 @@
     }
 
     /* HEADER */
+    /* Compacte koptekst: scheelt verticale ruimte boven de lijst.
+       De koptekst is niet sticky, dus hij scrollt gewoon weg. */
     .header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 4px 4px 14px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 2px 4px 10px;
     }
-    .header .logo { width: 44px; height: 44px; border-radius: 12px; box-shadow: 0 4px 14px rgba(5,150,105,.25); }
+    .header .logo { width: 34px; height: 34px; border-radius: 10px; box-shadow: 0 3px 10px rgba(5,150,105,.22); }
     .header h1 {
-      font-size: 24px; font-weight: 900; letter-spacing:-.5px;
+      font-size: 19px; font-weight: 900; letter-spacing:-.4px;
       background: linear-gradient(135deg, var(--green-600), var(--green-700));
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
@@ -111,15 +113,22 @@
     .budget-fill.warn { background: linear-gradient(90deg, #F59E0B, #D97706); }
     .budget-fill.over { background: linear-gradient(90deg, #EF4444, #DC2626); }
     .price-bar {
+      width:100%;
       background: var(--card);
+      border: 1.5px solid var(--slate-200);
       border-radius: 14px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.07);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
+      min-height: 44px; cursor: pointer; text-align: left;
+      font-family: inherit; color: var(--slate-900);
+      margin-bottom: 10px;
     }
-    .price-bar-label { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--slate-500); }
+    .price-bar:hover { border-color: var(--green-300); }
+    .price-bar-store { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .price-bar-store strong { font-size:16px; font-weight:900; color:var(--green-700); }
+    .price-bar-go { margin-left:auto; font-size:12px; font-weight:800; color:var(--slate-500); flex-shrink:0; }
+    .price-bar-label { font-size: 12px; font-weight: 700; color: var(--slate-500); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .price-bar-stores { display: flex; flex-wrap: wrap; gap: 6px; }
     .price-pill {
       display: flex; align-items: center; gap: 5px;
@@ -719,6 +728,11 @@
       box-shadow: 0 2px 8px rgba(15,23,42,.04);
       transition: transform .15s, box-shadow .15s;
     }
+    /* Vegen: links = verwijderen, rechts = afvinken. De achtergrondkleur
+       verschijnt pas als je ver genoeg bent, zodat je ziet wat er gebeurt. */
+    .item.swiping { transition: none; touch-action: pan-y; will-change: transform; }
+    .item.swipe-del   { background: rgba(239,68,68,.14);  border-color: var(--rose-500); }
+    .item.swipe-check { background: rgba(16,185,129,.14); border-color: var(--green-500); }
     .item.dragging {
       opacity:.85; transform:scale(1.03);
       box-shadow: 0 8px 24px rgba(15,23,42,.15);
@@ -753,7 +767,48 @@
     .item-name { font-size:16px; font-weight:700; color: var(--slate-900); }
     .item-meta { font-size:12px; color: var(--slate-400); margin-top:2px; }
     .item-nomatch { font-style:italic; }
-    /* Prijsvergelijking */
+    /* Prijsvergelijking — ingeklapt (standaard) */
+    .cmp-lite-wrap {
+      display:flex; align-items:center; gap:8px;
+      cursor:pointer; margin-top:4px;
+    }
+    .cmp-lite-rows { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .cmp-lite {
+      display:flex; align-items:center; gap:6px; font-size:13px;
+      min-width:0;
+      border-left:3px solid transparent; padding-left:6px;
+    }
+    .cmp-lite.best .cmp-price { color:var(--green-700); font-weight:900; font-size:14px; }
+    .cmp-lite:not(.best) { opacity:.75; }
+    .cmp-lite:not(.best) .cmp-price { color:var(--slate-600); font-weight:700; }
+    .cmp-lite.is-fav { border-left-color:var(--slate-300); }
+    .cmp-lite.in-bonus { border-left-color:#F59E0B; }
+    .cmp-lite.in-bonus .cmp-price { color:#B45309; }
+    .cmp-lite .cmp-product {
+      flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      color:var(--slate-500);
+    }
+    /* Het hele .cmp-lite-wrap is het trefvlak; het pijltje is alleen indicator. */
+    .cmp-expand {
+      display:inline-flex; align-items:center; justify-content:center; gap:3px;
+      min-width:34px; flex-shrink:0;
+      font-size:12px; font-weight:700; color:var(--slate-500);
+    }
+    .cmp-collapse {
+      display:inline-flex; align-items:center; justify-content:center; gap:4px;
+      width:100%; min-height:40px; margin-top:2px;
+      border:none; background:none; cursor:pointer;
+      font-size:12px; font-weight:700; color:var(--slate-500);
+    }
+    .cmp-expand .cmp-more {
+      font-size:11px; font-weight:800; color:var(--slate-500);
+      background:var(--slate-100); border-radius:99px; padding:1px 5px;
+    }
+    .cmp-chevron { font-size:18px; line-height:1; transition:transform .15s; }
+    .cmp-chevron.up { transform:rotate(180deg); }
+    .cmp-expand:hover, .cmp-collapse:hover { color:var(--green-700); }
+
+    /* Prijsvergelijking — uitgeklapt */
     .cmp { margin-top:5px; display:flex; flex-direction:column; gap:3px; }
     .cmp-row {
       display:flex; align-items:center; gap:6px; font-size:12px;
