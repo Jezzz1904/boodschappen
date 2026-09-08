@@ -21,6 +21,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { pathToFileURL } from 'node:url';
 
 const STORES = [
   { id: 'ah',    file: './data/ah.json'    },
@@ -34,17 +35,11 @@ const MAX_DAYS     = 60;
 const MAX_AGE_MS   = MAX_DAYS * 24 * 60 * 60 * 1000;
 const now          = Date.now();
 
-// Laad bestaande geschiedenis
-let history = {};
-if (existsSync(HISTORY_FILE)) {
-  try { history = JSON.parse(readFileSync(HISTORY_FILE, 'utf8')); } catch {}
-}
-
 // ── Compactie ───────────────────────────────────────────────────────────────
 // Eerdere versies schreven elke dag een entry, ook als de prijs gelijk bleef.
 // Dat blies het bestand op tot tientallen MB's. Gooi opeenvolgende duplicaten
 // weg; de eerste entry van een prijs is de enige die informatie draagt.
-function compact(entries) {
+export function compact(entries) {
   const out = [];
   let lastPrice = NaN, lastBonus;
   for (const e of entries) {
@@ -59,51 +54,76 @@ function compact(entries) {
   return out;
 }
 
-let entriesBefore = 0, entriesAfter = 0;
-for (const key of Object.keys(history)) {
-  const rec = history[key];
-  if (!rec || !Array.isArray(rec.entries)) { delete history[key]; continue; }
-  entriesBefore += rec.entries.length;
-  rec.entries = compact(rec.entries.filter(([ts]) => now - ts < MAX_AGE_MS));
-  entriesAfter += rec.entries.length;
+// Snoeit tot MAX_DAYS, maar houdt de laatste entry vóór de grens vast. Die
+// bepaalt namelijk de prijs óp de grens: bij run-length geldt een entry door
+// tot de volgende. Zonder die ene entry zou een prijs die al 60 dagen gelijk
+// is elke keer opnieuw "vandaag begonnen" lijken en verdwijnt de trend.
+export function prune(entries, nowTs = Date.now()) {
+  const cutoff = nowTs - MAX_AGE_MS;
+  const recent = entries.filter(([ts]) => ts >= cutoff);
+  const before = entries.filter(([ts]) => ts < cutoff);
+  return before.length ? [before.at(-1), ...recent] : recent;
 }
 
-// ── Nieuwe prijzen toevoegen ────────────────────────────────────────────────
-let changed = 0;
 
-for (const store of STORES) {
-  if (!existsSync(store.file)) { console.log(`Sla over: ${store.file} niet gevonden`); continue; }
-  let data;
-  try { data = JSON.parse(readFileSync(store.file, 'utf8')); } catch { continue; }
-  const products = data.products || [];
+export function main() {
+  // Laad bestaande geschiedenis
+  let history = {};
+  if (existsSync(HISTORY_FILE)) {
+    try { history = JSON.parse(readFileSync(HISTORY_FILE, 'utf8')); } catch {}
+  }
 
-  for (const p of products) {
-    const price = typeof p.price === 'number' ? p.price : null;
-    if (price === null || !p.id) continue; // sla over zonder stabiel ID (voorkomen duplicaten bij herindexatie)
-
-    const key = `${store.id}:${p.id}`;
-    if (!history[key]) history[key] = { name: p.name, entries: [] };
+  let entriesBefore = 0, entriesAfter = 0;
+  for (const key of Object.keys(history)) {
     const rec = history[key];
+    if (!rec || !Array.isArray(rec.entries)) { delete history[key]; continue; }
+    entriesBefore += rec.entries.length;
+    rec.entries = compact(prune(rec.entries));
+    entriesAfter += rec.entries.length;
+  }
 
-    const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : null;
-    const last = rec.entries.at(-1);
+  // ── Nieuwe prijzen toevoegen ────────────────────────────────────────────────
+  let changed = 0;
 
-    // Alleen bij een echte wijziging. Een ongewijzigde prijs voegt niets toe:
-    // de vorige entry geldt door tot de volgende.
-    if (!last || last[1] !== price || (last[2] ?? null) !== bonusPrice) {
-      rec.entries.push(bonusPrice === null ? [now, price] : [now, price, bonusPrice]);
-      changed++;
+  for (const store of STORES) {
+    if (!existsSync(store.file)) { console.log(`Sla over: ${store.file} niet gevonden`); continue; }
+    let data;
+    try { data = JSON.parse(readFileSync(store.file, 'utf8')); } catch { continue; }
+    const products = data.products || [];
+
+    for (const p of products) {
+      const price = typeof p.price === 'number' ? p.price : null;
+      if (price === null || !p.id) continue; // sla over zonder stabiel ID (voorkomen duplicaten bij herindexatie)
+
+      const key = `${store.id}:${p.id}`;
+      if (!history[key]) history[key] = { name: p.name, entries: [] };
+      const rec = history[key];
+
+      const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : null;
+      const last = rec.entries.at(-1);
+
+      // Alleen bij een echte wijziging. Een ongewijzigde prijs voegt niets toe:
+      // de vorige entry geldt door tot de volgende.
+      if (!last || last[1] !== price || (last[2] ?? null) !== bonusPrice) {
+        rec.entries.push(bonusPrice === null ? [now, price] : [now, price, bonusPrice]);
+        changed++;
+      }
     }
   }
+
+  // Verwijder lege keys
+  for (const key of Object.keys(history)) {
+    if (!history[key].entries.length) delete history[key];
+  }
+
+  writeFileSync(HISTORY_FILE, JSON.stringify(history), 'utf8');
+  console.log(
+    `Prijsgeschiedenis: ${changed} nieuwe prijzen, ${Object.keys(history).length} producten getrackt. ` +
+    `Entries ${entriesBefore} → ${entriesAfter + changed} (compactie).`
+  );
+
 }
 
-// Verwijder lege keys
-for (const key of Object.keys(history)) {
-  if (!history[key].entries.length) delete history[key];
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
 }
-
-writeFileSync(HISTORY_FILE, JSON.stringify(history), 'utf8');
-console.log(
-  `Prijsgeschiedenis: ${changed} nieuwe prijzen, ${Object.keys(history).length} producten getrackt. ` +
-  `Entries ${entriesBefore} → ${entriesAfter + changed} (compactie).`
-);

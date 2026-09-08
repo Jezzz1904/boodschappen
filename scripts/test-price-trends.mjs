@@ -2,6 +2,7 @@
 // Run: node scripts/test-price-trends.mjs
 
 import { buildTrend } from './build-price-trends.mjs';
+import { compact, prune } from './update-price-history.mjs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 8, 8); // vast referentiepunt, geen echte klok
@@ -77,6 +78,42 @@ check('prijs ontbreekt', buildTrend([[ago(10), 1.00]], null, NOW), null);
 check('alle drie de velden tegelijk',
   buildTrend([[ago(30), 2.00], [ago(5), 2.00], [ago(1), 1.00]], 1.00, NOW),
   { d: -1, l: 1, a: 1.97 });
+
+console.log('\nCompactie en snoeien\n' + '─'.repeat(60));
+
+// ── compact(): opeenvolgende duplicaten weg ──
+check('gelijke prijzen worden samengevouwen',
+  compact([[1, 1.89], [2, 1.89], [3, 1.89]]), [[1, 1.89]]);
+
+check('elke wijziging blijft staan',
+  compact([[1, 1.00], [2, 1.50], [3, 1.50], [4, 1.00]]),
+  [[1, 1.00], [2, 1.50], [4, 1.00]]);
+
+check('bonusprijs telt mee als wijziging',
+  compact([[1, 2.00, null], [2, 2.00, 1.50], [3, 2.00, 1.50]]),
+  [[1, 2.00], [2, 2.00, 1.50]]);
+
+check('null-bonus wordt weggelaten uit de entry',
+  compact([[1, 2.00, null]]), [[1, 2.00]]);
+
+// ── prune(): 60 dagen, maar de baseline blijft ──
+check('recente entries blijven',
+  prune([[ago(10), 1.00], [ago(2), 1.20]], NOW),
+  [[ago(10), 1.00], [ago(2), 1.20]]);
+
+check('de laatste entry vóór de grens blijft als baseline',
+  // 90 dagen oud valt buiten het venster, maar bepaalt wél de prijs op de grens
+  prune([[ago(90), 1.00], [ago(5), 1.20]], NOW),
+  [[ago(90), 1.00], [ago(5), 1.20]]);
+
+check('alleen de laatste van meerdere oude entries blijft',
+  prune([[ago(100), 0.80], [ago(90), 1.00], [ago(5), 1.20]], NOW),
+  [[ago(90), 1.00], [ago(5), 1.20]]);
+
+check('een al lang stabiele prijs overleeft het snoeien',
+  // dit was de bug: één entry van 61 dagen oud werd weggegooid, waarna de
+  // prijs elke keer opnieuw "vandaag begonnen" leek en de trend verdween
+  prune([[ago(61), 1.00]], NOW), [[ago(61), 1.00]]);
 
 console.log('─'.repeat(60));
 console.log(`${pass} geslaagd, ${fail} gefaald.`);
