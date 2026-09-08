@@ -2684,14 +2684,16 @@
     const it = items.find(x => x.id === id);
     if (!it) return;
     it.checked = !it.checked;
-    saveItems(); render();
+    saveItems();
+    patchItem(it); // prijsblok blijft gelijk — geen volledige herbouw nodig
   }
 
   function setQty(id, qty) {
     const it = items.find(x => x.id === id);
     if (!it) return;
     it.qty = qty;
-    saveItems(); render();
+    saveItems();
+    patchItem(it);
   }
 
   function deleteItem(id) {
@@ -2699,7 +2701,8 @@
     if (idx === -1) return;
     const removed = [{ item: items[idx], index: idx }];
     items = items.filter(x => x.id !== id);
-    saveItems(); render();
+    saveItems();
+    removeItemNode(id);
     toastWithUndo(`${removed[0].item.name} verwijderd`, removed);
   }
 
@@ -2835,13 +2838,8 @@
 
   // ── RENDER ──
   function render() {
-    renderList();
-    renderSuggestions();
-    renderActionbar();
-    renderHeaderSub();
-    renderWatchAlerts();
-    renderHamsterTips();
-    renderBudgetBar();
+    renderList(); // roept zelf renderPriceSummary aan
+    renderMeta();
   }
 
   function renderHeaderSub() {
@@ -3690,6 +3688,93 @@
       </div>`;
   }
 
+  // Volgorde binnen een categorie: afgevinkt onderaan, daarna handmatige
+  // sortering (drag & drop), daarna toevoegvolgorde.
+  function itemOrder(a, b) {
+    return (a.checked - b.checked)
+        || ((a.sortOrder ?? 9999) - (b.sortOrder ?? 9999))
+        || (a.addedAt - b.addedAt);
+  }
+
+  // ── GERICHTE DOM-UPDATES ────────────────────────────────────────────────────
+  // renderList() kost ~12 ms bij 15 items, waarvan ~10 ms in
+  // renderPriceComparison. Dat prijsblok hangt níét af van `checked` of `qty`,
+  // dus afvinken en aantal wijzigen hoeven de lijst niet te herbouwen — dat
+  // scheelt in winkelmodus 15-30 keer per bezoek een merkbare hapering.
+
+  function renderMeta() {
+    renderPriceSummary();
+    renderSuggestions();
+    renderActionbar();
+    renderHeaderSub();
+    renderWatchAlerts();
+    renderHamsterTips();
+    renderBudgetBar();
+  }
+
+  function itemNode(id) {
+    return document.querySelector(`.item[data-id="${CSS.escape(id)}"]`);
+  }
+
+  // Werkt de "open/totaal"-teller van een categoriegroep bij.
+  function patchCategoryCount(group) {
+    const catId = group?.dataset.cat;
+    if (!catId) return;
+    const arr = items.filter(it => it.category === catId);
+    const countEl = group.querySelector('.category-count');
+    if (countEl) countEl.textContent = `${arr.filter(x => !x.checked).length}/${arr.length}`;
+  }
+
+  // Zet één item-node op de juiste plek binnen zijn categoriegroep.
+  function repositionItem(it, node, group) {
+    const arr = items.filter(x => x.category === it.category).sort(itemOrder);
+    const idx = arr.indexOf(it);
+    const nextItem = arr[idx + 1];
+    const before = nextItem ? itemNode(nextItem.id) : null;
+    if (before) group.insertBefore(node, before);
+    else group.appendChild(node);
+  }
+
+  // Werkt klasse, aantal en positie van één item bij zonder de lijst te herbouwen.
+  function patchItem(it) {
+    const node = itemNode(it.id);
+    const group = node?.closest('.category-group');
+    if (!node || !group) { render(); return; } // val terug als de DOM afwijkt
+
+    node.classList.toggle('checked', !!it.checked);
+    const check = node.querySelector('.check');
+    if (check) check.setAttribute('aria-checked', String(!!it.checked));
+
+    // Aantal-badge staat tussen .item-body en .item-note-btn
+    let qtyEl = node.querySelector('.item-qty');
+    if (it.qty > 1) {
+      if (!qtyEl) {
+        qtyEl = document.createElement('span');
+        qtyEl.className = 'item-qty';
+        node.insertBefore(qtyEl, node.querySelector('.item-note-btn'));
+      }
+      qtyEl.textContent = `${it.qty}×`;
+    } else if (qtyEl) {
+      qtyEl.remove();
+    }
+
+    repositionItem(it, node, group);
+    patchCategoryCount(group);
+    renderMeta();
+  }
+
+  // Verwijdert één item-node; ruimt de categoriegroep op als die leeg raakt.
+  function removeItemNode(id) {
+    const node = itemNode(id);
+    const group = node?.closest('.category-group');
+    if (!node || !group) { render(); return; }
+    node.remove();
+    if (!group.querySelector('.item')) group.remove();
+    else patchCategoryCount(group);
+    if (!items.length) { render(); return; } // lege-lijst-scherm
+    renderMeta();
+  }
+
   function renderList() {
     const wrap = document.getElementById('list-wrap');
     renderPriceSummary();
@@ -3711,10 +3796,10 @@
     let html = '';
     order.forEach(catId => {
       const cat = CAT_BY_ID[catId];
-      const arr = byCat[catId].sort((a,b) => (a.checked - b.checked) || ((a.sortOrder ?? 9999) - (b.sortOrder ?? 9999)) || (a.addedAt - b.addedAt));
+      const arr = byCat[catId].sort(itemOrder);
       const open = arr.filter(x => !x.checked).length;
       html += `
-        <div class="category-group">
+        <div class="category-group" data-cat="${catId}">
           <div class="category-header">
             <span>${cat.emo}</span> ${cat.name}
             <span class="category-count">${open}/${arr.length}</span>
@@ -3784,7 +3869,9 @@
         const [moved] = items.splice(fromIdx, 1);
         items.splice(toIdx, 0, moved);
         items.forEach((it, i) => { it.sortOrder = i; });
-        saveItems(); matchCache.clear(); renderList();
+        // Alleen de volgorde wijzigt; naam en categorie niet, dus de
+        // match-cache blijft geldig.
+        saveItems(); render();
       }
     }
     document.querySelectorAll('.item').forEach(el => el.classList.remove('dragging', 'drag-over'));
@@ -5279,10 +5366,7 @@
     if (navigator.vibrate) navigator.vibrate(it.checked ? 30 : 10);
     saveItems();
     renderRoute();
-    renderList();
-    renderPriceSummary();
-    renderHeaderSub();
-    renderActionbar();
+    patchItem(it); // Lijst-tab bijwerken zonder hem te herbouwen
   }
 
   // ── WINKELMODUS ──
