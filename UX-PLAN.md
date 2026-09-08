@@ -8,9 +8,17 @@ staat nog open, plus één punt uit fase 3 dat op verzoek is overgeslagen
 (navigatie blijft bovenaan).
 
 Nog gevonden, buiten dit plan: het melden van een verkeerde match naar de
-Worker faalt op CORS — `x-report-token` staat niet in
-`Access-Control-Allow-Headers`. De lokale blacklist werkt wel (de fetch wordt
-opgevangen), dus dit is stil kapot. Vergt een aanpassing in `share-worker/`.
+Worker faalde op CORS — `x-report-token` stond niet in
+`Access-Control-Allow-Headers`. De code in `share-worker/` is gerepareerd en
+getest, maar de **live Worker draait nog de oude versie**. Uitrollen:
+
+    cd share-worker && wrangler login && wrangler deploy
+
+Controleren of het gelukt is:
+
+    curl -s -i -X OPTIONS https://boodschappen-share.jerome-67a.workers.dev/report       -H "Origin: https://boodschappen.herogames.nl"       -H "Access-Control-Request-Method: POST"       -H "Access-Control-Request-Headers: content-type,x-report-token" | grep -i access-control
+
+De regel `Access-Control-Allow-Headers` moet dan `X-Report-Token` bevatten.
 
 > **Correctie bij de eerste versie van dit document.** De eerste meting liep op
 > een werkkopie die 52 commits achterliep; de bestandsdatums op schijf waren
