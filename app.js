@@ -2670,13 +2670,13 @@
     'pick-set':  el => setMatchOverride(el.dataset.item, el.dataset.store, el.dataset.pname),
     'pick-auto': el => clearMatchOverride(el.dataset.item, el.dataset.store),
     'watch':     el => toggleWatch(el.dataset.store, el.dataset.pid, el.dataset.pname, Number(el.dataset.price) || 0),
-    'report':    el => openReportMenu(el, el.dataset.item, el.dataset.pname, el.dataset.storeName),
     'report-confirm': el => { blacklistMatch(el.dataset.item, el.dataset.pname, el.dataset.storeName); closeReportMenu(); },
     'report-cancel':  () => closeReportMenu(),
     // Route
     'route-toggle': el => toggleRouteItem(el.dataset.id),
     'route-move':   el => moveRouteStore(el.dataset.store, Number(el.dataset.dir)),
     'route-store':  el => toggleRouteStore(el.dataset.store),
+    'route-plan':   el => setRouteStores(el.dataset.stores.split(',')),
 
     // Toevoegen & suggesties
     'compose-add':   el => quickAddComposed(el.dataset.name),
@@ -3400,26 +3400,6 @@
   }
 
   let activeReportMenu = null;
-  function openReportMenu(el, itemName, productName, storeName) {
-    closeReportMenu();
-    const itemNorm = normalize(itemName);
-    const menu = document.createElement('div');
-    menu.className = 'report-menu';
-    menu.innerHTML = `
-      <div class="report-menu-title">Wat klopt er niet?</div>
-      <button class="report-opt danger"${act('report-confirm', { item: itemNorm, pname: productName, storeName })}>
-        ✗ Verkeerd product — niet meer tonen
-      </button>
-      <button class="report-opt"${act('report-cancel')}>
-        Annuleren
-      </button>`;
-    // Geen eigen delegate(): het menu hangt in .cmp-row binnen #list-wrap,
-    // dus de delegatie daar vangt de kliks al op.
-    el.closest('.cmp-row').style.position = 'relative';
-    el.closest('.cmp-row').appendChild(menu);
-    activeReportMenu = menu;
-    setTimeout(() => document.addEventListener('click', closeReportMenu, { once: true }), 10);
-  }
   function closeReportMenu() {
     if (activeReportMenu) { activeReportMenu.remove(); activeReportMenu = null; }
   }
@@ -3458,6 +3438,35 @@
     if (!it) return;
     it.brandPref = it.brandPref === pref ? null : pref; // toggle
     saveItems(); render();
+  }
+
+  // ── UITLEG BIJ EEN MATCH ────────────────────────────────────────────────────
+  // Een totaalprijs is alleen iets waard als de gekoppelde producten kloppen.
+  // "Tomaten" koppelen aan "PLUS Tomaten ketchup" is niet te voorkomen met
+  // scoren alleen, maar wél direct zichtbaar te maken: laat zien op welke
+  // woorden gematcht is en welke woorden in de productnaam daar niet in zaten.
+  function matchExplanation(itemName, product) {
+    const itemWords = normWords(itemName);
+    const prodWords = product._w || normWords(product.name);
+    const content = prodWords.filter(w => !BRAND_NOISE.has(w));
+    const hit  = content.filter(pw => itemWords.some(iw => wordMatches(iw, pw)));
+    const rest = content.filter(pw => !itemWords.some(iw => wordMatches(iw, pw)));
+    return { hit, rest };
+  }
+
+  // Hoe zeker is deze match?
+  //   'guess'   alleen via trigram-gelijkenis gevonden — per definitie een gok
+  //   'partial' geen enkel heel woord gematcht, alleen een woorddeel
+  //             (zo wordt "melk" gekoppeld aan "AH Karnemelk")
+  //
+  // Bewust géén badge voor "de productnaam bevat een extra woord": dat is niet
+  // te onderscheiden van een normale match. "Tomaten ketchup" en "Verse
+  // halfvolle melk" hebben allebei één extra woord, maar alleen de eerste is
+  // fout. Een badge op beide zou alleen ruis toevoegen. In plaats daarvan
+  // toont het kiespaneel altijd wáárop gematcht is, zodat je het zelf ziet.
+  function matchConfidence(itemName, m) {
+    if (m.fuzzy) return 'guess';
+    return matchExplanation(itemName, m.p).hit.length === 0 ? 'partial' : 'ok';
   }
 
   // Gedeelde match-berekening voor de ingeklapte en de uitgeklapte weergave.
@@ -3614,7 +3623,9 @@
       const diff = canDiff ? key(m) - key(cheapest) : 0;
       const diffTag = (!isCheapest && canDiff && diff > 0 && diff < Infinity)
         ? `<span class="cmp-diff">+${fmtPrice(diff)}${sameUnit ? (UNIT_LABEL[dominantUnit] || '') : ''}</span>` : '';
-      const brandName = escapeHtml(m.p.name.length > 32 ? m.p.name.slice(0, 30) + '…' : m.p.name);
+      // Niet hard afkappen: CSS doet de ellipsis, en de volledige naam blijft
+      // in de tooltip staan zodat je kunt controleren waar de prijs vandaan komt.
+      const brandName = escapeHtml(m.p.name);
       const unitStr = m.p.unit ? ' · ' + escapeHtml(m.p.unit) : '';
       const isFav  = m.storeId === prefStore;
       const trend  = getPriceTrend(m.storeId, m.p);
@@ -3628,7 +3639,8 @@
               : ''
         : '';
       const hasOv = it.matchOverrides && it.matchOverrides[m.storeId];
-      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : '', hasOv ? 'has-override' : ''].filter(Boolean).join(' ');
+      const conf = matchConfidence(it.name, m);
+      const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : '', hasOv ? 'has-override' : '', conf !== 'ok' ? 'low-conf' : ''].filter(Boolean).join(' ');
       return `
         <div class="${rowClass}"${act('pick-open', { store: m.storeId })}>
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
@@ -3639,8 +3651,10 @@
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
           ${trendTag}
-          <button class="cmp-watch${isWatched(m.storeId, m.p) ? ' active' : ''}" title="${isWatched(m.storeId, m.p) ? 'Niet meer volgen' : 'Volg de prijs van dit product'}"${act('watch', { store: m.storeId, pid: String(m.p.id || m.p.name), pname: m.p.name, price: typeof m.p.price === 'number' ? m.p.price : 0 })}>${isWatched(m.storeId, m.p) ? '⭐' : '☆'}</button>
-          <button class="cmp-flag" title="Fout melden"${act('report', { item: it.name, pname: m.p.name, storeName: store.name })}>🚩</button>
+          ${conf === 'guess' ? `<span class="cmp-conf" title="Alleen op gelijkende naam gevonden — controleer of dit klopt">gok</span>`
+            : conf === 'partial' ? `<span class="cmp-conf" title="Gematcht op een woorddeel, niet op een heel woord — tik om te controleren">deels</span>` : ''}
+          ${isWatched(m.storeId, m.p) ? '<span class="cmp-watching" title="Je volgt deze prijs">⭐</span>' : ''}
+          <span class="cmp-open" aria-hidden="true">›</span>
         </div>`;
     }
 
@@ -3782,7 +3796,46 @@
     if (currentOverride) {
       html += `<button class="pick-auto"${act('pick-auto', { item: itemId, store: storeId })}>↻ Automatisch</button>`;
     }
-    panel.innerHTML = html;
+
+    // Kop: waarop is er gematcht? Dit is de plek waar een verkeerde koppeling
+    // zichtbaar wordt — "tomaten" ↔ "tomaten ketchup" spreekt voor zich.
+    const shown = currentOverride ? resolveOverride(storeId, currentOverride) : currentAuto;
+    let head = '';
+    if (shown?.p) {
+      const ex = matchExplanation(it.name, shown.p);
+      const conf = matchConfidence(it.name, shown);
+      const woorden = ex.hit.length
+        ? `<span class="pick-head-match">${ex.hit.map(w => `<em>${escapeHtml(w)}</em>`).join(' ')}</span>` +
+          (ex.rest.length ? ` <span class="pick-head-rest">+ ${ex.rest.map(escapeHtml).join(' ')}</span>` : '')
+        : `<span class="pick-head-rest">${ex.rest.map(escapeHtml).join(' ') || 'gelijkende naam'}</span>`;
+      const titel = conf === 'guess'   ? '⚠️ Gok — alleen op gelijkende naam gevonden'
+                  : conf === 'partial' ? '⚠️ Alleen op een woorddeel gematcht'
+                  : `Jij vroeg om “${escapeHtml(it.name)}” — gematcht op`;
+      head = `
+        <div class="pick-head${conf !== 'ok' ? ' low-conf' : ''}">
+          <div class="pick-head-title">${titel}</div>
+          <div class="pick-head-words">${woorden}</div>
+          <div class="pick-head-prod">${escapeHtml(shown.p.name)}</div>
+        </div>`;
+    }
+
+    // Volgen en melden hadden trefvlakken van 15×17 en 26×17 px in de rij.
+    // Hier is ruimte voor een echt label en een fatsoenlijke knop.
+    let foot = '';
+    if (shown?.p) {
+      const watching = isWatched(storeId, shown.p);
+      foot = `
+        <div class="pick-actions">
+          <button class="pick-action"${act('watch', { store: storeId, pid: String(shown.p.id || shown.p.name), pname: shown.p.name, price: typeof shown.p.price === 'number' ? shown.p.price : 0 })}>
+            ${watching ? '⭐ Niet meer volgen' : '☆ Volg deze prijs'}
+          </button>
+          <button class="pick-action danger"${act('report-confirm', { item: normalize(it.name), pname: shown.p.name, storeName: store.name })}>
+            ✗ Klopt niet — niet meer tonen
+          </button>
+        </div>`;
+    }
+
+    panel.innerHTML = head + html + foot;
     rowEl.insertAdjacentElement('afterend', panel);
   }
 
@@ -3793,7 +3846,7 @@
     it.matchOverrides[storeId] = productName;
     saveItems();
     matchCache.clear();
-    renderList();
+    render();
   }
 
   function clearMatchOverride(itemId, storeId) {
@@ -3803,7 +3856,7 @@
     if (!Object.keys(it.matchOverrides).length) delete it.matchOverrides;
     saveItems();
     matchCache.clear();
-    renderList();
+    render();
   }
 
   // Detecteer koffie-subtype uit een productnaam: 'bonen'|'filter'|'pads'|'cups'|'instant'|null
@@ -4865,8 +4918,7 @@
     if (!saved) return;
     items = saved.items.map(i => ({ ...i, checked: false, id: Date.now() + Math.random() }));
     saveItems();
-    renderList();
-    updateActionBar();
+    render(); // renderMeta() doet de actiebalk al
     showTab('lijst');
     toast(`'${saved.name}' geladen`);
   }
@@ -5408,6 +5460,16 @@
     } catch {}
     return new Set(STORES.map(s => s.id)); // default: alles aan
   }
+  // Zet het winkelfilter in één keer op een gekozen combinatie.
+  function setRouteStores(idsArr) {
+    const valid = idsArr.filter(id => STORE_BY_ID[id]);
+    if (!valid.length) return;
+    try { localStorage.setItem(ROUTE_STORES_KEY, JSON.stringify(valid)); } catch {}
+    renderRouteFilter();
+    renderRoute();
+    renderPriceSummary();
+  }
+
   function toggleRouteStore(id) {
     const sel = getRouteStores();
     if (sel.has(id)) { if (sel.size > 1) sel.delete(id); } // altijd min. 1
@@ -5487,7 +5549,46 @@
       advice = { type: 'multi', total: multi, savedVsSingle: 0 };
     }
 
-    return { itemPlans, found, missing, multi, byStore, singles, bestSingle, advice };
+    // Hoeveel winkels wil je aandoen? Het volle optimum verdeelt over álle
+    // winkels; voor de meeste mensen is vier winkels rijden geen aanbod maar
+    // een straf. Reken daarom ook uit wat één en twee winkels opleveren, zodat
+    // de besparing tegen de moeite afgewogen kan worden.
+    // Let op: reken over ALLE winkels, niet over de huidige filterselectie.
+    // Anders verdwijnt de vergelijking zodra je "1 winkel" kiest — dan zou de
+    // filter zichzelf als enige optie overhouden.
+    const foundAll = allPlans.filter(p => p.matches.length);
+    function totalForStores(ids) {
+      let total = 0, hit = 0;
+      for (const p of foundAll) {
+        const opts = p.matches.filter(m => ids.includes(m.storeId));
+        if (!opts.length) continue;
+        total += opts.reduce((a, b) => b.eff < a.eff ? b : a).eff * (p.item.qty || 1);
+        hit++;
+      }
+      return { ids, total, hit, missing: foundAll.length - hit };
+    }
+
+    const ids = STORES.map(s => s.id);
+    const one = ids.map(id => totalForStores([id]))
+      .sort((a, b) => b.hit - a.hit || a.total - b.total)[0];
+    let two = null;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const cand = totalForStores([ids[i], ids[j]]);
+        if (!two || cand.hit > two.hit || (cand.hit === two.hit && cand.total < two.total)) two = cand;
+      }
+    }
+    // Volledig splitsen: alleen de winkels die er in de optimale verdeling
+    // écht aan te pas komen. Winkels zonder match (bijv. lege handmatige
+    // winkels) noemen zou de keuze duurder laten lijken dan hij is.
+    const usedIds = [...new Set(foundAll
+      .map(p => p.matches.reduce((a, b) => b.eff < a.eff ? b : a).storeId))];
+    const all = totalForStores(usedIds.length ? usedIds : ids);
+    // Twee winkels alleen aanbieden als het écht iets toevoegt boven één.
+    const options = [one, two, all].filter(Boolean).filter((o, i, arr) =>
+      i === 0 || (o.ids.length !== arr[i - 1].ids.length && o.total < arr[i - 1].total - 0.01));
+
+    return { itemPlans, found, missing, multi, byStore, singles, bestSingle, advice, options };
   }
 
   function renderRoute() {
@@ -5522,6 +5623,31 @@
         }).join('')}
       </div>` : '';
 
+    // Hoeveel winkels? Toon de afweging in plaats van alleen het volle optimum:
+    // €7,62 besparen door vier winkels af te rijden is voor de meeste mensen
+    // geen aanbod. Tikken zet het winkelfilter op die combinatie.
+    const opts = route.options || [];
+    const optionsHtml = opts.length > 1 ? `
+      <div class="route-options">
+        <div class="route-options-label">Hoeveel winkels wil je doen?</div>
+        ${opts.map(o => {
+          const namen = o.ids.map(id => STORE_BY_ID[id]?.name || id).join(' + ');
+          const meer = o.total - opts[opts.length - 1].total;
+          const mist = o.missing > 0 ? `<span class="route-opt-missing">${o.missing} niet te krijgen</span>` : '';
+          const isNu = o.ids.length === new Set(getRouteStores()).size &&
+                       o.ids.every(id => getRouteStores().has(id));
+          return `
+            <button class="route-opt${isNu ? ' active' : ''}"${act('route-plan', { stores: o.ids.join(',') })}>
+              <span class="route-opt-count">${o.ids.length} winkel${o.ids.length === 1 ? '' : 's'}</span>
+              <span class="route-opt-names">${escapeHtml(namen)}</span>
+              <span class="route-opt-total">${fmtPrice(o.total)}</span>
+              ${meer > 0.01 ? `<span class="route-opt-diff">+${fmtPrice(meer)}</span>`
+                            : '<span class="route-opt-diff best">goedkoopst</span>'}
+              ${mist}
+            </button>`;
+        }).join('')}
+      </div>` : '';
+
     // Advies-kaart bovenaan
     let recHtml = '';
     if (advice.type === 'single') {
@@ -5539,6 +5665,7 @@
           <div class="route-rec-totals">
             <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
           </div>
+          ${optionsHtml}
           ${compareTableHtml}
         </div>`;
     } else {
@@ -5555,6 +5682,7 @@
           <div class="route-rec-totals">
             <div><strong>${fmtPrice(advice.total)}</strong>totaal (${found.length} items)</div>
           </div>
+          ${optionsHtml}
           ${compareTableHtml}
         </div>`;
     }

@@ -238,7 +238,9 @@
     .brand-chip.active { background:#eff6ff; color:#1d4ed8; border-color:#3b82f6; }
     .pack-badge { font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; background:var(--slate-100); color:var(--slate-500); margin-left:4px; flex-shrink:0; }
     .pack-group-header { font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; letter-spacing:.05em; padding:6px 0 2px; }
-    .cmp-product { font-size:11px; color:var(--slate-500); font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* Dit is het product waar de prijs vandaan komt. Op 11px grijs las niemand
+       dat "Tomaten" gekoppeld was aan "Tomaten ketchup" — vandaar leesbaarder. */
+    .cmp-product { font-size:12.5px; color:var(--slate-600); font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     /* Recept-kaart in suggesties */
     .recipe-card {
@@ -388,6 +390,31 @@
     body.shopmode .route-store { padding:16px; }
     body.shopmode .route-store-name { font-size:16px; }
     body.shopmode .route-store-total { font-size:16px; }
+
+    /* Hoeveel winkels wil je doen? De besparing tegen de moeite afwegen. */
+    .route-options { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+    .route-options-label {
+      font-size:12px; font-weight:800; opacity:.85; margin-bottom:2px;
+    }
+    .route-opt {
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      width:100%; min-height:44px; padding:8px 12px;
+      border:1.5px solid rgba(255,255,255,.28); border-radius:12px;
+      background:rgba(255,255,255,.10); color:inherit;
+      font-family:inherit; font-size:13px; cursor:pointer; text-align:left;
+    }
+    .route-opt:hover { background:rgba(255,255,255,.18); }
+    .route-opt.active { border-color:#fff; background:rgba(255,255,255,.22); }
+    .route-opt-count { font-weight:800; flex-shrink:0; }
+    .route-opt-names { opacity:.8; font-size:12px; flex:1; min-width:0; }
+    .route-opt-total { font-weight:900; flex-shrink:0; }
+    .route-opt-diff { font-size:11px; font-weight:800; opacity:.85; flex-shrink:0; }
+    .route-opt-diff.best {
+      background:rgba(255,255,255,.25); border-radius:99px; padding:1px 7px; opacity:1;
+    }
+    .route-opt-missing {
+      font-size:11px; font-weight:700; opacity:.8; flex-basis:100%;
+    }
 
     .route-missing {
       background: rgba(239,68,68,.06); border:1.5px dashed rgba(239,68,68,.25);
@@ -817,10 +844,51 @@
       cursor:pointer;
     }
     .cmp-row.has-override .cmp-product { text-decoration:underline; text-decoration-color:var(--green-400); }
+    /* Zekerheid van een match. Een verkeerde koppeling ondermijnt het hele
+       totaalbedrag, dus twijfel wordt getoond in plaats van weggepoetst. */
+    .cmp-conf {
+      font-size:11px; font-weight:800; line-height:1; flex-shrink:0;
+      padding:2px 6px; border-radius:99px;
+      background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;
+    }
+    .cmp-conf.weak { padding:2px 7px; }
+    .cmp-row.low-conf { border-left-color:#FCD34D; }
+    .cmp-watching { font-size:12px; flex-shrink:0; }
+    .cmp-open { font-size:15px; color:var(--slate-400); flex-shrink:0; margin-left:2px; }
+
     .pick-panel {
       background:var(--slate-50); border:1px solid var(--slate-200);
       border-radius:10px; padding:6px; margin:4px 0 6px;
     }
+    /* Kop van het kiespaneel: waarop is er gematcht? */
+    .pick-head {
+      padding:8px 8px 10px; margin:-6px -6px 6px;
+      border-bottom:1px solid var(--slate-200);
+      border-radius:10px 10px 0 0;
+    }
+    .pick-head.low-conf { background:#FEF3C7; border-bottom-color:#FCD34D; }
+    html.dark .pick-head.low-conf { background:rgba(251,191,36,.12); }
+    .pick-head-title { font-size:12px; font-weight:800; color:var(--slate-700); margin-bottom:3px; }
+    .pick-head.low-conf .pick-head-title { color:#92400E; }
+    html.dark .pick-head.low-conf .pick-head-title { color:var(--amber-400); }
+    .pick-head-words { font-size:13px; color:var(--slate-600); }
+    .pick-head-match em { font-style:normal; font-weight:800; color:var(--green-700); }
+    .pick-head-rest { color:var(--slate-500); }
+    .pick-head-prod { font-size:12px; color:var(--slate-500); margin-top:3px; }
+    /* Volgen en melden: hier is ruimte voor een label en een 44px-trefvlak */
+    .pick-actions {
+      display:flex; flex-wrap:wrap; gap:6px;
+      padding-top:6px; margin-top:4px; border-top:1px solid var(--slate-200);
+    }
+    .pick-action {
+      flex:1 1 auto; min-height:44px; padding:8px 12px;
+      border:1.5px solid var(--slate-200); border-radius:10px;
+      background:var(--card); color:var(--slate-700);
+      font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;
+    }
+    .pick-action:hover { border-color:var(--green-400); color:var(--green-700); }
+    .pick-action.danger { color:var(--rose-500); }
+    .pick-action.danger:hover { border-color:var(--rose-500); color:var(--rose-500); }
     .pick-row {
       display:flex; align-items:center; gap:6px; font-size:11px;
       padding:6px 8px; border-radius:8px; cursor:pointer;
