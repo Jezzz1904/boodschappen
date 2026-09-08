@@ -194,16 +194,16 @@ Zonder deze fase wordt elke layoutwijziging in Fase 3 een string-plakfeest.
 
 ### Fase 3 — De lijst herontwerpen rond de lijst
 
-Gedaan: ✅ 3 (deelbalk), ✅ 4 (prijzen ingeklapt — variant "goedkoopste +
-voorkeurswinkel"), ✅ 5 (prijssamenvatting naar één regel), ✅ 6 (vegen, met
-behoud van de knoppen), ✅ 7 (tik klapt uit i.p.v. categoriekiezer openen),
-plus een compacte koptekst. Niet gedaan: ⬜ 1 (navigatie blijft bovenaan, op
-verzoek) en ⬜ 2 (invoerkaart samenvouwen — nog 125 px te winnen).
+Gedaan: ✅ 2 (invoerkaart 125 → 76 px), ✅ 3 (deelbalk), ✅ 4 (prijzen
+ingeklapt — variant "goedkoopste + voorkeurswinkel"), ✅ 5 (prijssamenvatting
+naar één regel), ✅ 6 (vegen, met behoud van de knoppen), ✅ 7 (tik klapt uit
+i.p.v. categoriekiezer openen), plus een compacte koptekst.
+Niet gedaan: ⬜ 1 — navigatie blijft bovenaan, op verzoek.
 
-    chrome boven eerste item   576 px → 352 px
+    chrome boven eerste item   576 px → 303 px
     hoogte per product         207 px → 111 px
-    documenthoogte            3131 px → 2108 px
-    producten boven de vouw       0   → 3,6
+    documenthoogte            3131 px → 2025 px
+    producten boven de vouw       0   → 4,0
 
 
 1. **Navigatie naar onderen.** Bottom tab bar van 56 px + safe-area, in
@@ -240,16 +240,23 @@ verzoek) en ⬜ 2 (invoerkaart samenvouwen — nog 125 px te winnen).
    prijzen/route rechts); ≥1024 px een begrensde, gecentreerde container.
 7. Actiebalk: "✓ Klaar" groen maken, 💾 en 📤 een tekstlabel geven.
 
-### Fase 5 — Vertrouwen in de match
+### Fase 5 — Vertrouwen in de match ✅ af
 
-1. **"Klopt dit niet?" als echte knop** in de uitgeklapte rij, niet als vlagje
-   van 26×17 px.
-2. **Lage-zekerheidsmatches markeren** in plaats van ze als feit te tonen —
-   toon bij twijfel op welke woorden gematcht is ("tomaten ↔ tomaten ketchup")
-   zodat de fout meteen zichtbaar is.
-3. **Route-advies wegen naar moeite:** bied drie opties in plaats van altijd
-   de maximale splitsing — "beste 1 winkel", "beste 2 winkels", "volledig
-   gesplitst" — met per optie de besparing.
+1. ✅ **Echte knoppen.** Het kiespaneel is een controlepaneel geworden met
+   "Volg deze prijs" en "Klopt niet — niet meer tonen", allebei 44 px met een
+   label. De trefvlakken van 15×17 en 26×17 px zijn weg uit de rij.
+2. ✅ **Tonen waarop gematcht is**, met een belangrijke nuance: automatisch
+   *detecteren* dat een match fout is, blijkt niet te doen met woordstatistiek.
+   "Tomaten ketchup" en "Verse halfvolle melk" hebben allebei precies één
+   extra woord; alleen de eerste is fout. Een waarschuwing op beide is ruis.
+   Daarom: altijd tonen wáárop gematcht is ("gematcht op: tomaten + ketchup")
+   en alleen markeren wat verdedigbaar is — `gok` (alleen trigram-gelijkenis)
+   en `deels` (geen heel woord gematcht, zoals melk → karnemelk).
+   De productnaam in de rij ging van 11 px grijs afgekapt naar 12,5 px vet
+   volledig; dát is waarom niemand de fout zag.
+3. ✅ **Route-advies weegt naar moeite.** Drie opties met hun prijs; tikken
+   zet het winkelfilter. De vergelijking rekent over álle winkels, anders
+   verdwijnt hij zodra je "1 winkel" kiest.
 
 ### Fase 6 — Codebase splitsen (alleen als je doorgaat)
 
