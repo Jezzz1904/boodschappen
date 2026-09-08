@@ -3,7 +3,10 @@
  *
  * Leest de huidige winkeldata en voegt de prijzen toe aan
  * data/price-history.json. Bewaart maximaal 60 dagen.
- * Slaat alleen op als de prijs veranderd is (compact diff).
+ *
+ * Dit bestand is een BUILD-ARTEFACT: de app haalt het niet meer op.
+ * scripts/build-price-trends.mjs verdicht het tot de paar velden die de app
+ * nodig heeft en schrijft die direct in de winkel-JSON.
  *
  * Formaat price-history.json:
  * {
@@ -11,6 +14,10 @@
  *   ...
  * }
  * bonus_price is null als er geen actieve aanbieding is.
+ *
+ * Een entry wordt ALLEEN toegevoegd als de prijs of bonusprijs verandert.
+ * Een prijs geldt dus vanaf zijn timestamp tot aan de volgende entry (of nu).
+ * Lezers moeten daarom tijdsgewogen rekenen, niet per entry tellen.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -26,7 +33,6 @@ const HISTORY_FILE = './data/price-history.json';
 const MAX_DAYS     = 60;
 const MAX_AGE_MS   = MAX_DAYS * 24 * 60 * 60 * 1000;
 const now          = Date.now();
-const today        = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
 // Laad bestaande geschiedenis
 let history = {};
@@ -34,6 +40,35 @@ if (existsSync(HISTORY_FILE)) {
   try { history = JSON.parse(readFileSync(HISTORY_FILE, 'utf8')); } catch {}
 }
 
+// ── Compactie ───────────────────────────────────────────────────────────────
+// Eerdere versies schreven elke dag een entry, ook als de prijs gelijk bleef.
+// Dat blies het bestand op tot tientallen MB's. Gooi opeenvolgende duplicaten
+// weg; de eerste entry van een prijs is de enige die informatie draagt.
+function compact(entries) {
+  const out = [];
+  let lastPrice = NaN, lastBonus;
+  for (const e of entries) {
+    const price = e[1];
+    const bonus = e[2] ?? null;
+    if (price !== lastPrice || bonus !== lastBonus) {
+      out.push(bonus === null ? [e[0], price] : [e[0], price, bonus]);
+      lastPrice = price;
+      lastBonus = bonus;
+    }
+  }
+  return out;
+}
+
+let entriesBefore = 0, entriesAfter = 0;
+for (const key of Object.keys(history)) {
+  const rec = history[key];
+  if (!rec || !Array.isArray(rec.entries)) { delete history[key]; continue; }
+  entriesBefore += rec.entries.length;
+  rec.entries = compact(rec.entries.filter(([ts]) => now - ts < MAX_AGE_MS));
+  entriesAfter += rec.entries.length;
+}
+
+// ── Nieuwe prijzen toevoegen ────────────────────────────────────────────────
 let changed = 0;
 
 for (const store of STORES) {
@@ -48,19 +83,15 @@ for (const store of STORES) {
 
     const key = `${store.id}:${p.id}`;
     if (!history[key]) history[key] = { name: p.name, entries: [] };
-
-    const entries = history[key].entries;
-
-    // Verwijder oude entries (>60 dagen)
-    history[key].entries = entries.filter(([ts]) => now - ts < MAX_AGE_MS);
+    const rec = history[key];
 
     const bonusPrice = typeof p.bonus_price === 'number' ? p.bonus_price : null;
+    const last = rec.entries.at(-1);
 
-    // Voeg alleen toe als prijs of bonusprijs veranderd is, of het de eerste entry van vandaag is
-    const lastEntry = history[key].entries.at(-1);
-    const lastDate  = lastEntry ? new Date(lastEntry[0]).toISOString().slice(0, 10) : null;
-    if (!lastEntry || lastEntry[1] !== price || (lastEntry[2] ?? null) !== bonusPrice || lastDate !== today) {
-      history[key].entries.push([now, price, bonusPrice]);
+    // Alleen bij een echte wijziging. Een ongewijzigde prijs voegt niets toe:
+    // de vorige entry geldt door tot de volgende.
+    if (!last || last[1] !== price || (last[2] ?? null) !== bonusPrice) {
+      rec.entries.push(bonusPrice === null ? [now, price] : [now, price, bonusPrice]);
       changed++;
     }
   }
@@ -72,4 +103,7 @@ for (const key of Object.keys(history)) {
 }
 
 writeFileSync(HISTORY_FILE, JSON.stringify(history), 'utf8');
-console.log(`Prijsgeschiedenis bijgewerkt: ${changed} prijzen opgeslagen, ${Object.keys(history).length} producten getrackt.`);
+console.log(
+  `Prijsgeschiedenis: ${changed} nieuwe prijzen, ${Object.keys(history).length} producten getrackt. ` +
+  `Entries ${entriesBefore} → ${entriesAfter + changed} (compactie).`
+);

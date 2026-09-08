@@ -1,4 +1,7 @@
-const CACHE = 'boodschappen-v33';
+// v34: prijsgeschiedenis wordt niet meer opgehaald. De versiebump ruimt de
+// oude cache op, die per app-start een kopie van 4 MB price-history.json
+// opsloeg (unieke URL door de cache-buster, dus nooit een treffer).
+const CACHE = 'boodschappen-v34';
 const STATIC = ['./manifest.json', './logo.svg', './styles.css', './app.js'];
 
 self.addEventListener('install', e => {

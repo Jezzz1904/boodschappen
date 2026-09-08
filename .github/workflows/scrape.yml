@@ -51,7 +51,12 @@ jobs:
         run: node scripts/scrape-plus-bonus.mjs
 
       - name: Prijsgeschiedenis bijwerken
-        run: node scripts/update-price-history.mjs
+        run: node --max-old-space-size=4096 scripts/update-price-history.mjs
+
+      # Verdicht de historie tot het `t`-veld per product in de winkel-JSON.
+      # Moet ná update-price-history draaien en vóór de commit.
+      - name: Prijstrends in winkeldata schrijven
+        run: node --max-old-space-size=4096 scripts/build-price-trends.mjs
 
       - name: Commit data if changed
         run: |

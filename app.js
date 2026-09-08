@@ -2001,7 +2001,6 @@
 
   // Laad server-correcties parallel met winkeldata
   loadServerCorrections().then(() => { matchCache.clear(); render(); });
-  loadPriceHistory();
 
   // Eenheid-tokens die uit productnamen gestript worden vóór het matchen
   // (anders verdunnen "1", "l", "500ml" de woord-dichtheid).
@@ -2890,36 +2889,21 @@
   // Pas merkvoorkeur toe op een lijst matches; fallback naar alles als filter leeg is
   // ── FOUT-RAPPORTAGE & BLACKLIST ──
   // ── PRIJSGESCHIEDENIS ──
-  let priceHistory = {};
-
-  async function loadPriceHistory() {
-    try {
-      const res = await fetch('./data/price-history.json?v=' + Date.now());
-      if (res.ok) { priceHistory = await res.json(); render(); }
-    } catch {}
-  }
-
-  function getPriceKey(storeId, p) {
-    return `${storeId}:${p.id || p.name}`;
-  }
+  // De volledige historie (tientallen MB's) wordt niet meer opgehaald. De
+  // scraper verdicht hem tot een `t`-veld per product — zie
+  // scripts/build-price-trends.mjs:
+  //   t.d  prijsverschil t.o.v. 7 dagen geleden (+ = duurder)
+  //   t.l  1 als dit de laagste prijs in 30 dagen is
+  //   t.a  tijdsgewogen 30-daags gemiddelde (alleen bij ≥10% korting)
 
   function getPriceTrend(storeId, p) {
-    const key = getPriceKey(storeId, p);
-    const rec = priceHistory[key];
-    if (!rec || rec.entries.length < 2) return null;
-    const entries = rec.entries;
-    const current = entries.at(-1)[1];
-    // Vergelijk met prijs van 7 dagen geleden (of vroegste beschikbare)
-    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const old = entries.find(([ts]) => ts <= week) || entries[0];
-    const oldPrice = old[1];
-    const diff = current - oldPrice;
-    const pct  = oldPrice > 0 ? diff / oldPrice : 0;
-    // Laagste prijs in 30 dagen?
-    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recent = entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
-    const isLowest = recent.length >= 3 && current <= Math.min(...recent);
-    return { diff, pct, isLowest, oldPrice, current };
+    const t = p?.t;
+    if (!t) return null;
+    const current  = p.price;
+    const diff     = t.d || 0;
+    const oldPrice = current - diff;
+    const pct      = oldPrice > 0 ? diff / oldPrice : 0;
+    return { diff, pct, isLowest: !!t.l, oldPrice, current };
   }
 
   // ── PRIJSALERTS: gevolgde producten ──
@@ -3167,13 +3151,10 @@
 
   // ── HAMSTEREN-RADAR ──
   function getHamsterAdvice(storeId, p) {
-    const key = getPriceKey(storeId, p);
-    const rec = priceHistory[key];
-    if (!rec || rec.entries.length < 5) return null;
-    const month = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recent = rec.entries.filter(([ts]) => ts >= month).map(([,pr]) => pr);
-    if (recent.length < 5) return null;
-    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    // t.a is het tijdsgewogen 30-daags gemiddelde; de scraper levert het
+    // alleen aan als de huidige prijs er minstens 10% onder ligt.
+    const avg = p?.t?.a;
+    if (typeof avg !== 'number' || avg <= 0) return null;
     const current = p.price;
     const discount = (avg - current) / avg;
     if (discount >= 0.15) return { avg, discount, saving: avg - current };
@@ -3183,7 +3164,6 @@
   function renderHamsterTips() {
     const div = document.getElementById('hamster-tips');
     if (!div) return;
-    if (!Object.keys(priceHistory).length) { div.innerHTML = ''; return; }
     // Zoek alle items op de lijst met een goede hamster-deal
     const tips = [];
     for (const it of items.filter(x => !x.checked)) {
@@ -3215,7 +3195,10 @@
 
   async function loadServerCorrections() {
     try {
-      const res = await fetch('./data/corrections.json?v=' + Date.now());
+      // Geen cache-buster: de service worker doet network-first en valt
+      // alleen offline terug op de cache. Een unieke URL per start zou de
+      // HTTP-cache én de SW-cache nutteloos maken.
+      const res = await fetch('./data/corrections.json', { cache: 'no-cache' });
       if (res.ok) serverCorrections = await res.json();
     } catch {}
   }
