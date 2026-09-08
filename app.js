@@ -4054,6 +4054,7 @@
           <span class="empty-emoji">🛒</span>
           <div class="empty-title">Lijst is leeg</div>
           <div class="empty-sub">Typ hierboven een product, of kies uit 'Vaak gekocht'.</div>
+          <button class="browse-link"${act('browse-open')}>📋 Bladeren door categorieën</button>
         </div>`;
       return;
     }
