@@ -3,7 +3,14 @@
 Gemeten op de draaiende app (375×812 mobiel + 1280×900 desktop) op 2026-09-08.
 Alle getallen hieronder komen uit metingen in de browser, niet uit schattingen.
 
-**Status:** fase 1 en 2 zijn af, fase 3 grotendeels. Zie de secties hieronder.
+**Status:** fase 1, 2, 3, 4 en 5 zijn af. Alleen fase 6 (codebase splitsen)
+staat nog open, plus één punt uit fase 3 dat op verzoek is overgeslagen
+(navigatie blijft bovenaan).
+
+Nog gevonden, buiten dit plan: het melden van een verkeerde match naar de
+Worker faalt op CORS — `x-report-token` staat niet in
+`Access-Control-Allow-Headers`. De lokale blacklist werkt wel (de fetch wordt
+opgevangen), dus dit is stil kapot. Vergt een aanpassing in `share-worker/`.
 
 > **Correctie bij de eerste versie van dit document.** De eerste meting liep op
 > een werkkopie die 52 commits achterliep; de bestandsdatums op schijf waren
@@ -224,7 +231,23 @@ Niet gedaan: ⬜ 1 — navigatie blijft bovenaan, op verzoek.
 7. **Tik op de rij opent detail/uitklap**, niet de categoriekiezer. Categorie
    wijzigen verhuist naar het uitgeklapte paneel.
 
-### Fase 4 — Tikdoelen, typografie, toegankelijkheid
+### Fase 4 — Tikdoelen, typografie, toegankelijkheid ✅ af
+
+Gemeten met `elementFromPoint` in plaats van met de doosafmeting — dat is wat
+een vinger daadwerkelijk raakt. Twee valkuilen die daarbij bleken:
+`inset` rekent vanaf de padding-box (een rand van 2,5 px kost dus 2,5 px
+bereik), en twee naast elkaar liggende vergrote vlakken kapen elkaars helft.
+
+    afvinken       28×28 → 46×47      tab            117×37 → 121×44
+    notitie        27×27 → 44×45      instellingen    40×40 → 44×44
+    verwijderen    28×35 → 44×45      winkelrij      338×20 → 44 hoog
+
+55 regels onder 12 px → allemaal minstens 12 px (productrij 111 → 115 px).
+Rollen, focusbeheer, `aria-live`, `:focus-visible` en drie media queries
+toegevoegd; `showTab()` moest daarvoor `style.display` leegmaken in plaats van
+op `block` zetten, anders won de inline stijl van de tweekolomsopmaak.
+
+Oorspronkelijk plan:
 
 1. **Ondergrens 44×44 px** voor alles wat aanklikbaar is; kleine iconen
    krijgen een onzichtbaar vergroot trefvlak (`::after` met negatieve inset).
