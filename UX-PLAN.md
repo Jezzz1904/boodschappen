@@ -3,19 +3,31 @@
 Gemeten op de draaiende app (375×812 mobiel + 1280×900 desktop) op 2026-09-08.
 Alle getallen hieronder komen uit metingen in de browser, niet uit schattingen.
 
+**Status:** fase 1 en 2 zijn af, fase 3 grotendeels. Zie de secties hieronder.
+
+> **Correctie bij de eerste versie van dit document.** De eerste meting liep op
+> een werkkopie die 52 commits achterliep; de bestandsdatums op schijf waren
+> van 2026-07-12. Daaruit concludeerde ik ten onrechte dat de scraper stil lag.
+> Dat is niet zo: de workflow draait en commit elke dag. Op de échte data was
+> `price-history.json` geen 42,8 MB maar **95,4 MB** (3,45 miljoen entries),
+> groeiend met ongeveer 1 MB per dag. De cijfers in §1.1 zijn bijgewerkt.
+
 ---
 
 ## 1. Wat er nu misgaat
 
-### 1.1 Opstarten: 5,6 MB over de lijn, 144 MB heap
+### 1.1 Opstarten: 10 MB over de lijn ✅ opgelost
 
 | Bestand | Ruw | Gzip | Gecached? |
 |---|---|---|---|
-| `data/ah.json` | 2,5 MB | 322 KB | IndexedDB ✅ |
+| `data/ah.json` | 2,5 MB | 321 KB | IndexedDB ✅ |
 | `data/jumbo.json` | 2,7 MB | 553 KB | IndexedDB ✅ |
-| `data/plus.json` | 2,3 MB | 436 KB | IndexedDB ✅ |
-| `data/lidl.json` | 1,6 MB | 309 KB | IndexedDB ✅ |
-| **`data/price-history.json`** | **42,8 MB** | **4,0 MB** | **nee ❌** |
+| `data/plus.json` | 2,4 MB | 448 KB | IndexedDB ✅ |
+| `data/lidl.json` | 1,8 MB | 338 KB | IndexedDB ✅ |
+| **`data/price-history.json`** | **95,4 MB** | **8,5 MB** | **nee ❌** |
+
+Na de fix: de historie wordt niet meer opgehaald (8,5 MB → 0 per start) en is
+zelf gecompacteerd van 95,4 MB naar 8,1 MB (3.445.660 → 84.577 entries, −97,5%).
 
 `loadPriceHistory()` (app.js:2895) haalt de prijshistorie op met een
 `?v=` + `Date.now()` cache-buster. Die maakt elke URL uniek, dus:
@@ -181,6 +193,18 @@ de DOM.
 Zonder deze fase wordt elke layoutwijziging in Fase 3 een string-plakfeest.
 
 ### Fase 3 — De lijst herontwerpen rond de lijst
+
+Gedaan: ✅ 3 (deelbalk), ✅ 4 (prijzen ingeklapt — variant "goedkoopste +
+voorkeurswinkel"), ✅ 5 (prijssamenvatting naar één regel), ✅ 6 (vegen, met
+behoud van de knoppen), ✅ 7 (tik klapt uit i.p.v. categoriekiezer openen),
+plus een compacte koptekst. Niet gedaan: ⬜ 1 (navigatie blijft bovenaan, op
+verzoek) en ⬜ 2 (invoerkaart samenvouwen — nog 125 px te winnen).
+
+    chrome boven eerste item   576 px → 352 px
+    hoogte per product         207 px → 111 px
+    documenthoogte            3131 px → 2108 px
+    producten boven de vouw       0   → 3,6
+
 
 1. **Navigatie naar onderen.** Bottom tab bar van 56 px + safe-area, in
    duimbereik. Header krimpt tot een compacte titelregel die wegscrollt.
