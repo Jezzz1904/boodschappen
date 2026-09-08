@@ -2762,6 +2762,50 @@
     'modal-close': el => MODAL_CLOSERS[el.dataset.modal]?.(),
   });
 
+  // ── MODALS: focus vasthouden en Escape ──────────────────────────────────
+  // Zes modals hadden geen focusbeheer: met een toetsenbord tabde je gewoon
+  // door naar de pagina eronder, en Escape deed niets.
+  let modalReturnFocus = null;
+
+  function openModals() {
+    return [...document.querySelectorAll('.modal-bg')]
+      .filter(el => getComputedStyle(el).display !== 'none');
+  }
+
+  function focusableIn(root) {
+    return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter(el => !el.disabled && el.offsetParent !== null);
+  }
+
+  // Roep dit aan zodra een modal zichtbaar is gemaakt.
+  function modalOpened(el) {
+    modalReturnFocus = document.activeElement;
+    const f = focusableIn(el);
+    // Voorkom dat de focus meteen op "Annuleren" of "Wissen" landt.
+    (f.find(x => x.tagName === 'INPUT') || f[0])?.focus();
+  }
+
+  function modalClosed() {
+    if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    modalReturnFocus = null;
+  }
+
+  document.addEventListener('keydown', e => {
+    const modal = openModals().at(-1);
+    if (!modal) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      MODAL_CLOSERS[modal.dataset.modal]?.();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const f = focusableIn(modal);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
   const MODAL_CLOSERS = {
     'save-list': () => closeSaveListModal(),
     'receipt':   () => closeReceiptCheck(),
@@ -5062,10 +5106,14 @@
   function showTab(tab) {
     if (tab !== 'route') exitShopMode();
     for (const t of ['lijst','route','tips','hist']) {
-      document.getElementById('tab-' + t).classList.toggle('active', tab===t);
-      document.getElementById('view-' + t).style.display = tab===t ? 'block' : 'none';
+      const btn = document.getElementById('tab-' + t);
+      btn.classList.toggle('active', tab===t);
+      btn.setAttribute('aria-selected', String(tab===t));
+      // Leegmaken in plaats van 'block': anders overschrijft de inline stijl
+      // de tweekolomsopmaak uit de media query op brede schermen.
+      document.getElementById('view-' + t).style.display = tab===t ? '' : 'none';
     }
-    document.getElementById('view-settings').style.display = tab==='settings' ? 'block' : 'none';
+    document.getElementById('view-settings').style.display = tab==='settings' ? '' : 'none';
     document.getElementById('settings-btn').classList.toggle('active', tab==='settings');
     document.getElementById('actionbar').style.display  = tab==='lijst' && items.length ? 'flex' : 'none';
     if (tab === 'hist')  { renderSavedLists(); renderSeasonal(); renderHistory(); }
@@ -5861,5 +5909,17 @@
   delegate(document.getElementById('list-wrap'));
   delegate(document.getElementById('route-wrap'));
   delegate(document.body); // al het overige: koptekst, tabs, modals, instellingen
+
+  // De modals gaan open via .open óf via style.display; in plaats van twaalf
+  // aanroepen toe te voegen kijken we centraal of ze zichtbaar worden.
+  for (const el of document.querySelectorAll('.modal-bg')) {
+    let zichtbaar = getComputedStyle(el).display !== 'none';
+    new MutationObserver(() => {
+      const nu = getComputedStyle(el).display !== 'none';
+      if (nu === zichtbaar) return;
+      zichtbaar = nu;
+      nu ? modalOpened(el) : modalClosed();
+    }).observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  }
   // Op desktop meteen in het invoerveld; op touch niet (toetsenbord zou opspringen)
   if (matchMedia('(pointer: fine)').matches) document.getElementById('add-input').focus();

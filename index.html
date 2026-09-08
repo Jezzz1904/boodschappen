@@ -34,21 +34,22 @@
     <button class="settings-btn" id="settings-btn" data-act="tab" data-tab="settings" aria-label="Instellingen" title="Instellingen">⚙️</button>
   </div>
 
-  <div class="tabs tabs-4">
-    <button class="tab active" id="tab-lijst" data-act="tab" data-tab="lijst">🛒 Lijst</button>
-    <button class="tab"        id="tab-route" data-act="tab" data-tab="route">🗺️ Route</button>
-    <button class="tab"        id="tab-tips"  data-act="tab" data-tab="tips">💡 Tips</button>
-    <button class="tab"        id="tab-hist"  data-act="tab" data-tab="hist">⭐ Vaak</button>
+  <div class="tabs tabs-4" role="tablist" aria-label="Hoofdnavigatie">
+    <button class="tab active" id="tab-lijst" role="tab" aria-selected="true" aria-controls="view-lijst" data-act="tab" data-tab="lijst">🛒 Lijst</button>
+    <button class="tab"        id="tab-route" role="tab" aria-selected="false" aria-controls="view-route" data-act="tab" data-tab="route">🗺️ Route</button>
+    <button class="tab"        id="tab-tips"  role="tab" aria-selected="false" aria-controls="view-tips" data-act="tab" data-tab="tips">💡 Tips</button>
+    <button class="tab"        id="tab-hist"  role="tab" aria-selected="false" aria-controls="view-hist" data-act="tab" data-tab="hist">⭐ Vaak</button>
   </div>
 
   <!-- TAB: LIJST -->
-  <div id="view-lijst">
+  <div id="view-lijst" role="tabpanel" aria-labelledby="tab-lijst">
     <div class="add-card">
       <div class="add-row">
         <input class="add-input" id="add-input" type="text" placeholder="Wat heb je nodig?"
+               aria-label="Product toevoegen"
                autocomplete="off" autocapitalize="sentences"
                data-act="add-input" data-on="input keydown">
-        <input class="qty-input" id="qty-input" type="text" inputmode="numeric"
+        <input class="qty-input" id="qty-input" type="text" inputmode="numeric" aria-label="Aantal"
                placeholder="1" value="" maxlength="3"
                data-act="add-enter" data-on="keydown">
         <button class="add-btn browse-btn" data-act="browse-open" aria-label="Bladeren door categorieën" title="Bladeren door categorieën">📋</button>
@@ -68,14 +69,14 @@
   </div>
 
   <!-- TAB: ROUTE -->
-  <div id="view-route" style="display:none">
+  <div id="view-route" role="tabpanel" aria-labelledby="tab-route" style="display:none">
     <button class="shopmode-btn" id="shopmode-btn" data-act="shopmode">🛍️ Start winkelmodus</button>
     <div id="route-store-filter"></div>
     <div id="route-wrap"></div>
   </div>
 
   <!-- TAB: TIPS (AI) -->
-  <div id="view-tips" style="display:none">
+  <div id="view-tips" role="tabpanel" aria-labelledby="tab-tips" style="display:none">
     <div class="tips-grid">
       <button class="tips-btn" data-act="ai" data-mode="recept">
         <span class="tips-emo">🍳</span>
@@ -110,10 +111,10 @@
   </div>
 
   <!-- TAB: HISTORIE -->
-  <div id="view-hist" style="display:none">
+  <div id="view-hist" role="tabpanel" aria-labelledby="tab-hist" style="display:none">
     <div class="saved-lists-section" id="saved-lists-section"></div>
     <div id="seasonal-wrap"></div>
-    <input class="hist-search" id="hist-search" type="text"
+    <input class="hist-search" id="hist-search" type="text" aria-label="Zoeken in jouw producten"
            placeholder="🔍 Zoeken in jouw producten..."
            autocomplete="off" data-act="hist-search" data-on="input">
     <div id="hist-wrap"></div>
@@ -136,17 +137,17 @@
   <!-- ACTIE-BALK -->
   <div class="actionbar" id="actionbar" style="display:none">
     <button class="ab-btn ab-clear" id="ab-clear" data-act="clear-checked">Wis afgevinkt</button>
-    <button class="ab-btn ab-save" data-act="save-list-open" title="Lijst opslaan">💾</button>
-    <button class="ab-btn ab-share" id="ab-share" data-act="share-btn" title="Lijst delen">📤</button>
+    <button class="ab-btn ab-save" data-act="save-list-open" title="Lijst opslaan" aria-label="Lijst opslaan">💾<span class="ab-label">Opslaan</span></button>
+    <button class="ab-btn ab-share" id="ab-share" data-act="share-btn" title="Lijst delen" aria-label="Lijst delen">📤<span class="ab-label">Delen</span></button>
     <button class="ab-btn ab-done" data-act="finish">✓ Klaar</button>
   </div>
 
   <!-- MODAL LIJST OPSLAAN -->
-  <div class="modal-bg" id="modal-save-list" data-act="modal-bg" data-modal="save-list">
+  <div class="modal-bg" id="modal-save-list" role="dialog" aria-modal="true" aria-label="Lijst opslaan" data-act="modal-bg" data-modal="save-list">
     <div class="modal">
       <div class="modal-title">Lijst opslaan</div>
       <div class="modal-sub">Geef je lijst een naam om hem later terug te halen</div>
-      <input class="modal-save-input" id="save-list-name" type="text" placeholder="Bijv. Weekboodschappen, BBQ, Feestje…" maxlength="40" data-act="save-enter" data-on="keydown">
+      <input class="modal-save-input" id="save-list-name" type="text" aria-label="Naam van de lijst" placeholder="Bijv. Weekboodschappen, BBQ, Feestje…" maxlength="40" data-act="save-enter" data-on="keydown">
       <div class="modal-save-actions">
         <button class="modal-save-btn secondary" data-act="modal-close" data-modal="save-list">Annuleren</button>
         <button class="modal-save-btn primary" data-act="save-list">💾 Opslaan</button>
@@ -155,11 +156,11 @@
   </div>
 
   <!-- MODAL KASSABON-CHECK -->
-  <div class="modal-bg" id="modal-receipt" data-act="modal-bg" data-modal="receipt">
+  <div class="modal-bg" id="modal-receipt" role="dialog" aria-modal="true" aria-label="Kassabon-check" data-act="modal-bg" data-modal="receipt">
     <div class="modal">
       <div class="modal-title">🧾 Kassabon-check</div>
       <div class="modal-sub">Voorspeld totaal: <strong id="receipt-predicted"></strong> — wat stond er op de bon?</div>
-      <input class="modal-save-input" id="receipt-input" type="text" inputmode="decimal"
+      <input class="modal-save-input" id="receipt-input" type="text" inputmode="decimal" aria-label="Bedrag op de kassabon"
              placeholder="bijv. 42,50" data-act="receipt-enter" data-on="keydown">
       <div id="receipt-history"></div>
       <div class="modal-save-actions">
@@ -170,11 +171,11 @@
   </div>
 
   <!-- MODAL NOTITIE -->
-  <div class="modal-bg" id="modal-note" data-act="modal-bg" data-modal="note">
+  <div class="modal-bg" id="modal-note" role="dialog" aria-modal="true" aria-label="Notitie" data-act="modal-bg" data-modal="note">
     <div class="modal">
       <div class="modal-title">✏️ Notitie</div>
       <div class="modal-sub" id="note-modal-sub"></div>
-      <input class="modal-save-input" id="note-input" type="text" placeholder="bijv. groot pak, huismerk is ok, etc." maxlength="80"
+      <input class="modal-save-input" id="note-input" type="text" aria-label="Notitie" placeholder="bijv. groot pak, huismerk is ok, etc." maxlength="80"
              data-act="note-enter" data-on="keydown">
       <div class="modal-save-actions">
         <button class="modal-save-btn secondary" data-act="note-clear">Wissen</button>
@@ -185,7 +186,7 @@
   </div>
 
   <!-- MODAL BARCODE SCANNER -->
-  <div class="modal-bg" id="modal-barcode" data-act="modal-bg" data-modal="barcode">
+  <div class="modal-bg" id="modal-barcode" role="dialog" aria-modal="true" aria-label="Barcode scannen" data-act="modal-bg" data-modal="barcode">
     <div class="modal">
       <div class="modal-title">📷 Barcode scannen</div>
       <div class="modal-sub">Richt de camera op een barcode</div>
@@ -198,7 +199,7 @@
   </div>
 
   <!-- MODAL CATEGORIE -->
-  <div class="modal-bg" id="modal-cat" data-act="modal-bg" data-modal="cat">
+  <div class="modal-bg" id="modal-cat" role="dialog" aria-modal="true" aria-label="Categorie kiezen" data-act="modal-bg" data-modal="cat">
     <div class="modal">
       <div class="modal-title">Welke categorie?</div>
       <div class="modal-sub" id="modal-cat-sub">Kies een categorie voor dit product</div>
@@ -208,7 +209,7 @@
   </div>
 
   <!-- MODAL BROWSE -->
-  <div class="modal-bg" id="modal-browse" data-act="modal-bg" data-modal="browse">
+  <div class="modal-bg" id="modal-browse" role="dialog" aria-modal="true" aria-label="Bladeren door categorieen" data-act="modal-bg" data-modal="browse">
     <div class="modal modal-browse">
       <div class="browse-head" id="browse-head"></div>
       <div id="browse-body"></div>
@@ -216,7 +217,7 @@
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script src="app.js"></script>
 </body>
