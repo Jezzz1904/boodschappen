@@ -16,7 +16,9 @@ getest, maar de **live Worker draait nog de oude versie**. Uitrollen:
 
 Controleren of het gelukt is:
 
-    curl -s -i -X OPTIONS https://boodschappen-share.jerome-67a.workers.dev/report       -H "Origin: https://boodschappen.herogames.nl"       -H "Access-Control-Request-Method: POST"       -H "Access-Control-Request-Headers: content-type,x-report-token" | grep -i access-control
+    curl -si -X OPTIONS https://boodschappen-share.jerome-67a.workers.dev/report \
+      -H "Access-Control-Request-Headers: content-type,x-report-token" \
+      | grep -i access-control-allow-headers
 
 De regel `Access-Control-Allow-Headers` moet dan `X-Report-Token` bevatten.
 
