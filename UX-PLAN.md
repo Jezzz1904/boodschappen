@@ -155,15 +155,28 @@ Meetbaar met dezelfde methode als hierboven.
 
 ### Fase 2 — Event-delegatie (technische voorwaarde voor Fase 3)
 
-1. Vervang de 242 inline handlers door **`data-action`-attributen** en één
-   gedelegeerde listener per view-root. Dit is mechanisch werk en kan per
-   render-functie.
-2. **Stop met volledige `innerHTML`-herbouw** bij `toggleItem`, `setQty` en
-   `deleteItem`: werk alleen de betreffende `.item`-node bij.
-3. Splits `render()` op — een toetsaanslag hoeft alleen `renderSuggestions()`
-   te draaien, niet de hele lijst plus budgetbalk plus hamstertips.
-4. Memoïseer `findMatches()` per `naam+categorie`; invalideer bij nieuwe
-   winkeldata.
+**Twee aannames uit dit plan bleken bij meting niet te kloppen.** De 242
+handlers waren live DOM-elementen, niet bronregels: het gaat om 70 sites in
+`app.js` en 41 in `index.html`. En van de 11,7 ms die `render()` kostte bij
+15 items zat **9,6 ms in `renderPriceComparison`** en maar 0,85 ms in de
+`innerHTML`-toewijzing — de kosten zaten in het bouwen van de string, niet in
+de DOM.
+
+1. ✅ **Gerichte DOM-updates.** `renderPriceComparison` hangt niet af van
+   `checked` of `qty`, dus afvinken hoeft de lijst niet te herbouwen.
+   Afvinken 11,7 → 0,26 ms, aantal 11,7 → 0,23 ms, route-tik 12,4 → 0,74 ms.
+   Die laatste is de belangrijkste: in winkelmodus 15-30 keer per bezoek.
+2. ✅ **Delegatie voor lijst en route** (24 sites → 20 acties). Belangrijkste
+   bijvangst: geen dubbele escaping meer. Een `onclick` is HTML én
+   JavaScript, dus waarden gingen door `escapeHtml()` én een `\'`-replace.
+3. ⬜ **Delegatie voor de rest** — instellingen, tips, bladeren, historie
+   (46 sites in `app.js`, 41 in `index.html`).
+4. ❌ **`render()` splitsen — vervalt.** Gebaseerd op de aanname dat typen de
+   lijst herbouwt. Dat doet het niet: `onInputChange()` roept alleen
+   `syncSubmitBtn()` en `renderSuggestions()` aan. De zes overige
+   render-functies kosten samen ~0,1 ms.
+5. ❌ **`findMatches()` memoïseren — vervalt.** Gemeten op 0,06 ms per
+   aanroep, dus ~0,9 ms van de 11,7 ms. `findStoreMatch()` had de cache al.
 
 Zonder deze fase wordt elke layoutwijziging in Fase 3 een string-plakfeest.
 
