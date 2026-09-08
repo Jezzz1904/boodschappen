@@ -16,7 +16,12 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // X-Report-Token hoort hier ook in: /report en /reports vereisen die header,
+  // maar zonder vermelding hier blokkeert de browser de preflight en komt het
+  // verzoek nooit aan. De app vangt de fout op, dus dit faalde geruisloos.
+  'Access-Control-Allow-Headers': 'Content-Type, X-Report-Token',
+  // Scheelt een preflight per melding.
+  'Access-Control-Max-Age': '86400',
 };
 const TTL = 60 * 60 * 24 * 30; // 30 dagen in seconden
 
