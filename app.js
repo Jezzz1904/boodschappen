@@ -1963,7 +1963,6 @@
     div.innerHTML = MANUAL_STORES.map(store => {
       const products = (storeData[store.id]?.products || []).slice().sort((a, b) => a.name.localeCompare(b.name));
       const rows = products.map(p => {
-        const safePid = escapeHtml(String(p.id)).replace(/'/g, "\\'");
         const stale = p.checkedAt && (Date.now() - p.checkedAt) > 60 * 86400000;
         return `
           <div class="manual-prod-row${stale ? ' stale' : ''}">
@@ -1972,8 +1971,8 @@
               <div class="manual-prod-meta">gecheckt: ${fmtCheckedAt(p.checkedAt)}</div>
             </div>
             <input type="text" inputmode="decimal" class="manual-prod-price" value="${p.price.toFixed(2)}"
-                   onchange="updateManualProduct('${store.id}','${safePid}',this.value)">
-            <button class="manual-prod-del" onclick="deleteManualProduct('${store.id}','${safePid}')">✕</button>
+                   ${act('manual-update', { store: store.id, pid: p.id })} data-on="change">
+            <button class="manual-prod-del"${act('manual-del', { store: store.id, pid: p.id })}>✕</button>
           </div>`;
       }).join('');
       return `
@@ -1986,7 +1985,7 @@
           <div class="manual-add-row">
             <input type="text" class="manual-add-name" id="manual-add-name-${store.id}" placeholder="Productnaam">
             <input type="text" inputmode="decimal" class="manual-add-price" id="manual-add-price-${store.id}" placeholder="€">
-            <button class="manual-add-btn" onclick="submitManualProduct('${store.id}')">+ Toevoegen</button>
+            <button class="manual-add-btn"${act('manual-add', { store: store.id })}>+ Toevoegen</button>
           </div>
         </div>`;
     }).join('');
@@ -2467,19 +2466,18 @@
             <span class="share-pulse" style="${online ? '' : 'background:var(--slate-400)'}"></span>
             ${online ? 'Live gedeeld' : 'Offline'}
           </span>
-          <span class="share-code" onclick="copyShareLink('${escapeHtml(url)}')" title="Klik om te kopiëren">${shareCode}</span>
-          <button class="share-btn secondary" onclick="event.stopPropagation();shareStop()">Stop</button>
-          <button class="share-btn" onclick="event.stopPropagation();copyShareLink('${escapeHtml(url)}')">📤</button>
+          <span class="share-code"${act('share-copy', { url })} title="Klik om te kopiëren">${shareCode}</span>
+          <button class="share-btn secondary"${act('share-stop')}>Stop</button>
+          <button class="share-btn"${act('share-copy', { url })}>📤</button>
         </div>`;
     } else {
       el.innerHTML = `
         <div class="share-bar" style="flex-direction:column;gap:8px;align-items:stretch">
-          <button class="share-btn" style="width:100%;padding:10px;font-size:14px" onclick="startShare()">📤 Deel lijst met iemand</button>
+          <button class="share-btn" style="width:100%;padding:10px;font-size:14px"${act('share-start')}>📤 Deel lijst met iemand</button>
           <div class="share-join">
             <input id="share-code-input" placeholder="Code van iemand anders invoeren" maxlength="80"
-              oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"
-              onkeydown="if(event.key==='Enter')joinShare()">
-            <button class="share-btn secondary" onclick="joinShare()">Verbinden</button>
+              ${act('share-code')} data-on="input keydown">
+            <button class="share-btn secondary"${act('share-join')}>Verbinden</button>
           </div>
         </div>`;
     }
@@ -2638,17 +2636,25 @@
     return s;
   }
 
+  // Een element luistert standaard op click. data-on="input keydown" laat het
+  // op andere events reageren; de actie krijgt het event en kan op e.type
+  // splitsen.
+  const DELEGATED_EVENTS = ['click', 'change', 'input', 'keydown'];
+
   function delegate(root) {
     if (!root || root.__delegated) return;
     root.__delegated = true;
-    root.addEventListener('click', e => {
-      const el = e.target.closest('[data-act]');
-      if (!el || !root.contains(el)) return;
-      const fn = ACTIONS[el.dataset.act];
-      if (!fn) return;
-      e.stopPropagation();
-      fn(el, e);
-    });
+    for (const type of DELEGATED_EVENTS) {
+      root.addEventListener(type, e => {
+        const el = e.target.closest('[data-act]');
+        if (!el || !root.contains(el)) return;
+        if (!(el.dataset.on || 'click').split(' ').includes(type)) return;
+        const fn = ACTIONS[el.dataset.act];
+        if (!fn) return;
+        if (type === 'click') e.stopPropagation();
+        fn(el, e);
+      });
+    }
   }
 
   const itemIdOf = el => el.closest('.item')?.dataset.id;
@@ -2673,7 +2679,100 @@
     // Route
     'route-toggle': el => toggleRouteItem(el.dataset.id),
     'route-move':   el => moveRouteStore(el.dataset.store, Number(el.dataset.dir)),
+    'route-store':  el => toggleRouteStore(el.dataset.store),
+
+    // Toevoegen & suggesties
+    'compose-add':   el => quickAddComposed(el.dataset.name),
+    'pack':          el => setPackaging(el.dataset.pack),
+    'variant-clear': () => clearVariantPicks(),
+    'variant-pick':  el => toggleVariantPick(el.dataset.term, el.dataset.group, el.value),
+    'variant-item':  el => selectVariantItem(el.dataset.parent, el.dataset.group, el.dataset.name),
+    'recipe-add':    el => addRecipe(el.dataset.key),
+    'prefill':       el => { document.getElementById('add-input').value = el.dataset.name; onInputChange(); },
+    'seasonal-add':  el => { quickAdd(el.dataset.name); toast(`${el.dataset.name} toegevoegd`); el.remove(); },
+    'forgotten-add': el => { quickAdd(el.dataset.name); el.closest('.forgotten-chip')?.remove(); toast('Toegevoegd'); },
+    'barcode-add':   el => { quickAdd(el.dataset.name); closeBarcodeScanner(); toast('Toegevoegd'); },
+
+    // Bladeren
+    'browse-cat':       el => openBrowseCat(el.dataset.cat),
+    'browse-sub':       el => openBrowseSubCat(el.dataset.sub),
+    'browse-back-home': () => backToBrowseHome(),
+    'browse-back-cat':  () => backToBrowseCat(),
+    'browse-add':       el => browseAdd(el.dataset.name, el),
+
+    // Historie & opgeslagen lijsten
+    'hist-add':   el => { quickAdd(el.dataset.name); toast('Toegevoegd'); },
+    'hist-del':   el => deleteHistoryItem(el.dataset.name),
+    'saved-load': el => loadSavedList(Number(el.dataset.idx)),
+    'saved-del':  el => deleteSavedList(Number(el.dataset.idx)),
+
+    // Categorie & meldingen
+    'setcat':      el => setCategory(el.dataset.item, el.dataset.cat),
+    'unblacklist': el => unblacklistMatch(el.dataset.item, el.dataset.pname),
+    'watch-off':   el => toggleWatch(el.dataset.store, el.dataset.pid),
+    'undo':        () => undoRemove(),
+
+    // Delen
+    'share-copy':  el => copyShareLink(el.dataset.url),
+    'share-stop':  () => shareStop(),
+    'share-start': () => startShare(),
+    'share-join':  () => joinShare(),
+    'share-code':  (el, e) => {
+      if (e.type === 'input') el.value = el.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+      else if (e.key === 'Enter') joinShare();
+    },
+
+    // Instellingen
+    'budget-save':   () => saveBudget(),
+    'budget-clear':  () => { setBudget(0); renderBudgetConfig(); renderBudgetBar(); },
+    'prefstore':     el => setPrefStore(el.dataset.store),
+    'theme':         el => setTheme(el.dataset.theme),
+    'shareurl-save': () => saveShareWorkerUrl(),
+    'shareurl-clear':() => clearShareWorkerUrl(),
+    'ai-save':          () => saveAIUrl(),
+    'ai-save-settings': () => saveAIUrlFromSettings(),
+    'push-save':  () => savePushUrl(),
+    'push-sub':   () => subscribeToPush(),
+    'push-unsub': () => unsubscribeFromPush(),
+    'manual-add':    el => submitManualProduct(el.dataset.store),
+    'manual-del':    el => deleteManualProduct(el.dataset.store, el.dataset.pid),
+    'manual-update': el => updateManualProduct(el.dataset.store, el.dataset.pid, el.value),
+
+    // Vaste elementen uit index.html
+    'tab':          el => showTab(el.dataset.tab),
+    'add-input':    (el, e) => { if (e.type === 'input') onInputChange(); else if (e.key === 'Enter') addCurrent(); },
+    'add-enter':    (el, e) => { if (e.key === 'Enter') addCurrent(); },
+    'add-submit':   () => addCurrent(),
+    'barcode-open': () => openBarcodeScanner(),
+    'browse-open':  () => openBrowse(),
+    'shopmode':     () => toggleShopMode(),
+    'ai':           el => askAI(el.dataset.mode),
+    'hist-search':  () => renderHistory(),
+    'clear-checked':  () => clearChecked(),
+    'save-list-open': () => openSaveListModal(),
+    'share-btn':      () => handleShareBtn(),
+    'finish':         () => finishShopping(),
+    'save-list':    () => saveCurrentList(),
+    'save-enter':   (el, e) => { if (e.key === 'Enter') saveCurrentList(); },
+    'receipt-save': () => saveReceiptCheck(),
+    'receipt-enter':(el, e) => { if (e.key === 'Enter') saveReceiptCheck(); },
+    'note-save':    () => saveNote(),
+    'note-clear':   () => saveNote(''),
+    'note-enter':   (el, e) => { if (e.key === 'Enter') saveNote(); },
+    // Achtergrond van een modal: alleen sluiten bij een klik op de
+    // achtergrond zelf, niet op de inhoud erin.
+    'modal-bg':    (el, e) => { if (e.target === el) MODAL_CLOSERS[el.dataset.modal]?.(); },
+    'modal-close': el => MODAL_CLOSERS[el.dataset.modal]?.(),
   });
+
+  const MODAL_CLOSERS = {
+    'save-list': () => closeSaveListModal(),
+    'receipt':   () => closeReceiptCheck(),
+    'note':      () => closeNoteEditor(),
+    'barcode':   () => closeBarcodeScanner(),
+    'cat':       () => closeCatModal(),
+    'browse':    () => closeBrowse(),
+  };
 
   // ── ACTIES ──
   function addCurrent() {
@@ -2777,7 +2876,7 @@
   function toastWithUndo(msg, removed) {
     undoState = removed;
     const t = document.getElementById('toast');
-    t.innerHTML = `${escapeHtml(msg)}<button class="toast-undo" onclick="undoRemove()">Ongedaan maken</button>`;
+    t.innerHTML = `${escapeHtml(msg)}<button class="toast-undo"${act('undo')}>Ongedaan maken</button>`;
     t.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => { t.classList.remove('show'); undoState = null; }, 5000);
@@ -2877,7 +2976,7 @@
     const grid = document.getElementById('cat-grid');
     document.getElementById('modal-cat-sub').textContent = `Kies categorie voor "${it.name}"`;
     grid.innerHTML = CATEGORIES.map(c =>
-      `<button class="cat-btn" onclick="setCategory('${id}','${c.id}')">
+      `<button class="cat-btn"${act('setcat', { item: id, cat: c.id })}>
          <span class="cat-emo">${c.emo}</span> ${c.name}
        </button>`).join('');
     document.getElementById('modal-cat').classList.add('open');
@@ -2990,8 +3089,7 @@
     const today = new Date().toISOString().slice(0, 10);
     const rows = watchlist.map(w => {
       const store = STORE_BY_ID[w.storeId];
-      const safePid = escapeHtml(String(w.pid)).replace(/'/g, "\\'");
-      const unfollow = `<button class="watch-unfollow" title="Niet meer volgen" onclick="toggleWatch('${w.storeId}','${safePid}')">⭐</button>`;
+      const unfollow = `<button class="watch-unfollow" title="Niet meer volgen"${act('watch-off', { store: w.storeId, pid: w.pid })}>⭐</button>`;
       const chip = `<span class="store-chip" style="--sc:${store?.color || '#888'}">${store?.name || w.storeId}</span>`;
       const p = storeData[w.storeId]?.products?.find(x => String(x.id || x.name) === String(w.pid));
       if (!p || typeof p.price !== 'number') {
@@ -3128,7 +3226,7 @@
       </div>`).join('');
     resultDiv.innerHTML = `
       <div style="margin-bottom:10px">${rows}</div>
-      <button class="tips-config-btn" style="width:100%" onclick="quickAdd('${escapeHtml(name).replace(/'/g,"\\'")}');closeBarcodeScanner();toast('Toegevoegd')">
+      <button class="tips-config-btn" style="width:100%" ${act('barcode-add', { name })}>
         + Voeg toe aan lijst
       </button>`;
   }
@@ -3191,8 +3289,8 @@
           <input type="number" id="budget-input" min="0" step="5"
             value="${budget || ''}" placeholder="bijv. 150"
             style="flex:1;padding:8px 12px;border:1.5px solid var(--slate-200);border-radius:10px;font-size:15px;font-weight:700">
-          <button class="tips-config-btn" style="margin:0" onclick="saveBudget()">Opslaan</button>
-          ${budget ? `<button class="tips-config-btn" style="margin:0;background:var(--slate-400)" onclick="setBudget(0);renderBudgetConfig();renderBudgetBar();">Wissen</button>` : ''}
+          <button class="tips-config-btn" style="margin:0"${act('budget-save')}>Opslaan</button>
+          ${budget ? `<button class="tips-config-btn" style="margin:0;background:var(--slate-400)" ${act('budget-clear')}>Wissen</button>` : ''}
         </div>
       </div>`;
   }
@@ -3343,7 +3441,7 @@
           <div class="blacklist-name">${escapeHtml(itemNorm)}</div>
           <div class="blacklist-product">Geblokkeerd: ${escapeHtml(product)}</div>
         </div>
-        <button class="blacklist-undo" onclick="unblacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${product.replace(/'/g,"\\'")}')">Herstellen</button>
+        <button class="blacklist-undo"${act('unblacklist', { item: itemNorm, pname: product })}>Herstellen</button>
       </div>`).join('');
     div.innerHTML = `
       <div class="store-pref-card" style="margin-top:12px">
@@ -3431,9 +3529,6 @@
     function makeRow(m, cheapest, sameUnit, key) {
       const store = STORE_BY_ID[m.storeId];
       const isCheapest = m === cheapest;
-      const safeItem = escapeHtml(it.name).replace(/'/g,"\\'");
-      const safeProd = escapeHtml(m.p.name).replace(/'/g,"\\'");
-      const safeStore = escapeHtml(store.name).replace(/'/g,"\\'");
       const saving = m.activeBonus && typeof m.p.price === 'number' && m.eff < m.p.price
         ? m.p.price - m.eff : 0;
       const wasPrice = saving > 0 ? `<span class="cmp-was">${fmtPrice(m.p.price)}</span>` : '';
@@ -3979,12 +4074,12 @@
           html += `<div class="variant-compose-bar">
             <span class="variant-compose-name">${escapeHtml(composed)}</span>
           </div>
-          <button class="variant-compose-add" onclick="quickAddComposed('${escapeHtml(inp)}')">+ Voeg toe aan lijst</button>`;
+          <button class="variant-compose-add"${act('compose-add', { name: inp })}>+ Voeg toe aan lijst</button>`;
         }
 
         if (packs.length) {
           html += `<div class="suggestions" style="margin-bottom:6px">
-            ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" onclick="setPackaging('${escapeHtml(p).replace(/'/g, "\\'")}')">📦 ${escapeHtml(p)}</span>`).join('')}
+            ${packs.map(p => `<span class="chip chip-pack${activePackaging === p ? ' chip-pack-active' : ''}" ${act('pack', { pack: p })}>📦 ${escapeHtml(p)}</span>`).join('')}
           </div>`;
         }
 
@@ -3994,7 +4089,7 @@
           html += `<div class="variant-group-row">
             <span class="variant-group-label">${escapeHtml(g)}</span>
             <select class="variant-select${picked ? ' has-value' : ''}"
-              onchange="toggleVariantPick('${escapeHtml(inp)}','${escapeHtml(g).replace(/'/g,"\\'")}',this.value)">
+              ${act('variant-pick', { term: inp, group: g })} data-on="change">
               <option value="">${escapeHtml(g)} kiezen…</option>
               ${items.map(v => `<option value="${escapeHtml(v)}"${v === picked ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('')}
             </select>
@@ -4002,8 +4097,8 @@
         }
 
         html += `<div class="suggestions" style="margin-top:4px">
-          <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
-          ${hasPick ? `<span class="chip chip-back" onclick="clearVariantPicks()">✕ Wis</span>` : ''}
+          <span class="chip chip-generic"${act('quickadd', { name: inp })}>+ ${escapeHtml(inp)} (zonder soort)</span>
+          ${hasPick ? `<span class="chip chip-back"${act('variant-clear')}>✕ Wis</span>` : ''}
         </div>`;
 
         return html;
@@ -4015,10 +4110,10 @@
         if (ranked.length) return `
           <div class="suggestions-label">Soorten ${escapeHtml(inp)}</div>
           <div class="suggestions">
-            ${ranked.map(v => `<span class="chip variant-chip" onclick="quickAdd('${escapeHtml(v.name).replace(/'/g, "\\'")}')">
+            ${ranked.map(v => `<span class="chip variant-chip"${act('quickadd', { name: v.name })}>
               ${escapeHtml(v.name)}${v.count ? `<span class="chip-cnt">×${v.count}</span>` : ''}
             </span>`).join('')}
-            <span class="chip chip-generic" onclick="quickAdd('${escapeHtml(inp).replace(/'/g, "\\'")}')">+ ${escapeHtml(inp)} (zonder soort)</span>
+            <span class="chip chip-generic"${act('quickadd', { name: inp })}>+ ${escapeHtml(inp)} (zonder soort)</span>
           </div>`;
       }
     }
@@ -4070,13 +4165,12 @@
             const cat = r.category ? (CAT_BY_ID[r.category]?.emo || '📦') : (r.isVariantKey ? '🔍' : '📦');
             const cnt = r.histCount ? `<span class="chip-cnt">×${r.histCount}</span>` : '';
             const arrow = r.isVariantKey ? ` <span class="chip-cnt">→</span>` : '';
-            const safe = escapeHtml(r.name).replace(/'/g, "\\'");
             const action = r.isVariantKey
-              ? `document.getElementById('add-input').value='${safe}';onInputChange()`
+              ? act('prefill', { name: r.name })
               : r.parentKey
-                ? `selectVariantItem('${escapeHtml(r.parentKey).replace(/'/g,"\\'")}','${escapeHtml(r.groupName).replace(/'/g,"\\'")}','${safe}')`
-                : `quickAdd('${safe}')`;
-            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}" onclick="${action}">${cat} ${escapeHtml(r.label)}${arrow}${cnt}</span>`;
+                ? act('variant-item', { parent: r.parentKey, group: r.groupName, name: r.name })
+                : act('quickadd', { name: r.name });
+            return `<span class="chip${r.isVariantKey ? ' chip-group' : ''}"${action}>${cat} ${escapeHtml(r.label)}${arrow}${cnt}</span>`;
           }).join('')}
         </div>`;
     }
@@ -4090,7 +4184,7 @@
     return `
       <div class="suggestions-label">Vaak gekocht</div>
       <div class="suggestions">
-        ${entries.map(e => `<span class="chip" onclick="quickAdd('${escapeHtml(e.name).replace(/'/g, "\\'")}')">
+        ${entries.map(e => `<span class="chip"${act('quickadd', { name: e.name })}>
           ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}<span class="chip-cnt">×${e.count}</span>
         </span>`).join('')}
       </div>`;
@@ -4108,20 +4202,18 @@
       const hasVariant = !!VARIANTS[normalize(inp)]?.groups;
       if (!hasVariant && matching.length === 1 && (matching[0] === inp || inp.includes(matching[0]))) {
         const recipe = RECIPES[matching[0]];
-        const safe = matching[0].replace(/'/g, "\\'");
         wrap.innerHTML = `
           <div class="recipe-card">
             <div class="recipe-title">${recipe.emo} ${titleCase(matching[0])}</div>
             <div class="recipe-ingredients">${recipe.ingredients.map(i => `<span class="recipe-ing-chip">${escapeHtml(i)}</span>`).join('')}</div>
-            <button class="recipe-add-btn" onclick="addRecipe('${safe}')">+ Voeg alle ingrediënten toe</button>
+            <button class="recipe-add-btn"${act('recipe-add', { key: matching[0] })}>+ Voeg alle ingrediënten toe</button>
           </div>`;
         return;
       }
       if (matching.length > 1) {
         const recipeChips = matching.map(k => {
           const r = RECIPES[k];
-          const safe = k.replace(/'/g, "\\'");
-          return `<span class="chip chip-group" onclick="document.getElementById('add-input').value='${safe}';onInputChange()">${r.emo} ${escapeHtml(titleCase(k))}</span>`;
+          return `<span class="chip chip-group"${act('prefill', { name: k })}>${r.emo} ${escapeHtml(titleCase(k))}</span>`;
         }).join('');
         wrap.innerHTML = `<div class="suggestions-label">Recepten</div><div class="suggestions">${recipeChips}</div>` + buildRestHTML(inp, onList);
         return;
@@ -4553,7 +4645,7 @@
             ? e.subgroups.reduce((s, sg) => s + sg.items.length, 0)
             : e.length;
           return `
-          <button class="browse-cat" onclick="openBrowseCat('${c.id}')">
+          <button class="browse-cat"${act('browse-cat', { cat: c.id })}>
             <span class="b-emo">${c.emo}</span><span class="b-name">${escapeHtml(c.name)}</span>
             <span class="b-count">${count}</span>
           </button>`;
@@ -4566,12 +4658,12 @@
     // Sub-groepen niveau
     if (catalogEntry && catalogEntry.subgroups && !browseSubCat) {
       head.innerHTML = `
-        <button class="browse-back" onclick="backToBrowseHome()">← Categorieën</button>
+        <button class="browse-back"${act('browse-back-home')}>← Categorieën</button>
         <span class="browse-emo">${cat.emo}</span>
         <span class="browse-title">${escapeHtml(cat.name)}</span>`;
       body.innerHTML = `<div class="browse-grid">${
         catalogEntry.subgroups.map(sg => `
-          <button class="browse-cat" onclick="openBrowseSubCat('${escapeHtml(sg.name).replace(/'/g,"\\'")}')">
+          <button class="browse-cat"${act('browse-sub', { sub: sg.name })}>
             <span class="b-emo">${sg.emo}</span><span class="b-name">${escapeHtml(sg.name)}</span>
             <span class="b-count">${sg.items.length}</span>
           </button>`).join('')
@@ -4588,13 +4680,13 @@
     }
     const onListNorms = new Set(items.filter(x => !x.checked).map(x => normalize(x.name)));
     head.innerHTML = `
-      <button class="browse-back" onclick="${browseSubCat ? 'backToBrowseCat()' : 'backToBrowseHome()'}">&larr; ${browseSubCat ? escapeHtml(cat.name) : 'Categorieën'}</button>
+      <button class="browse-back"${act(browseSubCat ? 'browse-back-cat' : 'browse-back-home')}>&larr; ${browseSubCat ? escapeHtml(cat.name) : 'Categorieën'}</button>
       <span class="browse-emo">${cat.emo}</span>
       <span class="browse-title">${escapeHtml(browseSubCat || cat.name)}</span>`;
     body.innerHTML = `<div class="browse-products">${
       products.map(name => {
         const added = onListNorms.has(normalize(name));
-        return `<span class="browse-prod${added ? ' added' : ''}" onclick="browseAdd('${escapeHtml(name).replace(/'/g, "\\'")}', this)">${escapeHtml(name)}</span>`;
+        return `<span class="browse-prod${added ? ' added' : ''}" ${act('browse-add', { name })}>${escapeHtml(name)}</span>`;
       }).join('')
     }</div>`;
   }
@@ -4687,8 +4779,8 @@
           <div class="saved-list-name">${escapeHtml(l.name)}</div>
           <div style="font-size:11px;color:var(--slate-400);margin-top:2px">${l.items.length} items · ${timeAgo(l.savedAt)}</div>
         </div>
-        <button class="saved-list-btn load" onclick="loadSavedList(${i})">Laden</button>
-        <button class="saved-list-btn del" onclick="deleteSavedList(${i})">✕</button>
+        <button class="saved-list-btn load"${act('saved-load', { idx: i })}>Laden</button>
+        <button class="saved-list-btn del"${act('saved-del', { idx: i })}>✕</button>
       </div>`).join('');
     sec.innerHTML = `
       <div class="saved-lists-header"><span class="saved-lists-title">📋 Opgeslagen lijsten</span></div>
@@ -4721,8 +4813,7 @@
     const chips = season.items
       .filter(n => !onList.has(normalize(n)))
       .map(n => {
-        const safe = escapeHtml(n).replace(/'/g, "\\'");
-        return `<button class="seasonal-chip" onclick="quickAdd('${safe}'); toast('${safe} toegevoegd'); this.remove();">${escapeHtml(n)}</button>`;
+        return `<button class="seasonal-chip"${act('seasonal-add', { name: n })}>${escapeHtml(n)}</button>`;
       }).join('');
     div.innerHTML = chips ? `
       <div class="seasonal-block">
@@ -4742,8 +4833,7 @@
       .slice(0, 6);
     if (!forgotten.length) return '';
     const chips = forgotten.map(e => {
-      const safe = escapeHtml(e.name).replace(/'/g, "\\'");
-      return `<button class="hist-add" style="font-size:12px;padding:6px 10px;" onclick="quickAdd('${safe}'); this.closest('.forgotten-chip').remove(); toast('Toegevoegd');">${escapeHtml(e.name)}</button>`;
+      return `<button class="hist-add" style="font-size:12px;padding:6px 10px;" ${act('forgotten-add', { name: e.name })}>${escapeHtml(e.name)}</button>`;
     }).map(btn => `<div class="forgotten-chip">${btn}</div>`).join('');
     return `
       <div class="forgotten-block">
@@ -4779,15 +4869,14 @@
       html += `<div class="category-header" style="margin-top:14px"><span>${cat.emo}</span> ${cat.name}<span class="category-count">${arr.length}</span></div>`;
       arr.forEach(e => {
         const last = e.lastBought ? timeAgo(e.lastBought) : '';
-        const safeName = escapeHtml(e.name).replace(/'/g, "\\'");
         html += `
           <div class="hist-item">
             <div class="hist-info">
               <div class="hist-name">${escapeHtml(e.name)}</div>
               <div class="hist-meta">${e.count}× gekocht${last ? ' · laatst ' + last : ''}</div>
             </div>
-            <button class="hist-add" onclick="quickAdd('${safeName}'); toast('Toegevoegd');">+ Op lijst</button>
-            <button class="hist-del" title="Verwijder uit historie" onclick="deleteHistoryItem('${safeName}')">✕</button>
+            <button class="hist-add"${act('hist-add', { name: e.name })}>+ Op lijst</button>
+            <button class="hist-del" title="Verwijder uit historie"${act('hist-del', { name: e.name })}>✕</button>
           </div>`;
       });
     });
@@ -4851,14 +4940,14 @@
     if (!sec) return;
     const pref = getPrefStore();
     const chips = STORES.map(s => `
-      <button class="store-pref-chip${pref === s.id ? ' active' : ''}" onclick="setPrefStore('${s.id}')" style="${pref === s.id ? '--sc:'+s.color+';border-color:'+s.color : ''}">
+      <button class="store-pref-chip${pref === s.id ? ' active' : ''}" ${act('prefstore', { store: s.id })} style="${pref === s.id ? '--sc:'+s.color+';border-color:'+s.color : ''}">
         ${s.name}
       </button>`).join('');
     sec.innerHTML = `
       <div class="store-pref-card">
         <div class="store-pref-label">⭐ Mijn vaste winkel</div>
         <div class="store-pref-chips">
-          <button class="store-pref-chip none${!pref ? ' active' : ''}" onclick="setPrefStore('')">Geen voorkeur</button>
+          <button class="store-pref-chip none${!pref ? ' active' : ''}"${act('prefstore', { store: '' })}>Geen voorkeur</button>
           ${chips}
         </div>
       </div>`;
@@ -4877,8 +4966,8 @@
         <input class="tips-config-input" id="share-worker-url-input" type="url"
                placeholder="https://boodschappen-share.xxx.workers.dev"
                value="${escapeHtml(url)}">
-        <button class="tips-config-btn" onclick="saveShareWorkerUrl()">Opslaan</button>
-        ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="clearShareWorkerUrl()">Wissen</button>` : ''}
+        <button class="tips-config-btn"${act('shareurl-save')}>Opslaan</button>
+        ${url ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" ${act('shareurl-clear')}>Wissen</button>` : ''}
       </div>`;
   }
   // ── THEMA (licht/donker) ──
@@ -4908,7 +4997,7 @@
       <div class="store-pref-card">
         <div class="store-pref-label">🎨 Thema</div>
         <div class="store-pref-chips">
-          ${opts.map(([id,label]) => `<button class="store-pref-chip${t===id?' active':''}" onclick="setTheme('${id}')">${label}</button>`).join('')}
+          ${opts.map(([id,label]) => `<button class="store-pref-chip${t===id?' active':''}" ${act('theme', { theme: id })}>${label}</button>`).join('')}
         </div>
       </div>`;
   }
@@ -4926,7 +5015,7 @@
         <input class="tips-config-input" id="ai-url-settings-input" type="url"
                placeholder="https://boodschappen-ai.xxx.workers.dev"
                value="${escapeHtml(url)}">
-        <button class="tips-config-btn" onclick="saveAIUrlFromSettings()">Opslaan</button>
+        <button class="tips-config-btn"${act('ai-save-settings')}>Opslaan</button>
       </div>`;
   }
   function saveAIUrlFromSettings() {
@@ -5012,8 +5101,8 @@
     const subscribed = await isPushSubscribed();
     const actionBtn = !url ? ''
       : subscribed
-        ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" onclick="unsubscribeFromPush()">Uitzetten</button>`
-        : `<button class="tips-config-btn" style="margin-left:6px" onclick="subscribeToPush()">🔔 Aanzetten</button>`;
+        ? `<button class="tips-config-btn" style="margin-left:6px;background:var(--slate-400)" ${act('push-unsub')}>Uitzetten</button>`
+        : `<button class="tips-config-btn" style="margin-left:6px" ${act('push-sub')}>🔔 Aanzetten</button>`;
     div.innerHTML = `
       <div class="tips-config" style="margin-top:0">
         <strong>🔔 Push-meldingen${subscribed ? ' ✓ aan' : ''}</strong><br>
@@ -5023,7 +5112,7 @@
         <input class="tips-config-input" id="push-url-input" type="url"
                placeholder="https://boodschappen-push.xxx.workers.dev"
                value="${escapeHtml(url)}">
-        <button class="tips-config-btn" onclick="savePushUrl()">Opslaan</button>${actionBtn}
+        <button class="tips-config-btn"${act('push-save')}>Opslaan</button>${actionBtn}
       </div>`;
   }
   function savePushUrl() {
@@ -5054,7 +5143,7 @@
         AI-suggesties draaien via een Cloudflare Worker die ik je laat deployen.
         Plak hier de URL van jouw Worker (eindigt op <code>.workers.dev</code>) zodra die online staat:
         <input class="tips-config-input" id="ai-url-input" type="text" placeholder="https://boodschappen-ai.xxx.workers.dev" value="${escapeHtml(getAIUrl())}">
-        <button class="tips-config-btn" onclick="saveAIUrl()">Opslaan</button>
+        <button class="tips-config-btn"${act('ai-save')}>Opslaan</button>
       </div>`;
   }
   function saveAIUrl() {
@@ -5215,7 +5304,7 @@
     if (!div) return;
     const sel = getRouteStores();
     const chips = STORES.map(s => `
-      <button class="route-filter-chip${sel.has(s.id) ? ' on' : ''}" onclick="toggleRouteStore('${s.id}')"
+      <button class="route-filter-chip${sel.has(s.id) ? ' on' : ''}"${act('route-store', { store: s.id })}
               style="${sel.has(s.id) ? 'border-color:'+s.color+';color:'+s.color : ''}">${s.name}</button>`).join('');
     div.innerHTML = `<div class="route-filter"><span class="route-filter-label">Winkels:</span>${chips}</div>`;
   }
@@ -5520,7 +5609,11 @@
   renderShareBar();
   loadStores();
   initDrag();
+  // Lijst en route krijgen een eigen root: die stopt de propagatie, zodat een
+  // klik daarbinnen de body-listener niet ook nog bereikt (o.a. het
+  // "klik buiten sluit het meldmenu"-gedrag rekent daarop).
   delegate(document.getElementById('list-wrap'));
   delegate(document.getElementById('route-wrap'));
+  delegate(document.body); // al het overige: koptekst, tabs, modals, instellingen
   // Op desktop meteen in het invoerveld; op touch niet (toetsenbord zou opspringen)
   if (matchMedia('(pointer: fine)').matches) document.getElementById('add-input').focus();
