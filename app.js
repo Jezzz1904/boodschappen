@@ -2617,6 +2617,64 @@
     toast._t = setTimeout(() => t.classList.remove('show'), 1800);
   }
 
+  // ── EVENT-DELEGATIE ──────────────────────────────────────────────────────
+  // Eén listener per view-root in plaats van onclick-strings in de HTML.
+  // Naast onderhoud lost dit ook de dubbele escaping op: een onclick-attribuut
+  // is HTML én JavaScript, dus productnamen moesten door escapeHtml() én een
+  // handmatige \'-replace. Een data-attribuut kent die tweede laag niet.
+  //
+  // stopPropagation is hier overbodig: closest() levert het binnenste element
+  // met een data-act, en alleen díé actie draait.
+
+  const ACTIONS = {};
+
+  // Bouwt data-attributen. Waarden gaan door escapeHtml, nooit door JS-quoting.
+  function act(name, data) {
+    let s = ` data-act="${name}"`;
+    for (const [k, v] of Object.entries(data || {})) {
+      if (v === undefined || v === null) continue;
+      s += ` data-${k}="${escapeHtml(String(v))}"`;
+    }
+    return s;
+  }
+
+  function delegate(root) {
+    if (!root || root.__delegated) return;
+    root.__delegated = true;
+    root.addEventListener('click', e => {
+      const el = e.target.closest('[data-act]');
+      if (!el || !root.contains(el)) return;
+      const fn = ACTIONS[el.dataset.act];
+      if (!fn) return;
+      e.stopPropagation();
+      fn(el, e);
+    });
+  }
+
+  const itemIdOf = el => el.closest('.item')?.dataset.id;
+
+  Object.assign(ACTIONS, {
+    // Lijst
+    'toggle':    el => toggleItem(itemIdOf(el)),
+    'cat':       el => openCategoryPicker(itemIdOf(el)),
+    'note':      el => openNoteEditor(itemIdOf(el)),
+    'del':       el => deleteItem(itemIdOf(el)),
+    'setqty':    el => setQty(itemIdOf(el), Number(el.dataset.qty)),
+    'brand':     el => setBrandPref(itemIdOf(el), el.dataset.brand),
+    'quickadd':  el => quickAdd(el.dataset.name),
+    // Prijsvergelijking
+    'pick-open': el => togglePicker(el, itemIdOf(el), el.dataset.store),
+    'pick-set':  el => setMatchOverride(el.dataset.item, el.dataset.store, el.dataset.pname),
+    'pick-auto': el => clearMatchOverride(el.dataset.item, el.dataset.store),
+    'watch':     el => toggleWatch(el.dataset.store, el.dataset.pid, el.dataset.pname, Number(el.dataset.price) || 0),
+    'report':    el => openReportMenu(el, el.dataset.item, el.dataset.pname, el.dataset.storeName),
+    'report-confirm': el => { blacklistMatch(el.dataset.item, el.dataset.pname, el.dataset.storeName); closeReportMenu(); },
+    'report-cancel':  () => closeReportMenu(),
+    // Route
+    'route-toggle': el => toggleRouteItem(el.dataset.id),
+    'route-move':   el => moveRouteStore(el.dataset.store, Number(el.dataset.dir)),
+  });
+
   // ── ACTIES ──
   function addCurrent() {
     const input = document.getElementById('add-input');
@@ -3254,12 +3312,14 @@
     menu.className = 'report-menu';
     menu.innerHTML = `
       <div class="report-menu-title">Wat klopt er niet?</div>
-      <button class="report-opt danger" onclick="blacklistMatch('${itemNorm.replace(/'/g,"\\'")}','${productName.replace(/'/g,"\\'")}','${storeName.replace(/'/g,"\\'")}');closeReportMenu()">
+      <button class="report-opt danger"${act('report-confirm', { item: itemNorm, pname: productName, storeName })}>
         ✗ Verkeerd product — niet meer tonen
       </button>
-      <button class="report-opt" onclick="closeReportMenu()">
+      <button class="report-opt"${act('report-cancel')}>
         Annuleren
       </button>`;
+    // Geen eigen delegate(): het menu hangt in .cmp-row binnen #list-wrap,
+    // dus de delegatie daar vangt de kliks al op.
     el.closest('.cmp-row').style.position = 'relative';
     el.closest('.cmp-row').appendChild(menu);
     activeReportMenu = menu;
@@ -3348,11 +3408,10 @@
     // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
     const hasHuis = res.matches.some(m => isHuismerk(m));
     const hasAmerk = res.matches.some(m => !isHuismerk(m));
-    const safeId = it.id.replace(/'/g, "\\'");
     const brandToggle = (hasHuis && hasAmerk) ? `
       <div class="brand-toggle">
-        <span class="brand-chip${it.brandPref === 'amerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','amerk')">A-merk</span>
-        <span class="brand-chip${it.brandPref === 'huismerk' ? ' active' : ''}" onclick="event.stopPropagation();setBrandPref('${safeId}','huismerk')">Huismerk</span>
+        <span class="brand-chip${it.brandPref === 'amerk' ? ' active' : ''}"${act('brand', { brand: 'amerk' })}>A-merk</span>
+        <span class="brand-chip${it.brandPref === 'huismerk' ? ' active' : ''}"${act('brand', { brand: 'huismerk' })}>Huismerk</span>
       </div>` : '';
 
     // Verpakkingstype detecteren per match (canoniek: 'fles' | 'blik' | null)
@@ -3406,7 +3465,7 @@
       const hasOv = it.matchOverrides && it.matchOverrides[m.storeId];
       const rowClass = ['cmp-row', isCheapest ? 'best' : '', m.activeBonus ? 'in-bonus' : '', isFav ? 'store-pref-row-fav' : '', hasOv ? 'has-override' : ''].filter(Boolean).join(' ');
       return `
-        <div class="${rowClass}" onclick="event.stopPropagation();togglePicker(this,'${safeId}','${escapeHtml(m.storeId)}')">
+        <div class="${rowClass}"${act('pick-open', { store: m.storeId })}>
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
@@ -3415,8 +3474,8 @@
           <span class="cmp-product">${brandName}${unitStr}</span>
           ${isCheapest ? '' : diffTag}
           ${trendTag}
-          <button class="cmp-watch${isWatched(m.storeId, m.p) ? ' active' : ''}" title="${isWatched(m.storeId, m.p) ? 'Niet meer volgen' : 'Volg de prijs van dit product'}" onclick="event.stopPropagation();toggleWatch('${escapeHtml(m.storeId)}','${escapeHtml(String(m.p.id || m.p.name)).replace(/'/g,"\\'")}','${safeProd}',${typeof m.p.price === 'number' ? m.p.price : 0})">${isWatched(m.storeId, m.p) ? '⭐' : '☆'}</button>
-          <button class="cmp-flag" title="Fout melden" onclick="event.stopPropagation();openReportMenu(this,'${safeItem}','${safeProd}','${safeStore}')">🚩</button>
+          <button class="cmp-watch${isWatched(m.storeId, m.p) ? ' active' : ''}" title="${isWatched(m.storeId, m.p) ? 'Niet meer volgen' : 'Volg de prijs van dit product'}"${act('watch', { store: m.storeId, pid: String(m.p.id || m.p.name), pname: m.p.name, price: typeof m.p.price === 'number' ? m.p.price : 0 })}>${isWatched(m.storeId, m.p) ? '⭐' : '☆'}</button>
+          <button class="cmp-flag" title="Fout melden"${act('report', { item: it.name, pname: m.p.name, storeName: store.name })}>🚩</button>
         </div>`;
     }
 
@@ -3460,7 +3519,6 @@
       if (!minQty || it.qty >= minQty) return '';
       const store = STORE_BY_ID[activeDeal.storeId];
       const need = minQty - it.qty;
-      const safeId = it.id.replace(/'/g, "\\'");
       const effPerItem = activeDeal.eff;
       const totalPrice = effPerItem != null ? minQty * effPerItem : null;
       const priceStr = totalPrice != null
@@ -3469,14 +3527,14 @@
       return `<div class="deal-qty-tip">
         🏷️ <strong>${store.name}</strong>: <em>${escapeHtml(activeDeal.activeBonus.mechanism)}</em>${priceStr}
         — voeg nog <strong>${need}×</strong> toe om de deal te pakken
-        <button class="deal-qty-tip-btn" onclick="event.stopPropagation();setQty('${safeId}',${minQty})">+${need} toevoegen</button>
+        <button class="deal-qty-tip-btn"${act('setqty', { qty: minQty })}>+${need} toevoegen</button>
       </div>`;
     })();
 
     // Aanbieding-tip: zoek vergelijkbaar product dat nu in bonus is en goedkoper
     const bonusTip = findBonusAlternative(it.name, it.category, matches);
     const bonusTipHtml = bonusTip ? `
-      <div class="bonus-tip" onclick="quickAdd('${escapeHtml(bonusTip.name).replace(/'/g,"\\'")}')">
+      <div class="bonus-tip"${act('quickadd', { name: bonusTip.name })}>
         💡 <strong>${escapeHtml(bonusTip.storeName)}</strong> heeft
         <strong>${escapeHtml(bonusTip.name)}</strong> in aanbieding voor
         <strong>${fmtPrice(bonusTip.price)}</strong>
@@ -3527,7 +3585,8 @@
     const currentAuto = findStoreMatch(storeId, it.name, it.category);
     const panel = document.createElement('div');
     panel.className = 'pick-panel';
-    panel.onclick = function(e) { e.stopPropagation(); };
+    // Géén stopPropagation hier: het paneel hangt in #list-wrap en de
+    // delegatie daar moet de kliks op .pick-row nog kunnen zien.
     const store = STORE_BY_ID[storeId];
     const stripWords = new Set([
       ...normWords(it.name),
@@ -3546,9 +3605,8 @@
       const up = c.unitPrice;
       const upStr = up ? `<span class="pick-unit">${fmtPrice(up.value)}${UNIT_LABEL[up.unit]||''}</span>` : '';
       const bonusStr = c.activeBonus ? `<span class="pick-bonus">${escapeHtml(c.activeBonus.mechanism || 'bonus')}</span>` : '';
-      const safePN = escapeHtml(c.p.name).replace(/'/g, "\\'");
       const displayName = shortPickName(c.p.name, c.p.unit);
-      return `<div class="pick-row${isActive?' active':''}" onclick="setMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}','${safePN}')">
+      return `<div class="pick-row${isActive?' active':''}"${act('pick-set', { item: itemId, store: storeId, pname: c.p.name })}>
         <span class="pick-name">${escapeHtml(displayName)}</span>
         ${bonusStr}
         <span class="pick-price">${fmtPrice(c.eff)}</span>
@@ -3556,7 +3614,7 @@
       </div>`;
     }).join('');
     if (currentOverride) {
-      html += `<button class="pick-auto" onclick="clearMatchOverride('${escapeHtml(itemId).replace(/'/g,"\\'")}','${storeId}')">↻ Automatisch</button>`;
+      html += `<button class="pick-auto"${act('pick-auto', { item: itemId, store: storeId })}>↻ Automatisch</button>`;
     }
     panel.innerHTML = html;
     rowEl.insertAdjacentElement('afterend', panel);
@@ -3806,15 +3864,15 @@
           </div>
           ${arr.map(it => `
             <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
-              <div class="check" onclick="toggleItem('${it.id}')" role="checkbox" aria-checked="${it.checked}"></div>
-              <div class="item-body" onclick="openCategoryPicker('${it.id}')">
+              <div class="check"${act('toggle')} role="checkbox" aria-checked="${it.checked}"></div>
+              <div class="item-body"${act('cat')}>
                 <div class="item-name">${escapeHtml(it.name)}</div>
                 ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
                 ${renderPriceComparison(it)}
               </div>
               ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
-              <button class="item-note-btn" onclick="event.stopPropagation();openNoteEditor('${it.id}')" title="Notitie toevoegen">✏️</button>
-              <button class="item-del" onclick="deleteItem('${it.id}')" aria-label="Verwijder">✕</button>
+              <button class="item-note-btn"${act('note')} title="Notitie toevoegen">✏️</button>
+              <button class="item-del"${act('del')} aria-label="Verwijder">✕</button>
             </div>`).join('')}
         </div>`;
     });
@@ -5325,8 +5383,7 @@
         <div class="route-missing">
           <div class="route-missing-title">⚠ ${missing.length} item${missing.length === 1 ? '' : 's'} nergens gevonden</div>
           ${missing.map(it => {
-            const safeId = it.id.replace(/'/g, "\\'");
-            return `<div class="route-missing-item route-item${it.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+            return `<div class="route-missing-item route-item${it.checked ? ' checked' : ''}" ${act('route-toggle', { id: it.id })}>
               <span class="route-item-check">${it.checked ? '✓' : ''}</span>
               ${escapeHtml(it.name)}${it.qty > 1 ? ` (${it.qty}×)` : ''}
             </div>`;
@@ -5344,8 +5401,7 @@
             <span class="route-store-count">Afgevinkt (${checkedItems.length})</span>
           </div>
           ${checkedItems.map(it => {
-            const safeId = it.id.replace(/'/g, "\\'");
-            return `<div class="route-item checked" onclick="toggleRouteItem('${safeId}')">
+            return `<div class="route-item checked" ${act('route-toggle', { id: it.id })}>
               <span class="route-item-check">✓</span>
               <div style="flex:1;min-width:0;">
                 <div class="route-item-name">${escapeHtml(it.name)}</div>
@@ -5406,8 +5462,8 @@
   function renderStoreSection(store, rows, total, showReorder) {
     const reorderBtns = showReorder ? `
       <span class="route-reorder">
-        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',-1)">▲</button>
-        <button class="route-move-btn" onclick="event.stopPropagation();moveRouteStore('${store.id}',1)">▼</button>
+        <button class="route-move-btn" ${act('route-move', { store: store.id, dir: -1 })}>▲</button>
+        <button class="route-move-btn" ${act('route-move', { store: store.id, dir: 1 })}>▼</button>
       </span>` : '';
     return `
       <div class="route-store" data-store-id="${store.id}">
@@ -5426,9 +5482,8 @@
             ? `<span class="route-item-unitprice">${fmtPrice(match.unitPrice.value)}${UNIT_LABEL[match.unitPrice.unit] || ''}</span>` : '';
           const wasPrice = match.activeBonus && match.p.price && match.eff < match.p.price
             ? `<span class="cmp-was" style="font-size:10px">${fmtPrice(match.p.price)}</span> ` : '';
-          const safeId = item.id.replace(/'/g, "\\'");
           return `
-            <div class="route-item${item.checked ? ' checked' : ''}" onclick="toggleRouteItem('${safeId}')">
+            <div class="route-item${item.checked ? ' checked' : ''}" ${act('route-toggle', { id: item.id })}>
               <span class="route-item-check">${item.checked ? '✓' : ''}</span>
               ${qty > 1 ? `<span class="route-item-qty">${qty}×</span>` : ''}
               <div style="flex:1; min-width:0;">
@@ -5465,5 +5520,7 @@
   renderShareBar();
   loadStores();
   initDrag();
+  delegate(document.getElementById('list-wrap'));
+  delegate(document.getElementById('route-wrap'));
   // Op desktop meteen in het invoerveld; op touch niet (toetsenbord zou opspringen)
   if (matchMedia('(pointer: fine)').matches) document.getElementById('add-input').focus();
