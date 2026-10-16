@@ -18,12 +18,12 @@
 
   // Auto-categorisatie woordenboek (Nederlands, gericht op AH/Jumbo/Lidl/Plus assortiment)
   const AUTO_CAT = {
-    groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
+    groente: ['appel','peer','banaan','sinaasappel','mandarijn','citroen','limoen','druiven','kiwi','aardbei','framboos','blauwe bes','meloen','watermeloen','ananas','perzik','nectarine','pruim','avocado','tomaat','komkommer','paprika','wortel','ui','uien','knoflook','sla','andijvie','spinazie','rucola','broccoli','bloemkool','courgette','aubergine','prei','aardappel','aardappels','pieper','champignon','paddenstoel','radijs','rode kool','witte kool','spruitjes','bieten','bonen','sperziebonen','asperges','snijbonen','mais','bosui','peterselie','basilicum','tijm','rozemarijn','munt','dille','koriander','gember','citroengras'],
     zuivel:  ['melk','volle melk','halfvolle melk','magere melk','karnemelk','yoghurt','kwark','vla','room','slagroom','kookroom','crème fraîche','creme fraiche','zure room','boter','margarine','kaas','jong belegen','belegen','oude kaas','smeerkaas','mozzarella','feta','parmezaan','geitenkaas','brie','camembert','hüttenkäse','huttenkase','cottage cheese','ei','eieren','pudding','toetje','dessert','sojadrink','havermelk','amandelmelk','plantaardig'],
     bakkerij: ['brood','bruin brood','wit brood','volkoren','tijgerbrood','stokbrood','baguette','ciabatta','pistolet','broodje','bolletje','bollen','bolletjes','witte bollen','bruine bollen','croissant','krentenbol','rozijnenbol','beschuit','crackers','knäckebröd','knackebrod','wraps','tortilla','tortillas','pita','naan','bagel','cake','taart','muffin','koek','bloem','tarwebloem','bakmeel','zelfrijzend bakmeel','maizena','bakpoeder','gist'],
     vlees: ['kip','kipfilet','kipdij','kipschnitzel','kippenpoot','kalkoen','rundvlees','rundergehakt','gehakt','biefstuk','runderlap','varken','varkensfilet','varkenshaas','speklap','spek','spekjes','bacon','ham','beenham','schouderham','kipfilet','salami','worst','rookworst','knakworst','braadworst','frikandel','kroket','vlees','vis','zalm','tonijn','kabeljauw','tilapia','garnalen','mosselen','haring','makreel','sardines','schol','vleesvervanger','vegetarische burger','hamburger','tofu','tempeh','seitan','falafel','quorn','jackfruit','vegan gehakt','vegetarisch gehakt','plantaardige spekjes','vegetarische worst'],
     diepvries: ['diepvries','bevroren','pizza','friet','patat','aardappelpartjes','ijs','ijsje','ijsblokjes','vissticks','loempia','spinaziepuree','doperwten','frikandel','kroket','bitterballen','kaassoufflé','bosvruchten','garnalen diepvries','diepvries maaltijd'],
-    houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomaten','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
+    houdbaar: ['pasta','spaghetti','penne','macaroni','lasagne','rijst','basmati','jasmijnrijst','zilvervlies','quinoa','couscous','bulgur','noedels','mie','suiker','zout','peper','kruiden','olie','olijfolie','zonnebloemolie','azijn','balsamico','sojasaus','ketchup','mayonaise','mosterd','sambal','curry','currypasta','bouillon','bouillonblokjes','blik','blikje','tomatenpuree','passata','pesto','tonijn in blik','sardines','kikkererwten','bonen in blik','linzen','soep','meel','bloem','zelfrijzend','gist','bakpoeder','suiker','honing','jam','hagelslag','pindakaas','choco','choco pasta','nutella','nootjes','noten','rozijnen','muesli','cornflakes','havermout','crackers','rijstwafels','olijven','kappertjes','augurken','zilveruitjes'],
     snacks: ['chips','nootjes','borrelnoten','popcorn','chocolade','reep','snoep','drop','dropjes','wine gums','m&m','koek','koekjes','speculaas','stroopwafel','liga','sultana','candy','candybar','snickers','mars','twix','bounty','kitkat','oreo','pringles','tuc'],
     frisdranken: ['water','spa','mineraalwater','bruisend water','sap','vruchtensap','sinaasappelsap','appelsap','smoothie','frisdrank','cola','coca cola','fanta','sprite','7up','ice tea','aquarius','rivella','dubbelfris','energy','red bull','monster'],
     koffie: [
@@ -317,6 +317,10 @@
     'toetje','dessert','poeder','blokjes','plakjes','crackers','beschuit','soep',
     'pizza','salade','salades','smoothie','likeur','cocktail','compote','tapenade',
     'puree','moes','gedroogd','gekonfijt','konfijt','chutney','spread',
+    // Ander product waar het gezochte woord alleen in voorkomt
+    // ("PLUS Tomaten ketchup", "Tomaten gepeld", "Creamer voor koffie")
+    'ketchup','gepeld','gepelde','creamer','brioches','bakmix','quiche',
+    'kattenvoer','hondenvoer','croissants',
     // Dieet-/bereidingsvariant (alleen penalty als NIET gezocht)
     'glutenvrij','lactosevrij','suikervrij','vetvrij','zoutvrij',
     // Graanvariant (alleen penalty als NIET gezocht)
@@ -2134,6 +2138,47 @@
     return true;
   }
 
+  // ── ROL IN EEN SAMENSTELLING ─────────────────────────────────────────────
+  // Nederlandse samenstellingen zijn rechtshoofdig: het laatste deel zegt wát
+  // iets is. "Trostomaten" zijn tomaten, "tomatenketchup" is ketchup,
+  // "roomboter" is boter, "watermeloen" is een meloen.
+  //
+  // compoundContains() maakte dat onderscheid niet en gaf beide kanten een
+  // kwart punt. Daardoor won "PLUS Tomaten ketchup" (los woord, volle score)
+  // van de echte trostomaten.
+  //
+  // Uitzondering: als het hoofd een deel- of portiewoord is, noemt het eerste
+  // deel nog steeds de stof. "Kipfilet", "tonijnstukken" en "kaasblokjes" zijn
+  // kip, tonijn en kaas.
+  // Bewust gelijk aan het oude gewicht: een samenstelling is een *specifieke
+  // soort* (bloemkoolrijst, kruidenboter, karnemelk). Wie "rijst" typt bedoelt
+  // gewone rijst. Bij 0,75 en ook bij 0,4 won "Bloemkoolrijst" van "Witte rijst",
+  // omdat "witte" als los woord strafpunten kost en "bloemkool" verstopt zit.
+  // De winst zit hem er alleen in dat het hoofd niet meer als extra woord telt.
+  const COMPOUND_HEAD_WEIGHT = 0.25;
+  const COMPOUND_MOD_PENALTY = 3;     // "roomboter" voor "room": ander product
+  const PART_HEADS = new Set([
+    'filet','filets','stukken','stukjes','stuk','blokjes','blokken','plakjes','plakken',
+    'reepjes','repen','schijven','schijfjes','partjes','parten','dijen','dij','dijfilet',
+    'poten','pootjes','vleugels','vleugeltjes','borst','borstfilet','haas','lappen','lapjes',
+    'drumsticks','bouten','spiesen','sticks','snippers','rasp','geraspt','plak','blok',
+    'staafjes','bolletjes','partjes','kuipje','pakje','zakje','tros','trossen',
+  ]);
+
+  // 'head'     → zelfde soort product (woord is het hoofd, of hoofd is een deelwoord)
+  // 'modifier' → ander product dat er alleen naar verwijst
+  // null       → geen samenstelling met dit woord (of de rest is ruis)
+  function compoundRole(productWord, itemWord) {
+    if (!compoundContains(productWord, itemWord)) return null;
+    if (productWord.startsWith(itemWord)) {
+      const rest = productWord.slice(itemWord.length);
+      // Tussenletters: "tomaten-ketchup", "kippen-dijen", "appel-s-ap"
+      const kern = rest.replace(/^(en|s|e)(?=\w{3,})/, '');
+      return (PART_HEADS.has(rest) || PART_HEADS.has(kern)) ? 'head' : 'modifier';
+    }
+    return 'head';
+  }
+
   // Trigram-similarity (Sørensen-Dice) voor fuzzy matching
   function trigrams(s) {
     const t = new Set();
@@ -2197,8 +2242,22 @@
       const content = productWords.filter(w => !BRAND_NOISE.has(w));
       const denom = Math.max(content.length, 1);
       const matchedContent = content.filter(pw => effectiveWords.some(iw => wordMatches(iw, pw))).length;
-      const compoundOnly = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && effectiveWords.some(iw => compoundContains(pw, iw))).length;
-      const coverage = (matchedContent + compoundOnly * 0.25) / denom;
+      // Samenstellingen naar rol: hoofd telt bijna als een los woord, een
+      // samenstelling waarin het woord alleen bepalend is telt niet mee.
+      const roleOf = pw => {
+        if (effectiveWords.some(iw => wordMatches(iw, pw))) return 'word';
+        let best = null;
+        for (const iw of effectiveWords) {
+          const r = compoundRole(pw, iw);
+          if (r === 'head') return 'head';
+          if (r === 'modifier') best = 'modifier';
+        }
+        return best;
+      };
+      const roles = content.map(roleOf);
+      const compoundHead = roles.filter(r => r === 'head').length;
+      const compoundMod  = roles.filter(r => r === 'modifier').length;
+      const coverage = (matchedContent + compoundHead * COMPOUND_HEAD_WEIGHT) / denom;
       // Positie-bonus: item-woord vroeg in de naam
       let posBonus = 0;
       for (const iw of effectiveWords) {
@@ -2236,6 +2295,17 @@
       let secondaryRolePenalty = 0;
       if (matchedContent <= 1) for (const iw of effectiveWords) {
         const matchIdx = content.findIndex(w => wordMatches(iw, w));
+        // "Halfvolle melk", "Witte rijst", "Magere melk": het laatste woord ís
+        // het product, de woorden ervoor zijn bijvoeglijk. Een bijvoeglijk
+        // naamwoord vóór een zelfstandig naamwoord eindigt in het Nederlands
+        // vrijwel altijd op -e; "Kikkererwten tomatensaus" niet.
+        const voor = content.slice(0, Math.max(matchIdx, 0));
+        // Maar niet als dat woord zelf een product is ("Lasagne zalm" is lasagne),
+        // en niet bij voltooide deelwoorden: "gekruide boter", "gekookte eieren"
+        // en "geroosterde paprika" beschrijven een bewerkte vorm, geen kwaliteit.
+        const isBijvoeglijk = w => /[a-z]e$/.test(w) && w.length >= 4
+          && !PRODUCT_KEYWORDS.has(w) && !/^ge.+[dt]e$/.test(w);
+        if (voor.length && voor.every(isBijvoeglijk)) continue;
         if (matchIdx === content.length - 1 && matchIdx >= 1) {
           secondaryRolePenalty = Math.max(secondaryRolePenalty, matchIdx * 2.0);
           break;
@@ -2246,7 +2316,7 @@
         if (p.cat && p.cat === itemCategory) catBoost = 4;                                   // winkels met user-cat (Jumbo)
         else if (allowedCats.length && p.category && allowedCats.includes(p.category)) catBoost = 4; // AH (AH-categorie-strings)
       }
-      const extraWords = content.filter(pw => !effectiveWords.some(iw => wordMatches(iw, pw)) && !NOISE_WORDS.has(pw) && !BRAND_NOISE.has(pw)).length;
+      const extraWords = content.filter((pw, i) => roles[i] !== 'word' && roles[i] !== 'head' && !NOISE_WORDS.has(pw) && !BRAND_NOISE.has(pw)).length;
       // Adjacency bonus: zoekwoorden die naast elkaar staan in het product zijn waarschijnlijker de juiste match
       let adjacencyBonus = 0;
       if (effectiveWords.length >= 2) {
@@ -2257,7 +2327,7 @@
           adjacencyBonus = adjacent * 3;
         }
       }
-      const score = coverage * 10 + posBonus + adjacencyBonus + catBoost - noise * 4 - extraWords * 1.5 - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
+      const score = coverage * 10 + posBonus + adjacencyBonus + catBoost - noise * 4 - extraWords * 1.5 - compoundMod * COMPOUND_MOD_PENALTY - inComponentPenalty - secondaryRolePenalty - veganPenalty - eff * 0.02;
       candidates.push({ storeId, p, eff, activeBonus, upcomingBonus, score });
     }
     // Fuzzy fallback: als geen exacte/compound match, probeer trigram-similarity
@@ -2302,7 +2372,13 @@
       c.unitPrice = computeUnitPrice(c.eff, c.p.unit, c.p.name);
       c.multipack = isMultipack(c.p.name, c.p.unit);
     }
-    const singles = tier.filter(c => !c.multipack && c.unitPrice);
+    // Alleen prijzen per eenheid vergelijken die óók vergelijkbaar zijn met de
+    // beste match. Verse paprika heeft vaak geen eenheid ("per stuk" ontbreekt);
+    // eerder viel die dan buiten de vergelijking en won het enige product mét
+    // eenheid — een potje paprikapoeder van 39 g — terwijl de verse paprika
+    // het hoogst scoorde.
+    const singles = tier.filter(c => !c.multipack && c.unitPrice
+      && top.unitPrice && c.unitPrice.unit === top.unitPrice.unit);
     const best = singles.length
       ? singles.reduce((a, b) => b.unitPrice.value < a.unitPrice.value ? b : a)
       : top;
@@ -2634,6 +2710,9 @@
     const long  = da.length <= db.length ? db : da;
     return short.length >= 4 && long.startsWith(short) && short.length * 10 >= long.length * 6;
   }
+  // Alle trefwoorden uit de categorielijsten: woorden die zelf een product zijn.
+  const PRODUCT_KEYWORDS = new Set(Object.values(AUTO_CAT).flat().filter(k => !k.includes(' ')));
+
   function guessCategory(name) {
     const n = normalize(name);
     if (!n) return null;
