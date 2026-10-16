@@ -1453,3 +1453,9 @@
     }
     .shop-label strong { font-size: 18px; }
     .shop-stop { opacity: .8; font-weight: 700; font-size: 13px; }
+
+    .route-walk-hint {
+      font-size:12px; font-weight:700; color:var(--green-700);
+      background:var(--green-50); border-radius:99px; padding:2px 8px;
+    }
+    .settings-note { font-size:13px; color:var(--slate-600); margin:6px 0 10px; line-height:1.4; }

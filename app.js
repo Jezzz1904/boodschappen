@@ -2824,7 +2824,7 @@
     'report-confirm': el => { blacklistMatch(el.dataset.item, el.dataset.pname, el.dataset.storeName); closeReportMenu(); },
     'report-cancel':  () => closeReportMenu(),
     // Route
-    'route-toggle': el => toggleRouteItem(el.dataset.id),
+    'route-toggle': el => toggleRouteItem(el.dataset.id, el.closest('[data-store-id]')?.dataset.storeId),
     'route-move':   el => moveRouteStore(el.dataset.store, Number(el.dataset.dir)),
     'route-store':  el => toggleRouteStore(el.dataset.store),
     'route-plan':   el => setRouteStores(el.dataset.stores.split(',')),
@@ -2874,6 +2874,7 @@
     'budget-save':   () => saveBudget(),
     'budget-clear':  () => { setBudget(0); renderBudgetConfig(); renderBudgetBar(); },
     'prefstore':     el => setPrefStore(el.dataset.store),
+    'walk-reset':    () => { walkOrder = {}; saveWalkOrder(); renderStorePref(); toast('Looproute vergeten'); },
     'theme':         el => setTheme(el.dataset.theme),
     'shareurl-save': () => saveShareWorkerUrl(),
     'shareurl-clear':() => clearShareWorkerUrl(),
@@ -5356,7 +5357,18 @@
           <button class="store-pref-chip none${!pref ? ' active' : ''}"${act('prefstore', { store: '' })}>Geen voorkeur</button>
           ${chips}
         </div>
-      </div>`;
+      </div>
+      ${(() => {
+        const geleerd = Object.entries(walkOrder).filter(([, v]) => Object.keys(v).length)
+          .map(([id, v]) => `${STORE_BY_ID[id]?.name || id} (${Object.keys(v).length})`);
+        return `<div class="store-pref-card">
+          <div class="store-pref-label">🚶 Geleerde looproute</div>
+          <div class="settings-note">${geleerd.length
+            ? `Onthouden voor ${escapeHtml(geleerd.join(', '))}. De app sorteert de route per winkel in de volgorde waarin je daar afvinkt in winkelmodus.`
+            : 'Nog niets geleerd. Vink in winkelmodus af terwijl je loopt; de volgende keer staat je lijst in die volgorde.'}</div>
+          ${geleerd.length ? `<button class="tips-config-btn"${act('walk-reset')}>Looproute vergeten</button>` : ''}
+        </div>`;
+      })()}`;
   }
 
   function renderShareWorkerConfig() {
@@ -6007,10 +6019,77 @@
     updateShopBtn();
   }
 
-  function toggleRouteItem(id) {
+  // ── GELEERDE LOOPROUTE ──────────────────────────────────────────────────
+  // De volgorde waarin je in winkelmodus afvinkt ís de volgorde waarin je door
+  // die winkel loopt. Die onthouden we per winkel en per product, en de
+  // volgende keer staat de lijst van die winkel in die volgorde. Geen
+  // plattegrond nodig: de app leert het van jou.
+  //
+  // Per product een voortschrijdend gemiddelde van de positie (0, 1, 2, ...)
+  // binnen een bezoek. Gemiddeld i.p.v. overschreven, zodat één keer anders
+  // lopen de volgorde niet meteen omgooit.
+  const WALK_KEY = 'boodschappen.walkOrder';
+  const WALK_TRIP_KEY = 'boodschappen.walkTrip';
+  const WALK_ALPHA = 0.5;
+  const WALK_MIN_ITEMS = 3;
+  let walkOrder = loadJson(WALK_KEY, {});      // { storeId: { itemKey: positie } }
+  let walkTrip = loadJson(WALK_TRIP_KEY, {});  // { storeId: [itemKey, ...] } lopend bezoek
+
+  function saveWalkOrder() { try { localStorage.setItem(WALK_KEY, JSON.stringify(walkOrder)); } catch {} }
+  function saveWalkTrip()  { try { localStorage.setItem(WALK_TRIP_KEY, JSON.stringify(walkTrip)); } catch {} }
+
+  // Tijdens het bezoek alleen de volgorde bijhouden; leren pas aan het eind.
+  // Zo telt een mistik die je terugzet echt niet mee, en kan terugzetten ook
+  // vanuit de "Afgevinkt"-sectie (die hoort bij geen enkele winkel).
+  function learnWalk(storeId, itemKey, checked) {
+    if (!itemKey) return;
+    if (!checked) {
+      for (const id of Object.keys(walkTrip)) walkTrip[id] = walkTrip[id].filter(k => k !== itemKey);
+    } else if (storeId && !Object.values(walkTrip).some(t => t.includes(itemKey))) {
+      (walkTrip[storeId] || (walkTrip[storeId] = [])).push(itemKey);
+    }
+    saveWalkTrip();
+  }
+
+  // Einde bezoek: de definitieve afvinkvolgorde wordt per winkel geleerd.
+  // Het bezoek staat in localStorage, dus ook een bezoek dat werd
+  // onderbroken (app dicht) wordt bij de volgende start alsnog verwerkt.
+  function commitWalkTrip() {
+    for (const [storeId, keys] of Object.entries(walkTrip)) {
+      // Een bezoek met één of twee producten zegt niets over de indeling: dat
+      // ene product staat dan altijd "eerst" en zou naar voren schuiven.
+      if (keys.length < WALK_MIN_ITEMS) continue;
+      const store = walkOrder[storeId] || (walkOrder[storeId] = {});
+      keys.forEach((key, pos) => {
+        store[key] = key in store ? store[key] * (1 - WALK_ALPHA) + pos * WALK_ALPHA : pos;
+      });
+    }
+    walkTrip = {};
+    saveWalkOrder(); saveWalkTrip();
+  }
+
+  // Sorteert de rijen van één winkel op de geleerde volgorde. Producten die
+  // nog nooit in deze winkel zijn afgevinkt houden hun plek achteraan.
+  function sortByWalk(storeId, rows) {
+    const known = walkOrder[storeId];
+    if (!known) return { rows, learned: false };
+    const rank = r => known[normalize(r.item.name)];
+    const learned = rows.some(r => rank(r) !== undefined);
+    const sorted = rows.map((r, i) => ({ r, i })).sort((a, b) => {
+      const ra = rank(a.r), rb = rank(b.r);
+      if (ra === undefined && rb === undefined) return a.i - b.i;
+      if (ra === undefined) return 1;
+      if (rb === undefined) return -1;
+      return ra - rb || a.i - b.i;
+    }).map(x => x.r);
+    return { rows: sorted, learned };
+  }
+
+  function toggleRouteItem(id, storeId) {
     const it = items.find(x => x.id === id);
     if (!it) return;
     it.checked = !it.checked;
+    if (shopMode) learnWalk(storeId, normalize(it.name), it.checked);
     if (navigator.vibrate) navigator.vibrate(it.checked ? 30 : 10);
     saveItems();
     renderRoute();
@@ -6030,6 +6109,7 @@
   function toggleShopMode() {
     shopMode = !shopMode;
     document.body.classList.toggle('shopmode', shopMode);
+    commitWalkTrip();                // aan én uit: een eventueel onderbroken bezoek eerst verwerken
     if (shopMode) {
       requestWakeLock();
       window.scrollTo({ top: 0 });
@@ -6066,7 +6146,8 @@
       + ` <span class="shop-stop">· stoppen</span></span>`;
   }
 
-  function renderStoreSection(store, rows, total, showReorder) {
+  function renderStoreSection(store, unsortedRows, total, showReorder) {
+    const { rows, learned } = sortByWalk(store.id, unsortedRows);
     const reorderBtns = showReorder ? `
       <span class="route-reorder">
         <button class="route-move-btn" ${act('route-move', { store: store.id, dir: -1 })}>▲</button>
@@ -6078,6 +6159,7 @@
           <span class="route-store-name" style="background:${store.color}">${store.name}</span>
           ${isStoreStale(store.id) ? `<span class="cmp-conf" title="Niet bijgewerkt">${escapeHtml(fmtAge(storeAgeDays(store.id)))}</span>` : ''}
           <span class="route-store-count">${rows.length} item${rows.length === 1 ? '' : 's'}</span>
+          ${learned ? '<span class="route-walk-hint" title="Gesorteerd in de volgorde waarin je hier de vorige keer afvinkte">🚶 jouw looproute</span>' : ''}
           <span class="route-store-total">${fmtPrice(total)}</span>
           ${reorderBtns}
         </div>
