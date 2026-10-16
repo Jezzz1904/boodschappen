@@ -1,0 +1,13 @@
+{
+  "name": "boodschappen-ai-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker: proxy tussen de PWA en de Claude API",
+  "scripts": {
+    "test": "node test-worker.mjs",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0"
+  }
+}

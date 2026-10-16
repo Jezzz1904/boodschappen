@@ -10,6 +10,8 @@
 //   4. Settings → Triggers → Custom Domains: ai.boodschappen.herogames.nl (optioneel)
 //   5. Test: curl -X POST https://<worker>.workers.dev -d '{"mode":"ping"}'
 
+import Anthropic from '@anthropic-ai/sdk';
+
 const ALLOWED_ORIGINS = [
   'https://boodschappen.herogames.nl',
   'http://boodschappen.herogames.nl',
@@ -25,9 +27,46 @@ const MODELS = {
 };
 const MAX_TOKENS = 1500;
 
+// "Combi": korte productsuggesties die iets op je lijst afmaken, getoond in de
+// lijst zelf terwijl je toevoegt. Gestructureerde uitvoer (JSON-schema), zodat
+// de app elke suggestie met één tik kan toevoegen in plaats van tekst te
+// moeten ontleden.
+//
+// Claude Opus 5.5 met effort "low": dit is een korte, eenvoudige taak.
+// Denken staat op dit model altijd aan; effort is de knop voor diepgang en
+// kosten. max_tokens heeft ruimte voor dat denkwerk plus het antwoord.
+const COMBI_MODEL = 'claude-opus-5-5';
+const COMBI_MAX_TOKENS = 2000;
+const COMBI_SCHEMA = {
+  type: 'object',
+  properties: {
+    suggesties: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          naam:  { type: 'string' },
+          reden: { type: 'string' },
+        },
+        required: ['naam', 'reden'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['suggesties'],
+  additionalProperties: false,
+};
+
 // 4 modi met elk hun eigen system prompt. Houd elke prompt kort en concreet —
 // gebruiker wil snel iets bruikbaars zien, niet een essay.
 const PROMPTS = {
+  combi: `Je helpt iemand die een boodschappenlijst maakt. Kijk welke producten samen een gerecht of combinatie vormen, en welk product daarvoor nog ontbreekt.
+
+Geef maximaal 4 suggesties. Per suggestie:
+- naam: het product zoals je het op een boodschappenlijst schrijft, kort en algemeen (bijv. "rundergehakt", "parmezaanse kaas", "tortilla wraps") — geen merknaam, geen hoeveelheid
+- reden: waarvoor, in een paar woorden (bijv. "voor spaghetti bolognese")
+
+Stel geen producten voor die al op de lijst staan, ook niet in een andere vorm. Alleen suggesties die duidelijk volgen uit wat er al staat — liever geen suggestie dan een gok. Is er geen duidelijke combinatie, geef dan een lege lijst.`,
   recept: `Je bent een huis-kok die kijkt wat er in iemands boodschappenmandje zit en suggesties geeft welke gerechten ze daarmee kunnen maken.
 
 Antwoord-format:
@@ -108,7 +147,7 @@ export default {
     const { mode } = body || {};
 
     if (mode === 'ping') {
-      return json({ ok: true, models: MODELS }, 200, corsHeaders);
+      return json({ ok: true, models: { ...MODELS, combi: COMBI_MODEL } }, 200, corsHeaders);
     }
 
     // ── LIJST DELEN (KV) ──────────────────────────────────────────────────────
@@ -150,30 +189,27 @@ export default {
     // Bouw de user prompt op uit wat de PWA stuurt
     const userPrompt = buildUserPrompt(mode, body);
 
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODELS[mode] || 'claude-haiku-4-5-20251001',
-          max_tokens: MAX_TOKENS,
-          system: PROMPTS[mode],
-          messages: [{ role: 'user', content: userPrompt }],
-        }),
+      if (mode === 'combi') return json(await askCombi(client, userPrompt), 200, corsHeaders);
+
+      const data = await client.messages.create({
+        model: MODELS[mode],
+        max_tokens: MAX_TOKENS,
+        system: PROMPTS[mode],
+        messages: [{ role: 'user', content: userPrompt }],
       });
-      if (!resp.ok) {
-        const errText = await resp.text();
-        return json({ error: `Claude API ${resp.status}`, detail: errText.slice(0, 500) }, 502, corsHeaders);
-      }
-      const data = await resp.json();
-      const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
       return json({ text, model: data.model, usage: data.usage }, 200, corsHeaders);
     } catch (e) {
-      return json({ error: 'Fetch faalde', detail: String(e).slice(0, 300) }, 502, corsHeaders);
+      if (e instanceof Anthropic.RateLimitError) {
+        return json({ error: 'Even te veel verzoeken — probeer het zo opnieuw' }, 429, corsHeaders);
+      }
+      if (e instanceof Anthropic.APIError) {
+        return json({ error: `Claude API ${e.status ?? ''}`.trim(), detail: String(e.message).slice(0, 500) }, 502, corsHeaders);
+      }
+      return json({ error: 'Aanroep faalde', detail: String(e).slice(0, 300) }, 502, corsHeaders);
     }
   },
 };
@@ -196,6 +232,10 @@ function buildUserPrompt(mode, body) {
   const { list = [], history = [], deals = [] } = body;
   const today = new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  if (mode === 'combi') {
+    const lines = list.map(it => `- ${it.name}`).join('\n');
+    return `Mijn boodschappenlijst:\n${lines || '(leeg)'}`;
+  }
   if (mode === 'recept' || mode === 'vergeten') {
     const lines = list.length
       ? list.map(it => `- ${it.name}${it.qty > 1 ? ` (${it.qty}×)` : ''}`).join('\n')
@@ -208,9 +248,48 @@ function buildUserPrompt(mode, body) {
   }
   if (mode === 'deals') {
     const lines = deals.length
-      ? deals.slice(0, 40).map(d => `- ${d.name} bij ${d.store}: ${d.mechanism}${d.price ? ` (€${d.price.toFixed(2)})` : ''}`).join('\n')
+      // De app stuurt price_now/price_was; hier stond d.price, waardoor er nooit
+      // een prijs bij het model aankwam.
+      ? deals.slice(0, 40).map(d => {
+          const nu = typeof d.price_now === 'number' ? d.price_now : d.price;
+          const was = typeof d.price_was === 'number' && d.price_was > nu ? ` i.p.v. €${d.price_was.toFixed(2)}` : '';
+          return `- ${d.name} bij ${d.store}: ${d.mechanism}${typeof nu === 'number' ? ` (€${nu.toFixed(2)}${was})` : ''}`;
+        }).join('\n')
       : '(geen actieve aanbiedingen)';
     return `Vandaag is ${today}.\n\nActieve aanbiedingen deze week:\n${lines}`;
   }
   return '';
+}
+
+// Combi-suggesties: gestructureerde uitvoer, en bij een weigering de server-side
+// terugval naar het model dat Anthropic per weigeringscategorie aanraadt.
+// Een weigering die toch overblijft levert gewoon geen suggesties op; dat is
+// voor deze functie een prima uitkomst.
+export async function askCombi(client, userPrompt) {
+  const data = await client.beta.messages.create({
+    model: COMBI_MODEL,
+    max_tokens: COMBI_MAX_TOKENS,
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+    output_config: {
+      effort: 'low',
+      format: { type: 'json_schema', schema: COMBI_SCHEMA },
+    },
+    system: PROMPTS.combi,
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  if (data.stop_reason === 'refusal') {
+    return { suggesties: [], model: data.model, usage: data.usage, geweigerd: true };
+  }
+  if (data.stop_reason === 'max_tokens') {
+    throw new Error('Antwoord afgekapt (max_tokens)');
+  }
+  const text = data.content.find(b => b.type === 'text')?.text ?? '';
+  const parsed = JSON.parse(text);
+  const suggesties = (parsed.suggesties || [])
+    .filter(s => s && typeof s.naam === 'string' && s.naam.trim())
+    .slice(0, 4)
+    .map(s => ({ naam: s.naam.trim(), reden: String(s.reden || '').trim() }));
+  return { suggesties, model: data.model, usage: data.usage };
 }
