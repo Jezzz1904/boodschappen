@@ -2610,7 +2610,7 @@
           </span>
           <span class="share-code"${act('share-copy', { url })} title="Klik om te kopiëren">${shareCode}</span>
           <button class="share-btn secondary"${act('share-stop')}>Stop</button>
-          <button class="share-btn"${act('share-copy', { url })}>📤</button>
+          <button class="share-btn"${act('share-copy', { url })} aria-label="Link kopiëren">${icon('share')}</button>
         </div>`;
     } else {
       // Niet delen? Dan neemt de balk geen ruimte in. Delen start je met 📤 in
@@ -2753,6 +2753,9 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(() => t.classList.remove('show'), 1800);
   }
+
+  // Pictogram uit de SVG-sprite in index.html.
+  const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
   // ── EVENT-DELEGATIE ──────────────────────────────────────────────────────
   // Eén listener per view-root in plaats van onclick-strings in de HTML.
@@ -4351,8 +4354,8 @@
                 <div class="item-prices">${renderItemPrices(it)}</div>
               </div>
               ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
-              <button class="item-note-btn"${act('note')} title="Notitie toevoegen">✏️</button>
-              <button class="item-del"${act('del')} aria-label="Verwijder">✕</button>
+              <button class="item-note-btn"${act('note')} title="Notitie toevoegen" aria-label="Notitie">${icon('pencil')}</button>
+              <button class="item-del"${act('del')} aria-label="Verwijder">${icon('x')}</button>
             </div>`).join('')}
         </div>`;
     });
@@ -6147,7 +6150,7 @@
   function updateShopBtn() {
     const btn = document.getElementById('shopmode-btn');
     if (!btn) return;
-    if (!shopMode) { btn.textContent = '🛍️ Start winkelmodus'; btn.style.removeProperty('--progress'); return; }
+    if (!shopMode) { btn.innerHTML = `${icon('bag')} Start winkelmodus`; btn.style.removeProperty('--progress'); return; }
     const total = items.length;
     const done = items.filter(x => x.checked).length;
     const pct = total ? Math.round(done / total * 100) : 0;

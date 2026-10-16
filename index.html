@@ -24,6 +24,25 @@
   </script>
 </head>
 <body>
+  <!-- Pictogrammen: lijnicoontjes op een raster van 24, kleur = currentColor,
+       zodat ze meekleuren met licht/donker thema en knopstatus. Vervangen de
+       emoji op knoppen, die per toestel anders renderen. -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <defs>
+      <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11l2-8H6.3"/></symbol>
+      <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+      <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    </defs>
+  </svg>
 
   <div class="header">
     <img src="logo.svg" alt="" class="logo">
@@ -31,14 +50,14 @@
       <h1>Boodschappenheld</h1>
       <div class="sub" id="header-sub">Klaar om te shoppen</div>
     </div>
-    <button class="settings-btn" id="settings-btn" data-act="tab" data-tab="settings" aria-label="Instellingen" title="Instellingen">⚙️</button>
+    <button class="settings-btn" id="settings-btn" data-act="tab" data-tab="settings" aria-label="Instellingen" title="Instellingen"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></button>
   </div>
 
   <div class="tabs tabs-4" role="tablist" aria-label="Hoofdnavigatie">
-    <button class="tab active" id="tab-lijst" role="tab" aria-selected="true" aria-controls="view-lijst" data-act="tab" data-tab="lijst">🛒 Lijst</button>
-    <button class="tab"        id="tab-route" role="tab" aria-selected="false" aria-controls="view-route" data-act="tab" data-tab="route">🗺️ Route</button>
-    <button class="tab"        id="tab-tips"  role="tab" aria-selected="false" aria-controls="view-tips" data-act="tab" data-tab="tips">💡 Tips</button>
-    <button class="tab"        id="tab-hist"  role="tab" aria-selected="false" aria-controls="view-hist" data-act="tab" data-tab="hist">⭐ Vaak</button>
+    <button class="tab active" id="tab-lijst" role="tab" aria-selected="true" aria-controls="view-lijst" data-act="tab" data-tab="lijst"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg><span>Lijst</span></button>
+    <button class="tab"        id="tab-route" role="tab" aria-selected="false" aria-controls="view-route" data-act="tab" data-tab="route"><svg class="icon" aria-hidden="true"><use href="#i-route"/></svg><span>Route</span></button>
+    <button class="tab"        id="tab-tips"  role="tab" aria-selected="false" aria-controls="view-tips" data-act="tab" data-tab="tips"><svg class="icon" aria-hidden="true"><use href="#i-bulb"/></svg><span>Tips</span></button>
+    <button class="tab"        id="tab-hist"  role="tab" aria-selected="false" aria-controls="view-hist" data-act="tab" data-tab="hist"><svg class="icon" aria-hidden="true"><use href="#i-history"/></svg><span>Vaak</span></button>
   </div>
 
   <!-- TAB: LIJST -->
@@ -52,8 +71,8 @@
         <input class="qty-input" id="qty-input" type="text" inputmode="numeric" aria-label="Aantal"
                placeholder="1" value="" maxlength="3"
                data-act="add-enter" data-on="keydown">
-        <button class="add-btn browse-btn" data-act="browse-open" aria-label="Bladeren door categorieën" title="Bladeren door categorieën">📋</button>
-        <button class="add-btn scan-btn" data-act="barcode-open" aria-label="Barcode scannen" title="Barcode scannen">📷</button>
+        <button class="add-btn browse-btn" data-act="browse-open" aria-label="Bladeren door categorieën" title="Bladeren door categorieën"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg></button>
+        <button class="add-btn scan-btn" data-act="barcode-open" aria-label="Barcode scannen" title="Barcode scannen"><svg class="icon" aria-hidden="true"><use href="#i-scan"/></svg></button>
       </div>
       <button class="add-submit-btn" id="add-submit-btn" data-act="add-submit">+ Voeg toe aan lijst</button>
       <div id="suggestions-wrap"></div>
@@ -70,7 +89,7 @@
 
   <!-- TAB: ROUTE -->
   <div id="view-route" role="tabpanel" aria-labelledby="tab-route" style="display:none">
-    <button class="shopmode-btn" id="shopmode-btn" data-act="shopmode">🛍️ Start winkelmodus</button>
+    <button class="shopmode-btn" id="shopmode-btn" data-act="shopmode"><svg class="icon" aria-hidden="true"><use href="#i-bag"/></svg> Start winkelmodus</button>
     <div id="route-store-filter"></div>
     <div id="route-wrap"></div>
   </div>
@@ -137,8 +156,8 @@
   <!-- ACTIE-BALK -->
   <div class="actionbar" id="actionbar" style="display:none">
     <button class="ab-btn ab-clear" id="ab-clear" data-act="clear-checked">Wis afgevinkt</button>
-    <button class="ab-btn ab-save" data-act="save-list-open" title="Lijst opslaan" aria-label="Lijst opslaan">💾<span class="ab-label">Opslaan</span></button>
-    <button class="ab-btn ab-share" id="ab-share" data-act="share-btn" title="Lijst delen" aria-label="Lijst delen">📤<span class="ab-label">Delen</span></button>
+    <button class="ab-btn ab-save" data-act="save-list-open" title="Lijst opslaan" aria-label="Lijst opslaan"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span class="ab-label">Opslaan</span></button>
+    <button class="ab-btn ab-share" id="ab-share" data-act="share-btn" title="Lijst delen" aria-label="Lijst delen"><svg class="icon" aria-hidden="true"><use href="#i-share"/></svg><span class="ab-label">Delen</span></button>
     <button class="ab-btn ab-done" data-act="finish">✓ Klaar</button>
   </div>
 
@@ -223,7 +242,7 @@
       <div class="sheet-handle" aria-hidden="true"></div>
       <div class="sheet-head">
         <div class="sheet-title" id="sheet-title"></div>
-        <button class="sheet-close" data-act="modal-close" data-modal="sheet" aria-label="Sluiten">✕</button>
+        <button class="sheet-close" data-act="modal-close" data-modal="sheet" aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
       </div>
       <div class="sheet-body" id="sheet-body"></div>
     </div>

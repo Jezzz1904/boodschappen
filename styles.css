@@ -1489,3 +1489,37 @@
       .modal-bg.sheet-bg { align-items:center; }
       .sheet { border-radius:22px; }
     }
+
+    /* ── Pictogrammen (SVG-sprite in index.html) ─────────────────────────── */
+    .icon {
+      width: 1.25em; height: 1.25em; flex-shrink: 0;
+      fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+      vertical-align: -0.25em;
+    }
+    .tab { display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+    .tab .icon { width:18px; height:18px; }
+    .header .settings-btn { display:inline-flex; align-items:center; justify-content:center; color:var(--green-700); }
+    .header .settings-btn .icon { width:22px; height:22px; }
+    .header .settings-btn.active { color:#fff; }
+    .add-btn.browse-btn .icon, .add-btn.scan-btn .icon { width:22px; height:22px; }
+    .ab-save .icon, .ab-share .icon { width:20px; height:20px; }
+    /* Was opacity .25 voor een gekleurde emoji; een grijs lijnicoon wordt dan
+       onzichtbaar. slate-500 haalt 4,8:1 (licht) en 5,7:1 (donker); slate-400
+       zat met 2,6:1 onder de 3:1 die voor bedieningselementen geldt. */
+    .item-note-btn, .item-del { color: var(--slate-500); opacity: 1; }
+    .item.checked .item-note-btn, .item.checked .item-del { opacity: .45; }
+    .item-note-btn .icon, .item-del .icon { width:18px; height:18px; }
+    .item-note-btn:hover, .item-del:hover { color: var(--slate-700); }
+    .sheet-close { display:inline-flex; align-items:center; justify-content:center; }
+    .sheet-close .icon { width:18px; height:18px; }
+    .shopmode-btn .icon { width:20px; height:20px; margin-right:4px; }
+    .share-btn .icon { width:18px; height:18px; }
+
+    /* .cmp-lite-wrap draagt ook de klasse .cmp, en die regel staat later en
+       zet flex-direction op column. In een kolom werkt flex:1 op de hoogte,
+       dus de rij werd zo breed als de volledige productnaam (tot ~400 px in
+       een vak van ~230 px) en stak gecentreerd aan beide kanten uit — over
+       het vinkje heen. Expliciet een rij maken. */
+    .cmp.cmp-lite-wrap { flex-direction: row; }
+    .cmp-lite-rows { overflow: hidden; }
