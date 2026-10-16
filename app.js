@@ -2793,8 +2793,13 @@
     'note':      el => openNoteEditor(itemIdOf(el)),
     'del':       el => deleteItem(itemIdOf(el)),
     'setqty':    el => setQty(itemIdOf(el), Number(el.dataset.qty)),
+    'qty-inc':   el => { const it = items.find(x => x.id === itemIdOf(el)); if (it) setQty(it.id, Math.min(99, (it.qty || 1) + 1)); },
+    'qty-dec':   el => { const it = items.find(x => x.id === itemIdOf(el)); if (it && (it.qty || 1) > 1) setQty(it.id, (it.qty || 1) - 1); },
     'brand':     el => setBrandPref(itemIdOf(el), el.dataset.brand),
     'quickadd':  el => quickAdd(el.dataset.name),
+    // Vangt kliks op lege plekken in het uitgeklapte paneel op, zodat die niet
+    // doorvallen naar de rij (die het paneel dan zou dichtklappen).
+    'noop':      () => {},
     'expand':    el => { const id = itemIdOf(el); if (!id) return;
                          expandedItems.has(id) ? expandedItems.delete(id) : expandedItems.add(id);
                          patchItemPrices(id); },
@@ -3696,7 +3701,25 @@
   const expandedItems = new Set();
 
   function renderItemPrices(it) {
-    return expandedItems.has(it.id) ? renderPriceComparison(it) : renderPriceLite(it);
+    if (!expandedItems.has(it.id)) return renderPriceLite(it);
+    const collapse = `<button class="cmp-collapse"${act('expand')} aria-expanded="true">Minder tonen <span class="cmp-chevron up">⌄</span></button>`;
+    return renderItemTools(it) + renderPriceComparison(it) + collapse;
+  }
+
+  // Aantal en categorie wijzigen. Het aantal kon alleen bij het toevoegen
+  // worden gezet; daarna moest je het item verwijderen en opnieuw toevoegen.
+  function renderItemTools(it) {
+    const qty = it.qty || 1;
+    const cat = CAT_BY_ID[it.category];
+    return `
+      <div class="item-tools"${act('noop')}>
+        <div class="qty-stepper" role="group" aria-label="Aantal">
+          <button class="qty-btn"${act('qty-dec')} aria-label="Eén minder"${qty <= 1 ? ' disabled' : ''}>−</button>
+          <span class="qty-val">${qty}</span>
+          <button class="qty-btn"${act('qty-inc')} aria-label="Eén meer"${qty >= 99 ? ' disabled' : ''}>+</button>
+        </div>
+        <button class="item-tool"${act('cat')}>${cat ? `${cat.emo} ${escapeHtml(cat.name)}` : 'Categorie'} <span aria-hidden="true">›</span></button>
+      </div>`;
   }
 
   // Werkt alleen het prijsblok van één item bij (het duurste stuk render).
@@ -3712,7 +3735,7 @@
   function renderPriceLite(it) {
     const v = matchView(it);
     if (v.reason === 'loading') return '<div class="item-meta">Prijzen laden…</div>';
-    if (v.reason === 'nomatch')  return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    if (v.reason === 'nomatch')  return `<div class="item-meta item-nomatch"${act('cat')}>Geen prijs gevonden · tik voor categorie</div>`;
     const { matches, cheapest, sameUnit, dominantUnit, key, prefStore } = v;
 
     const others = matches.filter(m => m !== cheapest).sort((a, b) => key(a) - key(b));
@@ -3757,7 +3780,7 @@
   function renderPriceComparison(it) {
     const v = matchView(it);
     if (v.reason === 'loading') return '<div class="item-meta">Prijzen laden…</div>';
-    if (v.reason === 'nomatch')  return '<div class="item-meta item-nomatch">Geen prijs gevonden · tik voor categorie</div>';
+    if (v.reason === 'nomatch')  return `<div class="item-meta item-nomatch"${act('cat')}>Geen prijs gevonden · tik voor categorie</div>`;
     const { res, matches, sorted, cheapest, sameUnit, dominantUnit, key, prefStore } = v;
 
     // Merk-toggle tonen als er zowel huismerk als a-merk matches zijn
@@ -3928,8 +3951,7 @@
       return `<div class="item-bonus-banner">🔥 In bonus bij ${escapeHtml(store.name)}${end} ${mech}</div>`;
     }).join('') : '';
 
-    const collapse = `<button class="cmp-collapse"${act('expand')} aria-expanded="true">Minder tonen <span class="cmp-chevron up">⌄</span></button>`;
-    return `<div class="cmp">${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}${collapse}</div>`;
+    return `<div class="cmp"${act('noop')}>${bonusBanner}${rows}${brandToggle}${dealQtyTipHtml}${bonusTipHtml}${upcomingTipHtml}</div>`;
   }
 
   function togglePicker(rowEl, itemId, storeId) {
@@ -4208,6 +4230,16 @@
       qtyEl.remove();
     }
 
+    // Stepper in het uitgeklapte paneel bijwerken, als die open staat
+    const val = node.querySelector('.qty-val');
+    if (val) {
+      const q = it.qty || 1;
+      val.textContent = q;
+      const [dec, inc] = node.querySelectorAll('.qty-btn');
+      if (dec) dec.disabled = q <= 1;
+      if (inc) inc.disabled = q >= 99;
+    }
+
     repositionItem(it, node, group);
     patchCategoryCount(group);
     renderMeta();
@@ -4258,7 +4290,7 @@
           ${arr.map(it => `
             <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
               <div class="check"${act('toggle')} role="checkbox" aria-checked="${it.checked}"></div>
-              <div class="item-body"${act('cat')}>
+              <div class="item-body"${act('expand')}>
                 <div class="item-name">${escapeHtml(it.name)}</div>
                 ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
                 <div class="item-prices">${renderItemPrices(it)}</div>

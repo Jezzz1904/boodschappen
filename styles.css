@@ -1402,3 +1402,28 @@
         transition-duration: .01ms !important; scroll-behavior: auto !important;
       }
     }
+
+    /* ── Uitgeklapt item: aantal en categorie ─────────────────────────── */
+    .item-tools {
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      margin:6px 0 4px; padding-bottom:8px;
+      border-bottom:1px solid var(--slate-200);
+    }
+    .qty-stepper {
+      display:inline-flex; align-items:center;
+      border:1.5px solid var(--slate-200); border-radius:12px; overflow:hidden;
+      background:var(--card);
+    }
+    .qty-btn {
+      width:44px; height:44px; border:none; background:transparent;
+      font-size:20px; font-weight:800; color:var(--green-700); cursor:pointer;
+    }
+    .qty-btn:disabled { color:var(--slate-300); cursor:default; }
+    .qty-btn:not(:disabled):active { background:var(--green-50); }
+    .qty-val { min-width:32px; text-align:center; font-size:16px; font-weight:800; color:var(--slate-900); }
+    .item-tool {
+      min-height:44px; padding:0 14px; border-radius:12px;
+      border:1.5px solid var(--slate-200); background:var(--card);
+      font-family:inherit; font-size:13px; font-weight:700; color:var(--slate-700); cursor:pointer;
+    }
+    .item-tool:hover { border-color:var(--green-400); color:var(--green-700); }
