@@ -32,7 +32,12 @@ jobs:
         continue-on-error: true
         run: npx playwright install --with-deps chromium
 
+      # continue-on-error: als AH onbereikbaar is (storing of blokkade aan hun
+      # kant) mag dat de andere winkels niet meeslepen. Zonder dit brak de hele
+      # job af en bleven Jumbo, Plus en Lidl óók op oude data staan, terwijl
+      # die gewoon te scrapen zijn. De app markeert verouderde winkeldata zelf.
       - name: Scrape AH (mobile API, met bonus-data)
+        continue-on-error: true
         run: node scripts/scrape-ah.mjs
 
       - name: Scrape Jumbo + Plus + Lidl (via checkjebon)

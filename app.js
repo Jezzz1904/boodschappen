@@ -1855,12 +1855,66 @@
     brood:     ['Bakkerij'],
   };
 
-  function renderStaleBanner(show, label) {
+  // ── VEROUDERDE WINKELDATA ───────────────────────────────────────────────
+  // De scraper draait per winkel. Valt er één uit (storing of blokkade bij de
+  // winkel), dan blijft zijn bestand gewoon staan en serveert de server het
+  // netjes — er was dus niets te zien: dagenoude prijzen zagen er precies zo
+  // uit als verse. De banner hieronder keek alleen of je offline was.
+  const STALE_AFTER_DAYS = 2;
+
+  function storeAgeDays(storeId) {
+    const ts = storeData[storeId]?.scraped_at;
+    if (!ts) return null;
+    const d = (Date.now() - new Date(ts).getTime()) / 86400000;
+    return Number.isFinite(d) ? d : null;
+  }
+
+  function isStoreStale(storeId) {
+    const d = storeAgeDays(storeId);
+    return d !== null && d >= STALE_AFTER_DAYS;
+  }
+
+  function fmtAge(days) {
+    if (days === null) return '';
+    if (days < 1) return 'vandaag';
+    const n = Math.floor(days);
+    return n === 1 ? 'gisteren' : `${n} dagen oud`;
+  }
+
+  // Welke winkels lopen achter? Alleen echte (gescrapete) winkels tellen mee;
+  // Kruidvat en Etos voer je zelf in en hebben geen scrape-datum.
+  function staleStores() {
+    return STORES.filter(s => !s.manual && isStoreStale(s.id))
+      .map(s => ({ store: s, days: storeAgeDays(s.id) }))
+      .sort((a, b) => b.days - a.days);
+  }
+
+  // Offline-status wordt door loadStores() gezet; de verouderd-melding wordt
+  // bij elke render opnieuw bepaald uit scraped_at per winkel.
+  let offlineStale = false, offlineLabel = '';
+  function setOfflineStale(show, label) {
+    offlineStale = !!show; offlineLabel = label || '';
+    renderStaleBanner();
+  }
+
+  function renderStaleBanner() {
     const el = document.getElementById('stale-banner');
     if (!el) return;
-    el.innerHTML = show
-      ? `<div class="stale-banner">⚠️ ${label || 'Offline — prijzen zijn mogelijk verouderd. Verbind met internet voor actuele data.'}</div>`
+    const oud = staleStores();
+    let html = offlineStale
+      ? `<div class="stale-banner">⚠️ ${offlineLabel || 'Offline — prijzen zijn mogelijk verouderd. Verbind met internet voor actuele data.'}</div>`
       : '';
+    if (oud.length) {
+      const totaal = STORES.filter(s => !s.manual).length;
+      const alles = oud.length === totaal;
+      const tekst = alles
+        // Niet "de andere winkels zijn actueel" beweren als er geen andere zijn.
+        ? `Alle prijzen zijn ${fmtAge(oud[0].days)} — de dagelijkse update draait niet.`
+        : `Prijzen van ${oud.map(o => `${escapeHtml(o.store.name)} (${fmtAge(o.days)})`).join(', ')} `
+          + `zijn niet bijgewerkt; de andere winkels zijn wel actueel.`;
+      html += `<div class="stale-banner">⏳ ${tekst}</div>`;
+    }
+    el.innerHTML = html;
   }
 
   async function loadStores() {
@@ -1885,7 +1939,7 @@
       } catch (e) {}
     }));
     render();
-    if (anyCache && cacheStale) renderStaleBanner(true, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
+    if (anyCache && cacheStale) setOfflineStale(true, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
     // Vers ophalen (parallel)
     const results = await Promise.all(scrapedStores.map(async store => {
       try {
@@ -1902,7 +1956,7 @@
       return false;
     }));
     const freshLoaded = results.some(Boolean);
-    renderStaleBanner(!freshLoaded && cacheStale, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
+    setOfflineStale(!freshLoaded && cacheStale, 'Offline — prijzen zijn meer dan een dag oud. Verbind met internet voor actuele data.');
     render();
     if (!freshLoaded && !anyCache) {
       toast('⚠️ Prijsdata kon niet worden geladen. Controleer je verbinding.');
@@ -3598,6 +3652,7 @@
       return `
         <div class="cmp-lite${isBest ? ' best' : ''}${fav}${m.activeBonus ? ' in-bonus' : ''}">
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+          ${isStoreStale(m.storeId) ? `<span class="cmp-conf" title="Prijs van ${escapeHtml(store.name)} is ${fmtAge(storeAgeDays(m.storeId))} — niet bijgewerkt">oud</span>` : ''}
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${bonus}${up}${diff}
           <span class="cmp-product">${escapeHtml(m.p.name)}</span>
@@ -3688,6 +3743,7 @@
       return `
         <div class="${rowClass}"${act('pick-open', { store: m.storeId })}>
           <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
+          ${isStoreStale(m.storeId) ? `<span class="cmp-conf" title="Prijs van ${escapeHtml(store.name)} is ${fmtAge(storeAgeDays(m.storeId))} — niet bijgewerkt">oud</span>` : ''}
           <span class="cmp-price">${fmtPrice(m.eff)}</span>
           ${wasPrice}
           ${bonusBadge}
@@ -4017,6 +4073,7 @@
   // scheelt in winkelmodus 15-30 keer per bezoek een merkbare hapering.
 
   function renderMeta() {
+    renderStaleBanner();
     renderPriceSummary();
     renderSuggestions();
     renderActionbar();
@@ -5852,6 +5909,7 @@
       <div class="route-store" data-store-id="${store.id}">
         <div class="route-store-head">
           <span class="route-store-name" style="background:${store.color}">${store.name}</span>
+          ${isStoreStale(store.id) ? `<span class="cmp-conf" title="Niet bijgewerkt">${escapeHtml(fmtAge(storeAgeDays(store.id)))}</span>` : ''}
           <span class="route-store-count">${rows.length} item${rows.length === 1 ? '' : 's'}</span>
           <span class="route-store-total">${fmtPrice(total)}</span>
           ${reorderBtns}
