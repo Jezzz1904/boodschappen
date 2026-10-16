@@ -1441,3 +1441,15 @@
       border:1.5px solid var(--slate-200); background:var(--card);
       font-family:inherit; font-size:12px; font-weight:700; color:var(--green-700); cursor:pointer;
     }
+
+    /* Winkelmodus: voortgang als vulling van de vaste knop bovenaan */
+    body.shopmode .shopmode-btn {
+      background:
+        /* Donkere overlay i.p.v. --green-700: dat token is in donkere modus juist lichter */
+        linear-gradient(90deg, rgba(0,0,0,.24) var(--progress, 0%), transparent var(--progress, 0%)),
+        linear-gradient(135deg, var(--green-500), var(--green-600));
+      transition: background .3s;
+      color: #fff;
+    }
+    .shop-label strong { font-size: 18px; }
+    .shop-stop { opacity: .8; font-weight: 700; font-size: 13px; }

@@ -5838,15 +5838,43 @@
     return { itemPlans, found, missing, multi, byStore, singles, bestSingle, advice, options };
   }
 
+  // Afgevinkte items onderaan de route: tik om terug te zetten.
+  function renderCheckedSection(checkedItems) {
+    if (!checkedItems.length) return '';
+    return `
+        <div class="route-store" style="opacity:.5">
+          <div class="route-store-head">
+            <span class="route-store-name" style="background:var(--slate-400)">✓</span>
+            <span class="route-store-count">Afgevinkt (${checkedItems.length}) — tik om terug te zetten</span>
+          </div>
+          ${checkedItems.map(it => `<div class="route-item checked" ${act('route-toggle', { id: it.id })}>
+              <span class="route-item-check">✓</span>
+              <div style="flex:1;min-width:0;">
+                <div class="route-item-name">${escapeHtml(it.name)}</div>
+              </div>
+            </div>`).join('')}
+        </div>`;
+  }
+
   function renderRoute() {
     const wrap = document.getElementById('route-wrap');
     const route = buildRoute();
     if (!route) {
-      wrap.innerHTML = `<div class="route-empty">
-        <span class="empty-emoji" style="font-size:48px;">🗺️</span>
-        <div class="empty-title">Geen items op je lijst</div>
-        <div class="empty-sub">Voeg eerst boodschappen toe om een route te zien.</div>
-      </div>`;
+      // Geen open items: óf je lijst is leeg, óf je hebt alles afgevinkt. Dat
+      // laatste is het moment van klaar zijn, niet van "voeg eerst iets toe".
+      const allesGehad = items.length > 0;
+      wrap.innerHTML = allesGehad
+        ? `<div class="route-empty">
+            <span class="empty-emoji" style="font-size:48px;">🎉</span>
+            <div class="empty-title">Alles gehad!</div>
+            <div class="empty-sub">${items.length} item${items.length === 1 ? '' : 's'} afgevinkt. Tik op "Klaar" in je lijst om af te ronden.</div>
+          </div>${renderCheckedSection(items.filter(i => i.checked))}`
+        : `<div class="route-empty">
+            <span class="empty-emoji" style="font-size:48px;">🗺️</span>
+            <div class="empty-title">Geen items op je lijst</div>
+            <div class="empty-sub">Voeg eerst boodschappen toe om een route te zien.</div>
+          </div>`;
+      updateShopBtn(); // anders blijft de knop op de vorige stand staan
       return;
     }
     const { found, missing, advice, byStore } = route;
@@ -5973,24 +6001,7 @@
     }
 
     const checkedItems = items.filter(x => x.checked);
-    let checkedHtml = '';
-    if (checkedItems.length) {
-      checkedHtml = `
-        <div class="route-store" style="opacity:.5">
-          <div class="route-store-head">
-            <span class="route-store-name" style="background:var(--slate-400)">✓</span>
-            <span class="route-store-count">Afgevinkt (${checkedItems.length})</span>
-          </div>
-          ${checkedItems.map(it => {
-            return `<div class="route-item checked" ${act('route-toggle', { id: it.id })}>
-              <span class="route-item-check">✓</span>
-              <div style="flex:1;min-width:0;">
-                <div class="route-item-name">${escapeHtml(it.name)}</div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>`;
-    }
+    const checkedHtml = renderCheckedSection(checkedItems);
 
     wrap.innerHTML = recHtml + storesHtml + missingHtml + checkedHtml;
     updateShopBtn();
@@ -6032,12 +6043,27 @@
   function updateShopBtn() {
     const btn = document.getElementById('shopmode-btn');
     if (!btn) return;
-    if (!shopMode) { btn.textContent = '🛍️ Start winkelmodus'; return; }
+    if (!shopMode) { btn.textContent = '🛍️ Start winkelmodus'; btn.style.removeProperty('--progress'); return; }
     const total = items.length;
     const done = items.filter(x => x.checked).length;
-    btn.textContent = done >= total && total > 0
-      ? '🎉 Alles gehad — tik om te stoppen'
-      : `✓ ${done}/${total} afgevinkt — tik om te stoppen`;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    btn.style.setProperty('--progress', pct + '%');
+    btn.setAttribute('aria-label', `${done} van ${total} afgevinkt. Tik om winkelmodus te stoppen.`);
+    if (done >= total && total > 0) {
+      btn.innerHTML = '<span class="shop-label">🎉 Alles gehad — tik om te stoppen</span>';
+      return;
+    }
+    // Wat moet er nog afgerekend worden? Afgevinkte items zitten niet meer in
+    // het routeplan, dus dit is precies het bedrag van wat er nog op je lijst staat.
+    const route = buildRoute();
+    let rest = 0;
+    if (route) {
+      const single = route.advice.type === 'single' && route.singles.find(x => x.store.id === route.advice.storeId);
+      rest = single ? single.total : route.multi;
+    }
+    btn.innerHTML = `<span class="shop-label"><strong>${done}/${total}</strong>`
+      + (rest > 0.005 ? ` · nog ${fmtPrice(rest)}` : '')
+      + ` <span class="shop-stop">· stoppen</span></span>`;
   }
 
   function renderStoreSection(store, rows, total, showReorder) {
