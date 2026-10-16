@@ -1427,3 +1427,17 @@
       font-family:inherit; font-size:13px; font-weight:700; color:var(--slate-700); cursor:pointer;
     }
     .item-tool:hover { border-color:var(--green-400); color:var(--green-700); }
+
+    /* Winkels die je zelf hebt uitgesloten ("Plus heeft dit niet") */
+    .excluded-stores { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+    .excluded-store {
+      display:flex; align-items:center; gap:8px; min-height:44px;
+      padding:0 4px 0 6px; border-radius:10px; background:var(--slate-50);
+    }
+    .excluded-store .store-chip { opacity:.55; }
+    .excluded-text { flex:1; font-size:13px; color:var(--slate-500); font-style:italic; }
+    .excluded-undo {
+      min-height:44px; padding:0 12px; border-radius:8px;
+      border:1.5px solid var(--slate-200); background:var(--card);
+      font-family:inherit; font-size:12px; font-weight:700; color:var(--green-700); cursor:pointer;
+    }

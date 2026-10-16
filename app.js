@@ -2432,7 +2432,19 @@
     return { value: price / u.qty, unit: u.unit };
   }
 
+  // "Niet bij deze winkel": een override die naar geen enkel product verwijst.
+  // resolveOverride() geeft dan null en findMatches() slaat de winkel over, dus
+  // hij valt vanzelf uit de vergelijking, de totalen en de route.
+  //
+  // Bewust geen automatische drempel: een score zegt alleen iets binnen de
+  // kandidaten van één product. Over de hele woordenlijst scoorde ongeveer de
+  // helft van de matches onder -1 juist góéd (o.b. tampons, Hertog Jan
+  // speciaalbier, Duracell batterijen) — lange productnamen verzamelen
+  // strafpunten per extra woord. De gebruiker weet het beter.
+  const NOT_AVAILABLE = '__niet_verkrijgbaar__';
+
   function resolveOverride(storeId, productName) {
+    if (productName === NOT_AVAILABLE) return null;
     const data = storeData[storeId];
     if (!data || !data.products) return null;
     const p = data.products.find(x => x.name === productName);
@@ -2807,6 +2819,7 @@
     'pick-open': el => togglePicker(el, itemIdOf(el), el.dataset.store),
     'pick-set':  el => setMatchOverride(el.dataset.item, el.dataset.store, el.dataset.pname),
     'pick-auto': el => clearMatchOverride(el.dataset.item, el.dataset.store),
+    'pick-none': el => setMatchOverride(el.dataset.item, el.dataset.store, NOT_AVAILABLE),
     'watch':     el => toggleWatch(el.dataset.store, el.dataset.pid, el.dataset.pname, Number(el.dataset.price) || 0),
     'report-confirm': el => { blacklistMatch(el.dataset.item, el.dataset.pname, el.dataset.storeName); closeReportMenu(); },
     'report-cancel':  () => closeReportMenu(),
@@ -3703,7 +3716,21 @@
   function renderItemPrices(it) {
     if (!expandedItems.has(it.id)) return renderPriceLite(it);
     const collapse = `<button class="cmp-collapse"${act('expand')} aria-expanded="true">Minder tonen <span class="cmp-chevron up">⌄</span></button>`;
-    return renderItemTools(it) + renderPriceComparison(it) + collapse;
+    return renderItemTools(it) + renderPriceComparison(it) + renderExcludedStores(it) + collapse;
+  }
+
+  // Winkels die je zelf hebt uitgesloten blijven zichtbaar, zodat je het kunt
+  // terugdraaien — anders verdwijnt een winkel zonder spoor uit je lijst.
+  function renderExcludedStores(it) {
+    const ov = it.matchOverrides || {};
+    const ids = Object.keys(ov).filter(id => ov[id] === NOT_AVAILABLE && STORE_BY_ID[id]);
+    if (!ids.length) return '';
+    return `<div class="excluded-stores"${act('noop')}>` + ids.map(id => `
+      <div class="excluded-store">
+        <span class="store-chip" style="--sc:${STORE_BY_ID[id].color}">${STORE_BY_ID[id].name}</span>
+        <span class="excluded-text">niet verkrijgbaar</span>
+        <button class="excluded-undo"${act('pick-auto', { item: it.id, store: id })}>Herstel</button>
+      </div>`).join('') + `</div>`;
   }
 
   // Aantal en categorie wijzigen. Het aantal kon alleen bij het toevoegen
@@ -4032,6 +4059,9 @@
           </button>
           <button class="pick-action danger"${act('report-confirm', { item: normalize(it.name), pname: shown.p.name, storeName: store.name })}>
             ✗ Klopt niet — niet meer tonen
+          </button>
+          <button class="pick-action"${act('pick-none', { item: itemId, store: storeId })}>
+            🚫 ${escapeHtml(store.name)} heeft dit niet
           </button>
         </div>`;
     }
