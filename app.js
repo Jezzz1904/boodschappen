@@ -2796,7 +2796,8 @@
     }
   }
 
-  const itemIdOf = el => el.closest('.item')?.dataset.id;
+  // In de lijst zit het id op .item; in het detailsheet op .sheet-body.
+  const itemIdOf = el => (el.closest('.item') || el.closest('.sheet-body'))?.dataset.id;
 
   Object.assign(ACTIONS, {
     // Lijst
@@ -2812,9 +2813,7 @@
     // Vangt kliks op lege plekken in het uitgeklapte paneel op, zodat die niet
     // doorvallen naar de rij (die het paneel dan zou dichtklappen).
     'noop':      () => {},
-    'expand':    el => { const id = itemIdOf(el); if (!id) return;
-                         expandedItems.has(id) ? expandedItems.delete(id) : expandedItems.add(id);
-                         patchItemPrices(id); },
+    'expand':    el => { const id = itemIdOf(el); if (id) openSheet(id); },
     // Prijsvergelijking
     'pick-open': el => togglePicker(el, itemIdOf(el), el.dataset.store),
     'pick-set':  el => setMatchOverride(el.dataset.item, el.dataset.store, el.dataset.pname),
@@ -2965,6 +2964,7 @@
     'barcode':   () => closeBarcodeScanner(),
     'cat':       () => closeCatModal(),
     'browse':    () => closeBrowse(),
+    'sheet':     () => closeSheet(),
   };
 
   // ── ACTIES ──
@@ -3710,14 +3710,43 @@
              comparedByUnit: res.comparedByUnit };
   }
 
-  // Welke items tonen alle winkels. Bewust niet opgeslagen: het is een
-  // kijkstand, geen instelling — bij een nieuwe sessie begin je weer compact.
-  const expandedItems = new Set();
-
   function renderItemPrices(it) {
-    if (!expandedItems.has(it.id)) return renderPriceLite(it);
-    const collapse = `<button class="cmp-collapse"${act('expand')} aria-expanded="true">Minder tonen <span class="cmp-chevron up">⌄</span></button>`;
-    return renderItemTools(it) + renderPriceComparison(it) + renderExcludedStores(it) + collapse;
+    return renderPriceLite(it);
+  }
+
+  // ── DETAILSHEET ─────────────────────────────────────────────────────────
+  // Uitklappen in de lijst duwde alles ~250 px omlaag, waardoor je je plek
+  // kwijtraakte. Het sheet schuift over de lijst heen. Het hergebruikt de
+  // modal-infrastructuur: focus vasthouden, Escape, tik op de achtergrond.
+  let sheetItemId = null;
+
+  function openSheet(id) {
+    sheetItemId = id;
+    renderSheet();
+    document.getElementById('modal-sheet').classList.add('open');
+  }
+
+  function closeSheet() {
+    sheetItemId = null;
+    document.getElementById('modal-sheet').classList.remove('open');
+  }
+
+  function renderSheet() {
+    if (!sheetItemId) return;
+    const it = items.find(x => x.id === sheetItemId);
+    if (!it) { closeSheet(); return; }
+    document.getElementById('sheet-title').textContent = it.name;
+    const body = document.getElementById('sheet-body');
+    body.dataset.id = it.id;
+    // Focus terugzetten op dezelfde knop, anders verliest een toetsenbord-
+    // gebruiker zijn plek na elke tik op - of +.
+    const f = body.contains(document.activeElement) ? document.activeElement : null;
+    const sleutel = f && [f.dataset.act, f.dataset.store].join('|');
+    body.innerHTML = renderItemTools(it) + renderPriceComparison(it) + renderExcludedStores(it);
+    if (sleutel) {
+      const terug = [...body.querySelectorAll('[data-act]')].find(e => [e.dataset.act, e.dataset.store].join('|') === sleutel);
+      if (terug && !terug.disabled) terug.focus();
+    }
   }
 
   // Winkels die je zelf hebt uitgesloten blijven zichtbaar, zodat je het kunt
@@ -3750,13 +3779,7 @@
       </div>`;
   }
 
-  // Werkt alleen het prijsblok van één item bij (het duurste stuk render).
-  function patchItemPrices(id) {
-    const it = items.find(x => x.id === id);
-    const holder = itemNode(id)?.querySelector('.item-prices');
-    if (!it || !holder) { render(); return; }
-    holder.innerHTML = renderItemPrices(it);
-  }
+
 
   // Ingeklapt: de goedkoopste winkel, plus je voorkeurswinkel (of anders de
   // op één na goedkoopste) zodat er altijd iets te vergelijken valt.
@@ -3796,12 +3819,12 @@
     // zijn en blijft de rij compact, terwijl het trefvlak juist groot is.
     return `
       <div class="cmp cmp-lite-wrap"${act('expand')} role="button" tabindex="0"
-           aria-expanded="false" aria-label="Toon alle winkelprijzen">
+           aria-haspopup="dialog" aria-label="Toon alle winkelprijzen">
         <div class="cmp-lite-rows">
           ${line(cheapest, true)}
           ${second ? line(second, false) : ''}
         </div>
-        <span class="cmp-expand">${meer}<span class="cmp-chevron">⌄</span></span>
+        <span class="cmp-expand">${meer}<span class="cmp-chevron" aria-hidden="true">›</span></span>
       </div>`;
   }
 
@@ -4205,6 +4228,7 @@
   // scheelt in winkelmodus 15-30 keer per bezoek een merkbare hapering.
 
   function renderMeta() {
+    renderSheet();
     renderStaleBanner();
     renderPriceSummary();
     renderSuggestions();

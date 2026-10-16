@@ -1459,3 +1459,33 @@
       background:var(--green-50); border-radius:99px; padding:2px 8px;
     }
     .settings-note { font-size:13px; color:var(--slate-600); margin:6px 0 10px; line-height:1.4; }
+
+    /* ── Detailsheet ──────────────────────────────────────────────────────
+       Schuift van onder over de lijst, zodat je je plek in de lijst houdt. */
+    .modal-bg.sheet-bg { padding:0; align-items:flex-end; }
+    .sheet {
+      width:100%; max-width:560px; max-height:85vh;
+      display:flex; flex-direction:column;
+      background:var(--card); border-radius:22px 22px 0 0;
+      padding:6px 16px calc(16px + env(safe-area-inset-bottom));
+      box-shadow:0 -8px 30px rgba(15,23,42,.25);
+      animation: sheet-in .22s ease-out;
+    }
+    @keyframes sheet-in { from { transform: translateY(40px); opacity:.4; } to { transform:none; opacity:1; } }
+    .sheet-handle {
+      width:40px; height:5px; border-radius:99px; background:var(--slate-300);
+      margin:4px auto 8px; flex-shrink:0;
+    }
+    .sheet-head { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .sheet-title { flex:1; font-size:18px; font-weight:900; color:var(--slate-900); min-width:0;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sheet-close {
+      width:44px; height:44px; border:none; border-radius:12px;
+      background:var(--slate-100); color:var(--slate-600);
+      font-size:16px; cursor:pointer; flex-shrink:0;
+    }
+    .sheet-body { overflow-y:auto; -webkit-overflow-scrolling:touch; padding-top:4px; }
+    @media (min-width:1000px) {
+      .modal-bg.sheet-bg { align-items:center; }
+      .sheet { border-radius:22px; }
+    }
