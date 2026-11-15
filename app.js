@@ -2813,6 +2813,12 @@
     'qty-dec':   el => { const it = items.find(x => x.id === itemIdOf(el)); if (it && (it.qty || 1) > 1) setQty(it.id, (it.qty || 1) - 1); },
     'brand':     el => setBrandPref(itemIdOf(el), el.dataset.brand),
     'quickadd':  el => quickAdd(el.dataset.name),
+    // Bewust addItem en niet quickAdd: quickAdd haalt een product dat al op de
+    // lijst staat juist wég.
+    'ai-add':     el => { addItem(el.dataset.name, 1); toast(`${titleCase(el.dataset.name)} toegevoegd`); },
+    'ai-dismiss': el => { aiDismissed.add(normalize(el.dataset.name)); renderAIInline(); },
+    'ai-toggle':  () => { try { localStorage.setItem(AI_INLINE_KEY, aiInlineOn() ? 'off' : 'on'); } catch {}
+                          renderAIConfig(); renderAIInline(); },
     // Vangt kliks op lege plekken in het uitgeklapte paneel op, zodat die niet
     // doorvallen naar de rij (die het paneel dan zou dichtklappen).
     'noop':      () => {},
@@ -2903,6 +2909,20 @@
     'save-list-open': () => openSaveListModal(),
     'share-btn':      () => handleShareBtn(),
     'finish':         () => finishShopping(),
+    'finish-all':     () => finishShopping(),
+    'ab-menu':        () => setAbMenu(document.getElementById('ab-menu').hidden),
+    'ab-main':        el => { if (el.dataset.mode === 'finish') finishShopping(); else showTab('route'); },
+    'vaste-add':      () => addVasteBoodschappen(),
+    'bon-open':       () => openBon(),
+    'bon-pick':       () => document.getElementById('bon-file').click(),
+    'bon-files':      el => { const f = [...el.files]; el.value = ''; if (f.length) readBonFiles(f); },
+    'bon-toggle':     el => { if (bonState?.rows) { bonState.rows[Number(el.dataset.i)].aan = el.checked; renderBonCount(); } },
+    'bon-save':       () => saveBon(),
+    'idea-add':       () => ideaAdd(),
+    'idea-next':      () => ideaNext(),
+    'idea-hide':      () => ideaHide(),
+    'sheet-note':     el => { const id = itemIdOf(el); closeSheet(); openNoteEditor(id); },
+    'sheet-del':      el => { const id = itemIdOf(el); closeSheet(); deleteItem(id); },
     'save-list':    () => saveCurrentList(),
     'save-enter':   (el, e) => { if (e.key === 'Enter') saveCurrentList(); },
     'receipt-save': () => saveReceiptCheck(),
@@ -2968,6 +2988,7 @@
     'cat':       () => closeCatModal(),
     'browse':    () => closeBrowse(),
     'sheet':     () => closeSheet(),
+    'bon':       () => closeBon(),
   };
 
   // ── ACTIES ──
@@ -3779,56 +3800,33 @@
           <button class="qty-btn"${act('qty-inc')} aria-label="Eén meer"${qty >= 99 ? ' disabled' : ''}>+</button>
         </div>
         <button class="item-tool"${act('cat')}>${cat ? `${cat.emo} ${escapeHtml(cat.name)}` : 'Categorie'} <span aria-hidden="true">›</span></button>
+      </div>
+      <div class="item-tools item-tools-2"${act('noop')}>
+        <button class="item-tool"${act('sheet-note')}>${icon('pencil')} ${it.note ? 'Notitie wijzigen' : 'Notitie'}</button>
+        <button class="item-tool item-tool-danger"${act('sheet-del')}>${icon('trash')} Verwijderen</button>
       </div>`;
   }
 
 
 
-  // Ingeklapt: de goedkoopste winkel, plus je voorkeurswinkel (of anders de
-  // op één na goedkoopste) zodat er altijd iets te vergelijken valt.
+  // In de rij staat alleen het antwoord op "wat kost dit en waar": één prijs
+  // met de winkel eronder. De vergelijking tussen winkels zit in het sheet.
+  // Twee prijsregels per product maakten de lijst een prijstabel in plaats
+  // van een boodschappenlijst.
   function renderPriceLite(it) {
     const v = matchView(it);
-    if (v.reason === 'loading') return '<div class="item-meta">Prijzen laden…</div>';
-    if (v.reason === 'nomatch')  return `<div class="item-meta item-nomatch"${act('cat')}>Geen prijs gevonden · tik voor categorie</div>`;
-    const { matches, cheapest, sameUnit, dominantUnit, key, prefStore } = v;
-
-    const others = matches.filter(m => m !== cheapest).sort((a, b) => key(a) - key(b));
-    const prefMatch = prefStore ? others.find(m => m.storeId === prefStore) : null;
-    const second = prefMatch || others[0] || null;
-
-    const line = (m, isBest) => {
-      const store = STORE_BY_ID[m.storeId];
-      const up = (sameUnit && m.unitPrice && m.unitPrice.unit === dominantUnit)
-        ? `<span class="cmp-unit">${fmtPrice(m.unitPrice.value)}${UNIT_LABEL[dominantUnit] || ''}</span>` : '';
-      const bonus = m.activeBonus
-        ? `<span class="bonus-badge">${escapeHtml(m.activeBonus.mechanism || 'bonus')}</span>` : '';
-      const diff = !isBest && m.eff > cheapest.eff
-        ? `<span class="cmp-diff">+${fmtPrice(m.eff - cheapest.eff)}</span>` : '';
-      const fav = m.storeId === prefStore ? ' is-fav' : '';
-      return `
-        <div class="cmp-lite${isBest ? ' best' : ''}${fav}${m.activeBonus ? ' in-bonus' : ''}">
-          <span class="store-chip" style="--sc:${store.color}">${store.name}</span>
-          ${isStoreStale(m.storeId) ? `<span class="cmp-conf" title="Prijs van ${escapeHtml(store.name)} is ${fmtAge(storeAgeDays(m.storeId))} — niet bijgewerkt">oud</span>` : ''}
-          <span class="cmp-price">${fmtPrice(m.eff)}</span>
-          ${bonus}${up}${diff}
-          <span class="cmp-product">${escapeHtml(m.p.name)}</span>
-        </div>`;
-    };
-
-    const rest = matches.length - (second ? 2 : 1);
-    const meer = rest > 0 ? `<span class="cmp-more">+${rest}</span>` : '';
-
-    // Het hele blok is de knop: zo hoeft het pijltje zelf geen 44px hoog te
-    // zijn en blijft de rij compact, terwijl het trefvlak juist groot is.
+    if (v.reason === 'loading') return '<span class="pp pp-none">…</span>';
+    if (v.reason === 'nomatch') return '<span class="pp pp-none">geen prijs</span>';
+    const m = v.cheapest, store = STORE_BY_ID[m.storeId];
+    // "oud" alleen per rij als een déél van de winkels achterloopt; lopen ze
+    // allemaal achter, dan zegt de melding bovenaan dat al.
+    const deelsOud = isStoreStale(m.storeId) && staleStores().length < STORES.filter(x => !x.manual).length;
+    const extra = m.activeBonus ? ' · bonus' : deelsOud ? ' · oud' : '';
     return `
-      <div class="cmp cmp-lite-wrap"${act('expand')} role="button" tabindex="0"
-           aria-haspopup="dialog" aria-label="Toon alle winkelprijzen">
-        <div class="cmp-lite-rows">
-          ${line(cheapest, true)}
-          ${second ? line(second, false) : ''}
-        </div>
-        <span class="cmp-expand">${meer}<span class="cmp-chevron" aria-hidden="true">›</span></span>
-      </div>`;
+      <span class="pp${m.activeBonus ? ' in-bonus' : ''}">
+        <span class="pp-price">${fmtPrice(m.eff)}</span>
+        <span class="pp-store"><i style="background:${store.color}"></i>${escapeHtml(store.name)}${extra}</span>
+      </span>`;
   }
 
   function renderPriceComparison(it) {
@@ -4231,6 +4229,8 @@
   // scheelt in winkelmodus 15-30 keer per bezoek een merkbare hapering.
 
   function renderMeta() {
+    scheduleAIInline();
+    scheduleIdea();
     renderSheet();
     renderStaleBanner();
     renderPriceSummary();
@@ -4275,13 +4275,14 @@
     const check = node.querySelector('.check');
     if (check) check.setAttribute('aria-checked', String(!!it.checked));
 
-    // Aantal-badge staat tussen .item-body en .item-note-btn
+    // Aantal-badge staat in .item-main, tussen de naam en de prijs
     let qtyEl = node.querySelector('.item-qty');
     if (it.qty > 1) {
       if (!qtyEl) {
         qtyEl = document.createElement('span');
         qtyEl.className = 'item-qty';
-        node.insertBefore(qtyEl, node.querySelector('.item-note-btn'));
+        const main = node.querySelector('.item-main');
+        main.insertBefore(qtyEl, main.querySelector('.item-prices'));
       }
       qtyEl.textContent = `${it.qty}×`;
     } else if (qtyEl) {
@@ -4315,19 +4316,65 @@
     renderMeta();
   }
 
+  // Vaste boodschappen: wat je minstens twee keer kocht en recent nog. Dit is
+  // de snelste weg naar een lijst voor wie elke week grotendeels hetzelfde haalt.
+  function vasteBoodschappen() {
+    const now = Date.now();
+    return Object.values(history)
+      .filter(e => (e.count || 0) >= 2 && e.lastBought && now - e.lastBought < 90 * 86400000)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+  }
+
+  function renderEmptyList() {
+    const eersteKeer = !Object.keys(history).length;
+    if (eersteKeer) {
+      return `
+        <div class="welcome">
+          <div class="welcome-title">Welkom! Zo werkt het</div>
+          <ol class="welcome-steps">
+            <li><span class="welcome-nr">1</span><div><strong>Maak je lijst</strong>Typ wat je nodig hebt, of tik hierboven op een product.</div></li>
+            <li><span class="welcome-nr">2</span><div><strong>Zie de beste prijs</strong>Bij elk product staat waar het nu het goedkoopst is.</div></li>
+            <li><span class="welcome-nr">3</span><div><strong>Vink af in de winkel</strong>De app onthoudt wat je koopt en stelt het de volgende keer voor.</div></li>
+          </ol>
+          <div class="welcome-actions">
+            <button class="welcome-btn primary"${act('bon-open')}>${icon('receipt')} Bonnen inladen</button>
+            <button class="welcome-btn"${act('browse-open')}>${icon('grid')} Bladeren per categorie</button>
+          </div>
+          <div class="welcome-hint">Heb je digitale kassabonnen? Laad er een paar in, dan kent de app je vaste producten meteen.</div>
+        </div>`;
+    }
+    const vast = vasteBoodschappen();
+    return `
+      <div class="empty">
+        <div class="empty-title">Nieuwe lijst</div>
+        <div class="empty-sub">Tik hierboven op wat je meestal koopt${vast.length >= 3 ? ', of zet je vaste boodschappen er in één keer op' : ''}.</div>
+        <div class="welcome-actions">
+          ${vast.length >= 3 ? `<button class="welcome-btn primary"${act('vaste-add')}>+ Mijn vaste boodschappen (${vast.length})</button>` : ''}
+          <button class="welcome-btn"${act('browse-open')}>${icon('grid')} Bladeren per categorie</button>
+        </div>
+      </div>`;
+  }
+
+  function addVasteBoodschappen() {
+    const vast = vasteBoodschappen();
+    if (!vast.length) return;
+    const op = new Set(items.map(x => normalize(x.name)));
+    const nieuw = vast.filter(e => !op.has(normalize(e.name)));
+    const now = Date.now();
+    nieuw.forEach((e, i) => items.push({
+      id: now + i + Math.random().toString(36).slice(2, 6),
+      name: e.name, qty: 1, category: e.category || guessCategory(e.name),
+      checked: false, addedAt: now + i,
+    }));
+    saveItems(); render();
+    toast(`${nieuw.length} vaste boodschappen op je lijst`);
+  }
+
   function renderList() {
     const wrap = document.getElementById('list-wrap');
     renderPriceSummary();
-    if (!items.length) {
-      wrap.innerHTML = `
-        <div class="empty">
-          <span class="empty-emoji">🛒</span>
-          <div class="empty-title">Lijst is leeg</div>
-          <div class="empty-sub">Typ hierboven een product, of kies uit 'Vaak gekocht'.</div>
-          <button class="browse-link"${act('browse-open')}>📋 Bladeren door categorieën</button>
-        </div>`;
-      return;
-    }
+    if (!items.length) { wrap.innerHTML = renderEmptyList(); return; }
     // groeperen per categorie, in vaste volgorde, afgevinkten onderaan binnen elke groep
     // Items zonder geldige categorie vallen terug op 'houdbaar'
     items.forEach(it => { if (!CAT_BY_ID[it.category]) it.category = 'houdbaar'; });
@@ -4348,14 +4395,14 @@
           ${arr.map(it => `
             <div class="item ${it.checked ? 'checked' : ''}" data-id="${it.id}">
               <div class="check"${act('toggle')} role="checkbox" aria-checked="${it.checked}"></div>
-              <div class="item-body"${act('expand')}>
-                <div class="item-name">${escapeHtml(it.name)}</div>
-                ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
-                <div class="item-prices">${renderItemPrices(it)}</div>
+              <div class="item-main"${act('expand')} role="button" tabindex="0" aria-haspopup="dialog">
+                <span class="item-body">
+                  <span class="item-name">${escapeHtml(it.name)}</span>
+                  ${it.note ? `<span class="item-note">${escapeHtml(it.note)}</span>` : ''}
+                </span>
+                ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
+                <span class="item-prices">${renderItemPrices(it)}</span>
               </div>
-              ${it.qty > 1 ? `<span class="item-qty">${it.qty}×</span>` : ''}
-              <button class="item-note-btn"${act('note')} title="Notitie toevoegen" aria-label="Notitie">${icon('pencil')}</button>
-              <button class="item-del"${act('del')} aria-label="Verwijder">${icon('x')}</button>
             </div>`).join('')}
         </div>`;
     });
@@ -4482,6 +4529,9 @@
   }
 
   // Geeft HTML terug voor VARIANTS-submenu's, autocomplete en "vaak gekocht" (zonder recepten).
+  const STAPLES = ['Melk', 'Brood', 'Eieren', 'Kaas', 'Boter', 'Bananen', 'Appels', 'Aardappelen',
+                   'Tomaten', 'Komkommer', 'Pasta', 'Rijst', 'Yoghurt', 'Koffie', 'Wc-papier', 'Kipfilet'];
+
   function buildRestHTML(inp, onList) {
     const variants = inp && VARIANTS[inp];
     if (variants) {
@@ -4605,18 +4655,33 @@
           }).join('')}
         </div>`;
     }
-    // Leeg veld: vaak gekocht
+    // Leeg veld: wat je meestal koopt. Wie nog (bijna) geen historie heeft
+    // krijgt hetzelfde rijtje aangevuld met gangbare basisproducten: een leeg
+    // invoerveld helpt je niet bedenken wat je nodig hebt.
     let entries = Object.entries(history).filter(([k]) => !onList.has(k)).map(([k, v]) => ({ key: k, ...v }));
     const now = Date.now();
     entries.forEach(e => { const d = (now - (e.lastBought || 0)) / 86400000; e._score = e.count * Math.max(0.3, 1 - d / 60); });
     entries.sort((a, b) => b._score - a._score);
-    entries = entries.slice(0, 8);
+    entries = entries.slice(0, 12);
+    const eigen = entries.length;
+    if (eigen < 8) {
+      const heeft = new Set(Object.keys(history));
+      for (const n of STAPLES) {
+        if (entries.length >= 12) break;
+        const k = normalize(n);
+        if (onList.has(k) || heeft.has(k)) continue;
+        entries.push({ key: k, name: n, category: guessCategory(n), count: 0 });
+      }
+    }
     if (!entries.length) return '';
+    // Met producten op de lijst blijft het bij één veegbare regel, zodat de
+    // lijst zelf bovenaan het scherm blijft.
+    const compact = onList.size > 0;
     return `
-      <div class="suggestions-label">Vaak gekocht</div>
-      <div class="suggestions">
+      <div class="suggestions-label">${eigen >= 4 ? 'Meestal koop je dit' : 'Vaak gekocht'}</div>
+      <div class="suggestions${compact ? ' one-row' : ''}">
         ${entries.map(e => `<span class="chip"${act('quickadd', { name: e.name })}>
-          ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}<span class="chip-cnt">×${e.count}</span>
+          ${CAT_BY_ID[e.category]?.emo || '📦'} ${escapeHtml(e.name)}
         </span>`).join('')}
       </div>`;
   }
@@ -5152,13 +5217,27 @@
     if (el) el.classList.add('added');
   }
 
+  // Eén hoofdactie die meebeweegt met waar je bent: nog niets afgevinkt →
+  // naar de winkel; wel iets afgevinkt → afronden. Bewaren, delen en wissen
+  // zitten achter "Meer": vier knoppen naast elkaar vroegen elke keer om een keuze.
   function renderActionbar() {
     const bar = document.getElementById('actionbar');
-    if (!items.length) { bar.style.display = 'none'; return; }
+    if (!items.length) { bar.style.display = 'none'; setAbMenu(false); return; }
     bar.style.display = 'flex';
-    const hasChecked = items.some(x => x.checked);
-    const clr = document.getElementById('ab-clear');
-    clr.classList.toggle('has-checked', hasChecked);
+    const checked = items.filter(x => x.checked).length;
+    const main = document.getElementById('ab-main');
+    main.dataset.mode = checked ? 'finish' : 'shop';
+    main.innerHTML = checked
+      ? `${icon('check')} Klaar · ${checked} gekocht`
+      : `${icon('bag')} Naar de winkel`;
+    document.getElementById('ab-clear').hidden = !checked;
+    document.getElementById('ab-all').hidden = !!checked;
+  }
+  function setAbMenu(open) {
+    const m = document.getElementById('ab-menu'), b = document.getElementById('ab-more');
+    if (!m || !b) return;
+    m.hidden = !open;
+    b.setAttribute('aria-expanded', String(!!open));
   }
 
   // ── OPGESLAGEN LIJSTEN ──
@@ -5457,6 +5536,135 @@
       </div>`;
   }
 
+  // ── AI-SUGGESTIES IN DE LIJST ───────────────────────────────────────────
+  // "Je hebt pasta en tomaten — gehakt erbij voor een bolognese?" Verschijnt
+  // onder de lijst terwijl je toevoegt, met één tik om een suggestie toe te
+  // voegen. Elke aanvraag kost API-tegoed, dus alles hieronder is erop gericht
+  // om níét onnodig te vragen:
+  //   - pas vanaf AI_MIN_ITEMS producten, nooit in winkelmodus;
+  //   - 2,5 s na de laatste wijziging (niet per toetsaanslag of toevoeging);
+  //   - de sleutel is de *inhoud* van de lijst (ook afgevinkte items), dus
+  //     afvinken in de winkel vraagt nooit opnieuw;
+  //   - per lijst bewaard; een suggestie uit de vorige set toevoegen hergebruikt
+  //     de rest in plaats van opnieuw te vragen;
+  //   - hooguit AI_DAILY_CAP aanvragen per dag, zichtbaar in Instellingen.
+  const AI_INLINE_KEY  = 'boodschappen.aiInline';
+  const AI_CACHE_KEY   = 'boodschappen.aiCombiCache';
+  const AI_USAGE_KEY   = 'boodschappen.aiCombiUsage';
+  const AI_MIN_ITEMS   = 3;
+  const AI_DAILY_CAP   = 25;
+  const AI_DEBOUNCE_MS = 2500;
+  let aiTimer = null, aiBusy = false, aiDismissed = new Set();
+  let aiLast = loadJson('boodschappen.aiCombiLast', null); // { names:[], suggesties:[] }
+
+  function aiInlineOn() { try { return localStorage.getItem(AI_INLINE_KEY) !== 'off'; } catch { return true; } }
+  function aiUsageToday() {
+    const u = loadJson(AI_USAGE_KEY, {});
+    return u.date === new Date().toISOString().slice(0, 10) ? u.count || 0 : 0;
+  }
+  function aiCountCall() {
+    const today = new Date().toISOString().slice(0, 10);
+    try { localStorage.setItem(AI_USAGE_KEY, JSON.stringify({ date: today, count: aiUsageToday() + 1 })); } catch {}
+  }
+  const aiNames = () => [...new Set(items.map(it => normalize(it.name)))].sort();
+  const aiSig = names => names.join('|');
+
+  function aiCacheGet(sig) { return loadJson(AI_CACHE_KEY, {})[sig] || null; }
+  function aiCachePut(sig, suggesties) {
+    const c = loadJson(AI_CACHE_KEY, {});
+    c[sig] = { suggesties, ts: Date.now() };
+    const keys = Object.keys(c).sort((a, b) => c[b].ts - c[a].ts);
+    for (const k of keys.slice(30)) delete c[k];       // alleen de laatste 30 lijsten
+    try { localStorage.setItem(AI_CACHE_KEY, JSON.stringify(c)); } catch {}
+  }
+
+  // Alles wat al op de lijst staat (ook in een andere vorm) of weggeklikt is eruit.
+  function aiVisible(suggesties) {
+    const op = items.map(it => normalize(it.name));
+    return (suggesties || []).filter(s => {
+      const n = normalize(s.naam);
+      return !aiDismissed.has(n) && !op.some(o => o === n || stemMatch(o, n));
+    });
+  }
+
+  function renderAIInline(state) {
+    const el = document.getElementById('ai-inline');
+    if (!el) return;
+    if (!aiInlineOn() || !getAIUrl() || shopMode || items.length < AI_MIN_ITEMS) { el.innerHTML = ''; return; }
+    if (state === 'loading') {
+      el.innerHTML = `<div class="ai-inline loading" aria-live="polite">${icon('bulb')} Even kijken wat erbij past…</div>`;
+      return;
+    }
+    const sig = aiSig(aiNames());
+    const hit = aiCacheGet(sig) || (aiLast && aiSig(aiLast.names) === sig ? aiLast : null);
+    const zicht = aiVisible(hit?.suggesties);
+    if (!zicht.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="ai-inline" role="region" aria-label="Suggesties bij je lijst">
+        <div class="ai-inline-head">${icon('bulb')}<span>Past bij je lijst</span></div>
+        <div class="ai-inline-chips">
+          ${zicht.map(s => `
+            <span class="ai-chip">
+              <button class="ai-chip-add"${act('ai-add', { name: s.naam })}>
+                <strong>+ ${escapeHtml(s.naam)}</strong>${s.reden ? `<span class="ai-chip-why">${escapeHtml(s.reden)}</span>` : ''}
+              </button>
+              <button class="ai-chip-x"${act('ai-dismiss', { name: s.naam })} aria-label="${escapeHtml(s.naam)} niet tonen">${icon('x')}</button>
+            </span>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  // Na elke render: gepland opnieuw kijken. Niet direct: wie vijf producten
+  // achter elkaar typt, hoeft maar één aanvraag.
+  function scheduleAIInline() {
+    clearTimeout(aiTimer);
+    renderAIInline();
+    if (!aiInlineOn() || !getAIUrl() || shopMode || items.length < AI_MIN_ITEMS) return;
+    const names = aiNames(), sig = aiSig(names);
+    if (aiCacheGet(sig)) return;
+    // Alleen eigen suggesties toegevoegd? Dan gelden de overige nog steeds.
+    if (aiLast) {
+      const oud = new Set(aiLast.names);
+      const sugg = new Set((aiLast.suggesties || []).map(s => normalize(s.naam)));
+      const nieuw = names.filter(n => !oud.has(n));
+      const weg = aiLast.names.filter(n => !names.includes(n));
+      if (!weg.length && nieuw.length && nieuw.every(n => sugg.has(n) || [...sugg].some(s => stemMatch(s, n)))) {
+        aiCachePut(sig, aiLast.suggesties);
+        renderAIInline();
+        return;
+      }
+    }
+    aiTimer = setTimeout(() => fetchAIInline(names), AI_DEBOUNCE_MS);
+  }
+
+  async function fetchAIInline(names) {
+    if (aiBusy || aiUsageToday() >= AI_DAILY_CAP) return;
+    const sig = aiSig(names);
+    if (sig !== aiSig(aiNames()) || aiCacheGet(sig)) return;   // lijst al weer veranderd
+    aiBusy = true;
+    renderAIInline('loading');
+    try {
+      aiCountCall();
+      const res = await fetch(getAIUrl(), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: 'combi', list: items.map(it => ({ name: it.name })) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.suggesties)) throw new Error(data.error || `HTTP ${res.status}`);
+      aiCachePut(sig, data.suggesties);
+      aiLast = { names, suggesties: data.suggesties };
+      try { localStorage.setItem('boodschappen.aiCombiLast', JSON.stringify(aiLast)); } catch {}
+    } catch (e) {
+      // Stil falen: dit is een extraatje. Niet opnieuw proberen voor deze lijst.
+      console.warn('[ai-inline]', e.message);
+      aiCachePut(sig, []);
+    } finally {
+      aiBusy = false;
+      renderAIInline();
+    }
+  }
+
   function renderAIConfig() {
     const div = document.getElementById('ai-config');
     if (!div) return;
@@ -5471,7 +5679,13 @@
                placeholder="https://boodschappen-ai.xxx.workers.dev"
                value="${escapeHtml(url)}">
         <button class="tips-config-btn"${act('ai-save-settings')}>Opslaan</button>
-      </div>`;
+      </div>
+      ${url ? `
+      <div class="tips-config">
+        <strong>💡 Suggesties en ideeën in je lijst</strong><br>
+        <div class="settings-note">Vanaf ${AI_MIN_ITEMS} producten stelt de app voor wat er bij je lijst past ("gehakt erbij voor een bolognese?"). Elke aanvraag kost een klein beetje API-tegoed (grofweg een cent); afvinken in de winkel vraagt niets. Hetzelfde geldt voor het gerecht-idee boven je lijst, dat uitgaat van wat je de laatste weken kocht. Vandaag gebruikt: <strong>${aiUsageToday()} van ${AI_DAILY_CAP}</strong>.</div>
+        <button class="tips-config-btn"${act('ai-toggle')}>${aiInlineOn() ? 'Uitzetten' : 'Aanzetten'}</button>
+      </div>` : ''}`;
   }
   function saveAIUrlFromSettings() {
     const v = (document.getElementById('ai-url-settings-input')?.value || '').trim();
@@ -6214,6 +6428,318 @@
       </div>`;
   }
 
+  // ── BONNEN INLADEN ──────────────────────────────────────────────────────
+  // Een schermafbeelding of PDF van een digitale bon → de AI-Worker leest de
+  // producten eruit → jij controleert → ze komen in je historie. Daarmee kent
+  // de app je vaste producten vanaf dag één, in plaats van na weken afvinken.
+  // De bon zelf wordt nergens bewaard; alleen productnaam en datum.
+  const BON_SEEN_KEY = 'boodschappen.bonnenGezien';
+  const BON_BATCH = 12;            // zelfde grens als de Worker
+  let bonState = null;             // { fase: 'intro'|'bezig'|'controle'|'fout', ... }
+
+  function openBon() {
+    bonState = { fase: 'intro' };
+    renderBon();
+    document.getElementById('modal-bon').classList.add('open');
+  }
+  function closeBon() {
+    bonState = null;
+    document.getElementById('modal-bon').classList.remove('open');
+  }
+
+  const blobToB64 = blob => new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(',')[1] || '');
+    r.onerror = () => fail(new Error('Bestand kon niet gelezen worden'));
+    r.readAsDataURL(blob);
+  });
+
+  // Een bon uit een app is vaak één lange schermafbeelding. In zijn geheel
+  // verkleind wordt de tekst onleesbaar, dus knippen we hem in overlappende
+  // stukken van normale schermverhouding. De Worker weet dat de delen bij
+  // elkaar horen en telt een regel in de overlap één keer.
+  async function prepBonFile(file) {
+    if (file.type === 'application/pdf') {
+      if (file.size > 6e6) throw new Error(`${file.name} is te groot (maximaal 6 MB)`);
+      return [{ type: 'application/pdf', data: await blobToB64(file) }];
+    }
+    if (!file.type.startsWith('image/')) throw new Error(`${file.name} is geen afbeelding of PDF`);
+    const bmp = await createImageBitmap(file);
+    const W = Math.min(bmp.width, 1100), k = W / bmp.width;
+    const sliceH = Math.round(bmp.width * 1.6), step = Math.round(sliceH * 0.94);
+    const out = [];
+    for (let y = 0; y < bmp.height; y += step) {
+      const h = Math.min(sliceH, bmp.height - y);
+      const c = document.createElement('canvas');
+      c.width = W; c.height = Math.max(1, Math.round(h * k));
+      c.getContext('2d').drawImage(bmp, 0, y, bmp.width, h, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+      out.push({ type: 'image/jpeg', data: await blobToB64(blob) });
+      if (y + h >= bmp.height) break;
+    }
+    return out;
+  }
+
+  async function readBonFiles(files) {
+    if (!bonState) openBon();
+    bonState = { fase: 'bezig', n: files.length };
+    renderBon();
+    try {
+      const blocks = (await Promise.all(files.map(prepBonFile))).flat();
+      const bonnen = [];
+      for (let i = 0; i < blocks.length; i += BON_BATCH) {
+        aiCountCall();
+        const res = await fetch(getAIUrl(), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ mode: 'bon', files: blocks.slice(i, i + BON_BATCH) }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !Array.isArray(data.bonnen)) {
+          // Een Worker die deze functie nog niet kent antwoordt "Onbekende modus".
+          const oud = /onbekende modus/i.test(data.error || '');
+          throw new Error(oud ? 'De AI-koppeling is nog niet bijgewerkt voor bonnen. Rol de Worker opnieuw uit (zie worker/).'
+                              : (data.error || `De AI-koppeling gaf een fout (${res.status})`));
+        }
+        bonnen.push(...data.bonnen);
+      }
+      if (!bonState) return;                       // tussentijds gesloten
+      const gezien = new Set(loadJson(BON_SEEN_KEY, []));
+      const rows = [];
+      bonnen.forEach((b, bi) => {
+        b.sig = b.datum ? [b.winkel, b.datum, b.producten.map(p => normalize(p.naam)).sort().join(',')].join('|') : '';
+        b.dubbel = !!b.sig && gezien.has(b.sig);
+        b.producten.forEach(p => rows.push({ bon: bi, naam: titleCase(p.naam), aan: !b.dubbel }));
+      });
+      if (!rows.length) throw new Error('Geen producten gevonden. Is dit een kassabon, en is de tekst leesbaar?');
+      bonState = { fase: 'controle', bonnen, rows };
+    } catch (e) {
+      if (!bonState) return;
+      bonState = { fase: 'fout', fout: e.message || String(e) };
+    }
+    renderBon();
+  }
+
+  const bonDatumLabel = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' }) : '';
+
+  function renderBonCount() {
+    const btn = document.getElementById('bon-save-btn');
+    if (!btn || !bonState?.rows) return;
+    const n = bonState.rows.filter(r => r.aan).length;
+    btn.textContent = n ? `Onthoud ${n} product${n === 1 ? '' : 'en'}` : 'Niets geselecteerd';
+    btn.disabled = !n;
+  }
+
+  function renderBon() {
+    const el = document.getElementById('bon-body');
+    if (!el || !bonState) return;
+    const st = bonState;
+    if (st.fase === 'intro' || st.fase === 'fout') {
+      el.innerHTML = `
+        <div class="modal-title">${icon('receipt')} Bonnen inladen</div>
+        <div class="modal-sub">Kies een schermafbeelding of PDF van je digitale kassabon (uit de app van AH, Jumbo, Lidl of Plus). De app leest de producten eruit en onthoudt wat je meestal koopt.</div>
+        ${st.fase === 'fout' ? `<div class="bon-error" role="alert">${escapeHtml(st.fout)}</div>` : ''}
+        <ul class="bon-points">
+          <li>Meerdere bonnen tegelijk kan</li>
+          <li>Je controleert de producten voordat ze worden bewaard</li>
+          <li>De bon zelf wordt niet opgeslagen</li>
+        </ul>
+        <div class="modal-save-actions">
+          <button class="modal-save-btn secondary"${act('modal-close', { modal: 'bon' })}>Sluiten</button>
+          <button class="modal-save-btn primary"${act('bon-pick')}>${st.fase === 'fout' ? 'Opnieuw kiezen' : 'Kies bonnen'}</button>
+        </div>`;
+      return;
+    }
+    if (st.fase === 'bezig') {
+      el.innerHTML = `
+        <div class="modal-title">${icon('receipt')} Bonnen inladen</div>
+        <div class="bon-busy" aria-live="polite"><span class="tips-spin"></span> ${st.n === 1 ? 'Je bon wordt' : `${st.n} bonnen worden`} gelezen… dit duurt even.</div>`;
+      return;
+    }
+    const groepen = st.bonnen.map((b, bi) => {
+      const kop = [b.winkel || 'Bon', bonDatumLabel(b.datum)].filter(Boolean).join(' · ');
+      const rijen = st.rows.map((r, i) => r.bon !== bi ? '' : `
+        <label class="bon-row">
+          <input type="checkbox"${r.aan ? ' checked' : ''}${act('bon-toggle', { i })} data-on="change">
+          <span>${escapeHtml(r.naam)}</span>
+        </label>`).join('');
+      return `<div class="bon-group">
+        <div class="bon-group-head">${escapeHtml(kop)}${b.dubbel ? ' <span class="bon-dup">al eerder ingeladen</span>' : ''}</div>
+        ${rijen}</div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="modal-title">Klopt dit?</div>
+      <div class="modal-sub">Vink uit wat niet klopt of wat je niet wilt onthouden.</div>
+      <div class="bon-list">${groepen}</div>
+      <div class="modal-save-actions">
+        <button class="modal-save-btn secondary"${act('modal-close', { modal: 'bon' })}>Annuleren</button>
+        <button class="modal-save-btn primary" id="bon-save-btn"${act('bon-save')}></button>
+      </div>`;
+    renderBonCount();
+  }
+
+  function saveBon() {
+    if (bonState?.fase !== 'controle') return;
+    const now = Date.now();
+    const gezien = loadJson(BON_SEEN_KEY, []);
+    let n = 0;
+    bonState.bonnen.forEach((b, bi) => {
+      const ts = b.datum ? Math.min(now, new Date(b.datum + 'T12:00:00').getTime() || now) : now;
+      const perBon = new Set();                       // één keer tellen per bon
+      for (const r of bonState.rows) {
+        if (r.bon !== bi || !r.aan) continue;
+        const key = normalize(r.naam);
+        if (!key || perBon.has(key)) continue;
+        perBon.add(key);
+        const h = history[key] || { name: r.naam, category: guessCategory(r.naam), count: 0, lastBought: 0 };
+        h.count += 1;
+        h.lastBought = Math.max(h.lastBought || 0, ts);
+        history[key] = h;
+        n++;
+      }
+      if (b.sig && perBon.size && !gezien.includes(b.sig)) gezien.push(b.sig);
+    });
+    saveHistory();
+    try { localStorage.setItem(BON_SEEN_KEY, JSON.stringify(gezien.slice(-200))); } catch {}
+    closeBon();
+    render();
+    if (document.getElementById('view-hist').style.display !== 'none') renderHistory();
+    toast(`${n} product${n === 1 ? '' : 'en'} onthouden`);
+  }
+
+  // ── GERECHT-IDEE BIJ WAT JE KOCHT ───────────────────────────────────────
+  // "Je kocht broccolimix — roerbak met kip en noedels?" Eén idee tegelijk,
+  // boven de lijst, zonder dat je erom vraagt. Gaat uit van wat je de laatste
+  // drie weken kocht (afgevinkt of via een bon). Net als de combi-suggesties
+  // is alles erop gericht weinig aan te vragen: één aanvraag levert drie
+  // ideeën op, en er komt pas een nieuwe als je aankopen veranderen of je
+  // door de drie heen bent. Telt mee in dezelfde dagelijkse limiet.
+  const IDEA_KEY = 'boodschappen.ideas';
+  const IDEA_MIN = 3, IDEA_DAYS = 21;
+  let ideaBusy = false, ideaFailedSig = null, ideaTimer = null;
+  let ideaState = loadJson(IDEA_KEY, null); // { sig, ideeen:[], idx, eerder:[], hiddenDay }
+
+  const vandaag = () => new Date().toISOString().slice(0, 10);
+  function recentGekocht() {
+    const grens = Date.now() - IDEA_DAYS * 86400000;
+    return Object.values(history)
+      .filter(h => (h.lastBought || 0) >= grens)
+      .sort((a, b) => b.lastBought - a.lastBought)
+      .slice(0, 60)
+      .map(h => h.name);
+  }
+  const ideaSig = names => names.map(normalize).sort().join('|');
+  const ideaOn = () => aiInlineOn() && !!getAIUrl() && !shopMode;
+  function saveIdea() { try { localStorage.setItem(IDEA_KEY, JSON.stringify(ideaState)); } catch {} }
+
+  // Wat van "nodig" nog niet op de lijst staat.
+  function ideaMissing(idee) {
+    const op = items.map(it => normalize(it.name));
+    return (idee.nodig || []).filter(n => {
+      const k = normalize(n);
+      return !op.some(o => o === k || stemMatch(o, k));
+    });
+  }
+
+  function renderIdea(state) {
+    const el = document.getElementById('idea-card');
+    if (!el) return;
+    if (!ideaOn()) { el.innerHTML = ''; return; }
+    if (state === 'loading') {
+      el.innerHTML = `<div class="idea idea-loading" aria-live="polite">${icon('bulb')} Even een nieuw idee bedenken…</div>`;
+      return;
+    }
+    const idee = ideaState?.ideeen?.[ideaState.idx || 0];
+    if (!idee || ideaState.hiddenDay === vandaag()) { el.innerHTML = ''; return; }
+    const mis = ideaMissing(idee);
+    const alles = (idee.nodig || []).length > 0 && !mis.length;
+    el.innerHTML = `
+      <div class="idea" role="region" aria-label="Idee voor een gerecht">
+        <div class="idea-top">
+          <span class="idea-kicker">${icon('bulb')} ${idee.bij ? `Je kocht ${escapeHtml(idee.bij.toLowerCase())}` : 'Idee'}</span>
+          <button class="idea-x"${act('idea-hide')} aria-label="Idee verbergen">${icon('x')}</button>
+        </div>
+        <div class="idea-title">${escapeHtml(idee.titel)}</div>
+        ${idee.uitleg ? `<div class="idea-text">${escapeHtml(idee.uitleg)}</div>` : ''}
+        ${mis.length ? `<div class="idea-need"><strong>Nog nodig:</strong> ${mis.map(escapeHtml).join(', ')}</div>`
+                     : `<div class="idea-need">${alles ? 'Alles staat op je lijst.' : 'Je hebt alles al in huis.'}</div>`}
+        <div class="idea-actions">
+          ${mis.length ? `<button class="idea-btn primary"${act('idea-add')}>+ Zet op lijst</button>` : ''}
+          <button class="idea-btn"${act('idea-next')}>Ander idee</button>
+        </div>
+      </div>`;
+  }
+
+  function scheduleIdea() {
+    clearTimeout(ideaTimer);
+    renderIdea();
+    if (!ideaOn() || ideaBusy) return;
+    const names = recentGekocht();
+    if (names.length < IDEA_MIN) return;
+    const sig = ideaSig(names);
+    if (ideaState?.sig === sig || ideaFailedSig === sig) return;
+    ideaTimer = setTimeout(() => fetchIdea(false), 1500);
+  }
+
+  async function fetchIdea(gevraagd) {
+    if (ideaBusy) return;
+    const names = recentGekocht();
+    if (names.length < IDEA_MIN) return;
+    if (aiUsageToday() >= AI_DAILY_CAP) { if (gevraagd) toast('Limiet voor vandaag bereikt — morgen weer nieuwe ideeën'); return; }
+    const sig = ideaSig(names);
+    const eerder = [...(ideaState?.eerder || []), ...(ideaState?.ideeen || []).map(i => i.titel)].slice(-20);
+    ideaBusy = true;
+    if (gevraagd) renderIdea('loading');
+    try {
+      aiCountCall();
+      const res = await fetch(getAIUrl(), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'idee',
+          gekocht: names.map(name => ({ name })),
+          list: items.map(it => ({ name: it.name })),
+          eerder,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.ideeen) || !data.ideeen.length) throw new Error(data.error || `HTTP ${res.status}`);
+      ideaState = { sig, ideeen: data.ideeen, idx: 0, eerder, hiddenDay: null };
+      saveIdea();
+    } catch (e) {
+      // Stil falen: dit is een extraatje. Niet opnieuw proberen voor deze aankopen.
+      ideaFailedSig = sig;
+      if (gevraagd) toast('Nu even geen nieuw idee — probeer het later');
+      console.warn('idee:', e);
+    } finally {
+      ideaBusy = false;
+      renderIdea();
+    }
+  }
+
+  function ideaAdd() {
+    const idee = ideaState?.ideeen?.[ideaState.idx || 0];
+    if (!idee) return;
+    const mis = ideaMissing(idee);
+    mis.forEach(n => addItem(n, 1));
+    toast(`${mis.length} ingrediënt${mis.length === 1 ? '' : 'en'} voor ${idee.titel} toegevoegd`);
+  }
+  function ideaNext() {
+    if (!ideaState?.ideeen?.length) return;
+    if ((ideaState.idx || 0) + 1 < ideaState.ideeen.length) {
+      ideaState.idx = (ideaState.idx || 0) + 1;
+      saveIdea(); renderIdea();
+    } else {
+      fetchIdea(true);        // door de drie heen: nieuwe halen, zonder de oude te herhalen
+    }
+  }
+  function ideaHide() {
+    if (!ideaState) return;
+    ideaState.hiddenDay = vandaag();
+    saveIdea(); renderIdea();
+    toast('Idee verborgen tot morgen');
+  }
+
   // ── SW + INIT ──
   if ('serviceWorker' in navigator) {
     // Herlaad eenmalig zodra een nieuwe service worker de controle overneemt,
@@ -6243,6 +6769,16 @@
   delegate(document.getElementById('list-wrap'));
   delegate(document.getElementById('route-wrap'));
   delegate(document.body); // al het overige: koptekst, tabs, modals, instellingen
+  // Het Meer-menu sluit bij elke klik die niet op de Meer-knop zelf is, dus
+  // ook nadat je er een actie uit kiest. Capture: de lijst stopt propagatie.
+  document.addEventListener('click', e => { if (!e.target.closest('#ab-more')) setAbMenu(false); }, true);
+  // Rijen zijn een div met role="button" (een echte <button> zou het vegen en
+  // slepen blokkeren), dus Enter en spatie moeten we zelf doorgeven.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (el.matches?.('div[role="button"][data-act]')) { e.preventDefault(); el.click(); }
+  });
 
   // De modals gaan open via .open óf via style.display; in plaats van twaalf
   // aanroepen toe te voegen kijken we centraal of ze zichtbaar worden.

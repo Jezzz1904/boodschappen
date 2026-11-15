@@ -40,6 +40,10 @@
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
       <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"/></symbol>
       <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+      <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></symbol>
+      <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
       <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
     </defs>
   </svg>
@@ -81,10 +85,12 @@
     <div id="share-bar"></div>
     <div id="stale-banner"></div>
     <div id="budget-bar"></div>
+    <div id="idea-card"></div>
+    <div id="list-wrap"></div>
     <div id="price-summary"></div>
+    <div id="ai-inline"></div>
     <div id="watch-alerts"></div>
     <div id="hamster-tips"></div>
-    <div id="list-wrap"></div>
   </div>
 
   <!-- TAB: ROUTE -->
@@ -131,6 +137,7 @@
 
   <!-- TAB: HISTORIE -->
   <div id="view-hist" role="tabpanel" aria-labelledby="tab-hist" style="display:none">
+    <button class="bon-entry" data-act="bon-open"><svg class="icon" aria-hidden="true"><use href="#i-receipt"/></svg><span><strong>Bonnen inladen</strong><small>Laat de app je vaste producten leren uit je digitale kassabonnen</small></span></button>
     <div class="saved-lists-section" id="saved-lists-section"></div>
     <div id="seasonal-wrap"></div>
     <input class="hist-search" id="hist-search" type="text" aria-label="Zoeken in jouw producten"
@@ -153,12 +160,16 @@
     <div id="push-config" style="margin-top:12px"></div>
   </div>
 
-  <!-- ACTIE-BALK -->
+  <!-- ACTIE-BALK: één hoofdactie; de rest zit achter "Meer". -->
   <div class="actionbar" id="actionbar" style="display:none">
-    <button class="ab-btn ab-clear" id="ab-clear" data-act="clear-checked">Wis afgevinkt</button>
-    <button class="ab-btn ab-save" data-act="save-list-open" title="Lijst opslaan" aria-label="Lijst opslaan"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span class="ab-label">Opslaan</span></button>
-    <button class="ab-btn ab-share" id="ab-share" data-act="share-btn" title="Lijst delen" aria-label="Lijst delen"><svg class="icon" aria-hidden="true"><use href="#i-share"/></svg><span class="ab-label">Delen</span></button>
-    <button class="ab-btn ab-done" data-act="finish">✓ Klaar</button>
+    <div class="ab-menu" id="ab-menu" hidden>
+      <button class="ab-menu-item" data-act="save-list-open"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg>Lijst bewaren voor later</button>
+      <button class="ab-menu-item" id="ab-share" data-act="share-btn"><svg class="icon" aria-hidden="true"><use href="#i-share"/></svg>Lijst delen</button>
+      <button class="ab-menu-item" id="ab-all" data-act="finish-all"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Alles is gekocht</button>
+      <button class="ab-menu-item ab-menu-danger" id="ab-clear" data-act="clear-checked"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Afgevinkte producten wissen</button>
+    </div>
+    <button class="ab-btn ab-more" id="ab-more" data-act="ab-menu" aria-label="Meer acties" aria-haspopup="true" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-dots"/></svg></button>
+    <button class="ab-btn ab-done" id="ab-main" data-act="ab-main"></button>
   </div>
 
   <!-- MODAL LIJST OPSLAAN -->
@@ -188,6 +199,12 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL BONNEN INLADEN -->
+  <div class="modal-bg" id="modal-bon" role="dialog" aria-modal="true" aria-label="Bonnen inladen" data-act="modal-bg" data-modal="bon">
+    <div class="modal modal-bon"><div id="bon-body"></div></div>
+  </div>
+  <input type="file" id="bon-file" accept="image/*,application/pdf" multiple hidden data-act="bon-files" data-on="change">
 
   <!-- MODAL NOTITIE -->
   <div class="modal-bg" id="modal-note" role="dialog" aria-modal="true" aria-label="Notitie" data-act="modal-bg" data-modal="note">

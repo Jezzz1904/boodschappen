@@ -1523,3 +1523,216 @@
        het vinkje heen. Expliciet een rij maken. */
     .cmp.cmp-lite-wrap { flex-direction: row; }
     .cmp-lite-rows { overflow: hidden; }
+
+    /* ── AI-suggesties onder de lijst ────────────────────────────────────── */
+    #view-lijst #ai-inline { grid-column: 1; }
+    .ai-inline {
+      margin: 6px 0 14px; padding: 12px;
+      border: 1.5px dashed var(--green-200); border-radius: 14px;
+      background: var(--green-50);
+    }
+    .ai-inline.loading {
+      display:flex; align-items:center; gap:8px;
+      font-size: 13px; color: var(--slate-600); border-style: dotted;
+    }
+    .ai-inline-head {
+      display:flex; align-items:center; gap:6px; margin-bottom: 8px;
+      font-size: 13px; font-weight: 800; color: var(--green-700);
+    }
+    .ai-inline-chips { display:flex; flex-direction:column; gap:6px; }
+    .ai-chip {
+      display:flex; align-items:stretch;
+      background: var(--card); border:1.5px solid var(--slate-200); border-radius: 12px; overflow:hidden;
+    }
+    .ai-chip-add {
+      flex:1; min-height:44px; padding:6px 12px; border:none; background:none; cursor:pointer;
+      display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:1px;
+      font-family:inherit; text-align:left; color: var(--slate-900);
+    }
+    .ai-chip-add strong { font-size: 14px; color: var(--green-700); }
+    .ai-chip-why { font-size: 12px; color: var(--slate-500); }
+    .ai-chip-add:hover { background: var(--green-50); }
+    .ai-chip-x {
+      width:44px; border:none; border-left:1px solid var(--slate-200); background:none; cursor:pointer;
+      color: var(--slate-500); display:inline-flex; align-items:center; justify-content:center;
+    }
+    .ai-chip-x .icon { width:16px; height:16px; }
+
+    /* ══ Rustig lijstscherm ═══════════════════════════════════════════════
+       De lijst is weer een lijst: één kaart per categorie met regels erin,
+       in plaats van een losse kaart per product. Per regel alleen vinkje,
+       naam en één prijs; al het andere zit in het detailsheet. */
+    :root { --bar-bg: #F0FDF4; --bonus-ink: #B45309; }
+    html.dark { --bar-bg: #0B1220; --bonus-ink: #FBBF24; }
+
+    .tab { font-weight: 700; }
+    .category-group {
+      background: var(--card); border: 1px solid var(--slate-200); border-radius: 16px;
+      margin-bottom: 12px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15,23,42,.04);
+    }
+    .category-header { margin: 0; padding: 10px 14px 8px; letter-spacing: 1px; color: var(--slate-500); }
+    .category-header::after { display: none; }
+    .category-count { margin-left: auto; background: none; padding: 0; color: var(--slate-400); font-weight: 700; }
+    .item {
+      background: transparent; border: 0; border-top: 1px solid var(--slate-100);
+      border-radius: 0; margin: 0; padding: 0 14px; box-shadow: none; gap: 12px;
+    }
+    .item.checked { background: transparent; }
+    .item-main {
+      flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+      padding: 12px 0; min-height: 56px; cursor: pointer; border-radius: 8px;
+    }
+    .item-body { display: flex; flex-direction: column; gap: 1px; }
+    .item-name { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+    .item-note { margin: 0; }
+    .item-prices { flex-shrink: 0; }
+    .pp { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+    .pp-price { font-size: 15px; font-weight: 700; color: var(--slate-900); font-variant-numeric: tabular-nums; }
+    .pp-store { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
+    .pp-store i { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .pp.in-bonus .pp-price, .pp.in-bonus .pp-store { color: var(--bonus-ink); }
+    .pp-none { font-size: 12px; color: var(--slate-400); font-weight: 600; }
+    .item.checked .pp-price { color: var(--slate-600); }
+    .check { width: 26px; height: 26px; border-radius: 9px; border-width: 2px; border-color: var(--slate-300); }
+    .item.checked .check::after { left: 7px; top: 2px; }
+
+    /* Totaal staat ónder de lijst, zoals op een bon. */
+    #price-summary { margin: 2px 0 12px; }
+
+    /* Voorstellen onder het invoerveld: één veegbare regel zodra er een lijst is. */
+    .suggestions.one-row {
+      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+      padding-bottom: 2px; -webkit-overflow-scrolling: touch;
+    }
+    .suggestions.one-row::-webkit-scrollbar { display: none; }
+    .suggestions.one-row .chip { flex-shrink: 0; white-space: nowrap; }
+
+    /* Welkom / lege lijst */
+    .welcome {
+      background: var(--card); border: 1px solid var(--slate-200); border-radius: 18px;
+      padding: 18px 16px; margin-top: 4px;
+    }
+    .welcome-title { font-size: 18px; font-weight: 800; color: var(--slate-900); margin-bottom: 12px; }
+    .welcome-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .welcome-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.4; color: var(--slate-600); }
+    .welcome-steps strong { display: block; color: var(--slate-900); font-size: 15px; }
+    .welcome-nr {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--green-100); color: var(--green-700);
+      display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
+    }
+    .welcome-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .welcome-btn {
+      min-height: 48px; padding: 0 16px; border-radius: 12px; cursor: pointer;
+      border: 1.5px solid var(--slate-200); background: var(--card); color: var(--slate-800);
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .welcome-btn .icon { width: 18px; height: 18px; }
+    .welcome-btn.primary {
+      border-color: transparent; color: #fff;
+      background: linear-gradient(135deg, var(--green-500), #059669);
+      box-shadow: 0 4px 14px rgba(5,150,105,.3);
+    }
+    .welcome-btn:active { transform: scale(.98); }
+    .empty { padding: 28px 8px; }
+    .empty-title { color: var(--slate-900); }
+    .empty-sub { font-size: 14px; color: var(--slate-500); line-height: 1.4; }
+
+    /* Actiebalk: Meer + één hoofdactie */
+    .actionbar { background: linear-gradient(180deg, transparent, var(--bar-bg) 38%); }
+    .ab-more {
+      flex: 0 0 52px; padding: 0; background: var(--card); color: var(--slate-600);
+      border: 1.5px solid var(--slate-200);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .ab-more .icon { width: 22px; height: 22px; fill: currentColor; }
+    .ab-done { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; min-height: 52px; }
+    .ab-done .icon { width: 20px; height: 20px; }
+    .ab-menu {
+      position: absolute; left: 16px; bottom: calc(100% - 4px); min-width: 250px;
+      background: var(--card); border: 1px solid var(--slate-200); border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(15,23,42,.22); padding: 6px; display: flex; flex-direction: column;
+    }
+    .ab-menu[hidden], .ab-menu-item[hidden] { display: none; }
+    .ab-menu-item {
+      min-height: 48px; padding: 0 12px; border: 0; background: none; border-radius: 10px; cursor: pointer;
+      font-family: inherit; font-size: 15px; font-weight: 600; color: var(--slate-800); text-align: left;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ab-menu-item:hover { background: var(--slate-50); }
+    .ab-menu-item .icon { width: 18px; height: 18px; color: var(--slate-500); }
+    .ab-menu-danger, .ab-menu-danger .icon { color: var(--rose-500); }
+
+    /* Detailsheet: notitie en verwijderen (stonden als twee iconen in elke rij) */
+    .item-tools-2 { margin-top: 8px; }
+    .item-tools-2 .item-tool { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--slate-700); }
+    .item-tools-2 .item-tool .icon { width: 16px; height: 16px; }
+    .item-tools-2 .item-tool-danger { color: var(--rose-500); }
+
+    @media (min-width: 1000px) {
+      #view-lijst #idea-card { grid-column: 1; }
+    }
+
+    /* ── Bonnen inladen ───────────────────────────────────────────────────── */
+    .bon-entry {
+      width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+      padding: 12px 14px; margin-bottom: 12px; border-radius: 14px; cursor: pointer;
+      background: var(--card); border: 1.5px solid var(--green-200); color: var(--slate-900);
+      font-family: inherit;
+    }
+    .bon-entry .icon { width: 24px; height: 24px; color: var(--green-600); }
+    .bon-entry strong { display: block; font-size: 15px; }
+    .bon-entry small { display: block; font-size: 12px; color: var(--slate-500); margin-top: 1px; line-height: 1.35; }
+    .welcome-hint { font-size: 13px; color: var(--slate-500); margin-top: 10px; line-height: 1.4; text-align: center; }
+    .modal-bon .modal-title .icon { width: 20px; height: 20px; vertical-align: -3px; color: var(--green-600); }
+    .bon-points { margin: 12px 0 4px 18px; font-size: 14px; color: var(--slate-600); line-height: 1.6; }
+    .bon-error {
+      margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.4;
+      background: rgba(239,68,68,.12); color: var(--rose-500); font-weight: 600;
+    }
+    .bon-busy { display: flex; align-items: center; gap: 10px; padding: 24px 4px; font-size: 15px; color: var(--slate-700); }
+    .bon-list { max-height: 50vh; overflow-y: auto; margin: 12px -4px 4px; padding: 0 4px; -webkit-overflow-scrolling: touch; }
+    .bon-group { margin-bottom: 10px; }
+    .bon-group-head {
+      font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--slate-500); padding: 6px 0;
+    }
+    .bon-dup { text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--bonus-ink); margin-left: 6px; }
+    .bon-row {
+      display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 2px;
+      border-top: 1px solid var(--slate-100); font-size: 15px; color: var(--slate-900); cursor: pointer;
+    }
+    .bon-row input { width: 22px; height: 22px; accent-color: #059669; flex-shrink: 0; }
+    .modal-save-btn:disabled { opacity: .5; cursor: default; }
+
+    /* ── Gerecht-idee boven de lijst ──────────────────────────────────────── */
+    .idea {
+      background: var(--card); border: 1px solid var(--green-200); border-radius: 16px;
+      padding: 12px 14px 14px; margin-bottom: 12px;
+    }
+    .idea-loading { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--slate-600); padding: 14px; }
+    .idea-top { display: flex; align-items: center; gap: 8px; }
+    .idea-kicker {
+      flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700; color: var(--green-700);
+    }
+    .idea-kicker .icon { width: 15px; height: 15px; }
+    .idea-x {
+      width: 32px; height: 32px; margin: -6px -8px -6px 0; border: 0; background: none; cursor: pointer;
+      color: var(--slate-400); display: inline-flex; align-items: center; justify-content: center; position: relative;
+    }
+    .idea-x::before { content: ''; position: absolute; inset: -6px; }
+    .idea-x .icon { width: 16px; height: 16px; }
+    .idea-title { font-size: 17px; font-weight: 800; color: var(--slate-900); margin-top: 2px; line-height: 1.25; }
+    .idea-text { font-size: 14px; color: var(--slate-600); line-height: 1.45; margin-top: 4px; }
+    .idea-need { font-size: 14px; color: var(--slate-700); line-height: 1.45; margin-top: 8px; }
+    .idea-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .idea-btn {
+      min-height: 44px; padding: 0 14px; border-radius: 11px; cursor: pointer;
+      border: 1.5px solid var(--slate-200); background: var(--card); color: var(--slate-700);
+      font-family: inherit; font-size: 14px; font-weight: 700;
+    }
+    .idea-btn.primary { flex: 1; border-color: transparent; color: #fff; background: linear-gradient(135deg, var(--green-500), #059669); }
+    .idea-btn:active { transform: scale(.98); }

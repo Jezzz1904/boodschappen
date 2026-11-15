@@ -121,6 +121,57 @@ check('ping meldt combi-model', r.json.models?.combi, 'claude-opus-5-5');
 r = await vraag({ mode: 'bestaatniet' });
 check('onbekende modus → 400', r.status, 400);
 
+// 9. Bon: afbeelding en PDF gaan als de juiste inhoudsblokken mee, vóór de vraag
+antwoord = { body: apiBericht({ text: JSON.stringify({ bonnen: [
+  { winkel: 'Albert Heijn', datum: '2026-11-10', producten: [
+    { naam: 'halfvolle melk', aantal: 2 }, { naam: '  ', aantal: 1 }, { naam: 'broccolimix diepvries', aantal: 0 } ] },
+  { winkel: '', datum: 'gisteren', producten: [] },
+] }) }) };
+r = await vraag({ mode: 'bon', files: [
+  { type: 'image/jpeg', data: 'AAAA' }, { type: 'application/pdf', data: 'BBBB' } ] });
+const bc = laatsteVerzoek.body.messages[0].content;
+check('bon: afbeelding als image-blok', [bc[0].type, bc[0].source.type, bc[0].source.media_type], ['image', 'base64', 'image/jpeg']);
+check('bon: PDF als document-blok', [bc[1].type, bc[1].source.media_type], ['document', 'application/pdf']);
+check('bon: vraag staat na de bestanden', bc[2].type, 'text');
+check('bon: gestructureerde uitvoer', laatsteVerzoek.body.output_config?.format?.schema?.required, ['bonnen']);
+check('bon: terugval bij weigering', laatsteVerzoek.body.fallbacks, 'default');
+check('bon: lege naam weg, aantal minstens 1, lege bon weg', r.json.bonnen, [
+  { winkel: 'Albert Heijn', datum: '2026-11-10', producten: [
+    { naam: 'halfvolle melk', aantal: 2 }, { naam: 'broccolimix diepvries', aantal: 1 } ] },
+]);
+
+// 10. Bon: verkeerde invoer wordt geweigerd zonder de API aan te roepen
+laatsteVerzoek = null;
+r = await vraag({ mode: 'bon', files: [] });
+check('bon: geen bestand → 400', r.status, 400);
+r = await vraag({ mode: 'bon', files: [{ type: 'text/html', data: 'AAAA' }] });
+check('bon: verkeerd type → 400', r.status, 400);
+r = await vraag({ mode: 'bon', files: Array(13).fill({ type: 'image/png', data: 'AAAA' }) });
+check('bon: te veel bestanden → 400', r.status, 400);
+check('bon: bij een weigering geen API-aanroep', laatsteVerzoek, null);
+
+// 11. Idee: wat er gekocht is en eerdere ideeën komen in de prompt
+antwoord = { body: apiBericht({ text: JSON.stringify({ ideeen: [
+  { titel: 'Roerbak met kip en noedels', bij: 'broccolimix diepvries', uitleg: 'Bak de kip, voeg de mix toe.',
+    nodig: ['kipfilet', 'noedels', ' ', 'sojasaus'] },
+  { titel: ' ', bij: '', uitleg: '', nodig: [] },
+] }) }) };
+r = await vraag({ mode: 'idee', gekocht: [{ name: 'Broccolimix diepvries' }, { name: 'Rijst' }],
+                  list: [{ name: 'Melk' }], eerder: ['Nasi'] });
+const ip = laatsteVerzoek.body.messages[0].content;
+check('idee: gekochte producten in de prompt', ip.includes('- Broccolimix diepvries\n- Rijst'), true);
+check('idee: lijst en eerdere ideeën in de prompt', [ip.includes('- Melk'), ip.includes('- Nasi')], [true, true]);
+check('idee: gestructureerde uitvoer', laatsteVerzoek.body.output_config?.format?.schema?.required, ['ideeen']);
+check('idee: leeg idee en lege ingrediënt gefilterd', r.json.ideeen, [
+  { titel: 'Roerbak met kip en noedels', bij: 'broccolimix diepvries', uitleg: 'Bak de kip, voeg de mix toe.',
+    nodig: ['kipfilet', 'noedels', 'sojasaus'] },
+]);
+
+// 12. Idee: weigering levert gewoon niets op
+antwoord = { body: apiBericht({ text: null, stop_reason: 'refusal' }) };
+r = await vraag({ mode: 'idee', gekocht: [{ name: 'x' }] });
+check('idee: weigering → lege lijst', [r.status, r.json.ideeen], [200, []]);
+
 globalThis.fetch = echteFetch;
 console.log('─'.repeat(60));
 console.log(`${pass} geslaagd, ${fail} gefaald.`);
