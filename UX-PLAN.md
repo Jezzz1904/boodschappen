@@ -9,18 +9,14 @@ staat nog open, plus één punt uit fase 3 dat op verzoek is overgeslagen
 
 Nog gevonden, buiten dit plan: het melden van een verkeerde match naar de
 Worker faalde op CORS — `x-report-token` stond niet in
-`Access-Control-Allow-Headers`. De code in `share-worker/` is gerepareerd en
-getest, maar de **live Worker draait nog de oude versie**. Uitrollen:
-
-    cd share-worker && wrangler login && wrangler deploy
-
-Controleren of het gelukt is:
+`Access-Control-Allow-Headers`. Gerepareerd in `share-worker/` en op
+2026-11-15 uitgerold; de live Worker staat de header nu toe. Controleren:
 
     curl -si -X OPTIONS https://boodschappen-share.jerome-67a.workers.dev/report \
       -H "Access-Control-Request-Headers: content-type,x-report-token" \
       | grep -i access-control-allow-headers
 
-De regel `Access-Control-Allow-Headers` moet dan `X-Report-Token` bevatten.
+De regel `Access-Control-Allow-Headers` bevat dan `X-Report-Token`.
 
 > **Correctie bij de eerste versie van dit document.** De eerste meting liep op
 > een werkkopie die 52 commits achterliep; de bestandsdatums op schijf waren
